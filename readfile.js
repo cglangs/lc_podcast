@@ -24,10 +24,15 @@ const readInterface = readline.createInterface({
 
 readInterface.on('line', function(line) {
 	let word_array = line.split(',')
-    lines.push({sentence: line.replace(/,/g,""), hard_words: word_array.filter(value => dw.includes(value))});
+    lines.push({sentence: line.replace(/,/g,""), hard_words: Array.from(new Set(word_array.filter(value => dw.includes(value))))});
 })
 .on('close', function(line) {
- console.log(lines)
+	lines.forEach(function (item, index) {
+  		console.log('sentence:',item.sentence,'\n', 'hard words:', item.hard_words);
+  		item.hard_words.forEach(function(hard_word,index){
+  			console.log(hard_word + ':')
+  		})
+	});
 });
 }
 
