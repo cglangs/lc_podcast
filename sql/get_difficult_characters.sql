@@ -6,8 +6,8 @@ FROM
 imported_characters
 LEFT JOIN hsk4
 ON hsk4.characters LIKE CONCAT('%', imported_characters.characters, '%')
-LEFT JOIN proper_nouns 
-ON proper_nouns.word LIKE CONCAT('%', imported_characters.characters, '%')
-WHERE hsk4.characters IS NULL AND proper_nouns.word IS NULL;
+LEFT JOIN special_chars 
+ON special_chars.char_text = imported_characters.characters
+WHERE hsk4.characters IS NULL AND special_chars.char_text IS NULL;
 END$$
 DELIMITER ;
