@@ -3,10 +3,6 @@ const { ApolloServer }  = require("apollo-server");
 const neo4j = require('neo4j-driver')
 
 
-
-
-
-
 const driver = neo4j.driver(
   'bolt://localhost:7687',
   neo4j.auth.basic('neo4j','password')
@@ -18,6 +14,10 @@ type Word {
 }
 type User {
 	name: String!
+}
+type Sentence {
+	text: String!,
+	words: [Word!]! @relation(name: "CONTAINS", direction: OUT)
 }
 `
 
