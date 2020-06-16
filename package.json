@@ -1,0 +1,26 @@
+{
+  "name": "lc_podcast",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cglangs/lc_podcast.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cglangs/lc_podcast/issues"
+  },
+  "homepage": "https://github.com/cglangs/lc_podcast#readme",
+  "dependencies": {
+    "apollo-server": "^2.14.4",
+    "neo4j-driver": "^4.0.2",
+    "neo4j-graphql-js": "^2.14.2",
+    "node-driver": "0.0.0"
+  }
+}
