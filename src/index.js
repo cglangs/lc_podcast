@@ -1,35 +1,17 @@
-const { makeAugmentedSchema } = require("neo4j-graphql-js");
-const { ApolloServer }  = require("apollo-server");
-const neo4j = require('neo4j-driver')
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+import * as serviceWorker from './serviceWorker';
 
-
-const driver = neo4j.driver(
-  'bolt://localhost:7687',
-  neo4j.auth.basic('neo4j','password')
+ReactDOM.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+  document.getElementById('root')
 );
 
-const typeDefs = `
-type Word {
-  text: String!
-}
-type User {
-	name: String!
-}
-type Sentence {
-	text: String!,
-	words: [Word!]! @relation(name: "CONTAINS", direction: OUT)
-}
-`
-
-const schema = makeAugmentedSchema({
-  typeDefs
-});
-
-const server = new ApolloServer({
-  schema: schema,
-  context: { driver }
-});
-
-server.listen(3003, '0.0.0.0').then(({ url }) => {
-  console.log(`GraphQL API ready at ${url}`);
-});
+// If you want your app to work offline and load faster, you can change
+// unregister() to register() below. Note this comes with some pitfalls.
+// Learn more about service workers: https://bit.ly/CRA-PWA
+serviceWorker.unregister();
