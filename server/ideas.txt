@@ -1,0 +1,18 @@
+Idea #1
+Can create a sentence at an interval if a sentence for the same word at the previous interval exists
+
+Can use any word for a which a third interval sentence exists (or a base word)
+
+
+when querying the words:
+
+must wait for source word to have answered the third interval correctly in order to show the destination sentence 
+
+
+at the fourth interval and higher must use at least one additional word from the podcast that is not a base word
+
+
+(when searching words order by have the fewest sentence in which they are found)
+
+
+
