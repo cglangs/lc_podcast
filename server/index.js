@@ -9,8 +9,11 @@ const driver = neo4j.driver(
 );
 
 const typeDefs = `
+type Query {
+  wordlist: [Word]
+}
 type Word {
-  text: String!
+  text: String
 }
 type User {
 	name: String!
