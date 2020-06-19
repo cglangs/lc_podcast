@@ -1,16 +1,16 @@
 import React from 'react';
 import gql from 'graphql-tag';
 import { useQuery } from 'urql'
-import { useMutation } from 'urql';
+//import { useMutation } from 'urql';
 import '../styles/App.css';
 
-const ADD_WORD = gql`
+/*const ADD_WORD = gql`
   mutation AddWord($wordText: String!) {
     CreateWord(text: $wordText) {
       text
     }
   }
-`
+`*/
 const GET_WORDS = gql`
   query GetWords{
       wordlist{
@@ -19,7 +19,7 @@ const GET_WORDS = gql`
   }
 `
 
-const WordList = () => {
+/*const WordList = () => {
 
   const [showWords, toggleShowWords] = React.useState(false)
   const [result, reexecuteQuery] = useQuery({ query: GET_WORDS })
@@ -56,41 +56,43 @@ const WordList = () => {
     )
 
 
-}
+}*/
+
+  //const [wordText, setWordText] = React.useState('')
+  //const [addWordState, executeMutation] = useMutation(ADD_WORD)
+
+  /*const submit = React.useCallback(() => {
+    executeMutation({wordText})
+  }, [executeMutation, wordText])*/
 
 function App() {
 
-  const [wordText, setWordText] = React.useState('')
-  
+  const [sentenceWords, setSentenceWords] = React.useState([])
+  const [result] = useQuery({ query: GET_WORDS })
+  const {data} = result
+  const appendWord = (newWord) => setSentenceWords(words => [...words, newWord])
+  const popWord = () => setSentenceWords(words => words.slice(0,-1))
 
 
-  
-  const [addWordState, executeMutation] = useMutation(ADD_WORD)
-
-  const submit = React.useCallback(() => {
-    executeMutation({wordText})
-  }, [executeMutation, wordText])
 
 
 
   return (
     <div className="App">
       <header className="App-header">
-         <input
-          className="mb2"
-          value={wordText}
-          onChange={e => setWordText(e.target.value)}
-          type="text"
-          placeholder="Enter word here"
-        />
-      <button
-        disabled={addWordState.fetching}
-        onClick={submit}
-      >
-        Add Word
-      </button>
+          <div>
+          <p style={{fontSize: "30px;"}}>{sentenceWords.length ?  sentenceWords.join(''): null}</p>
+           <button
+            disabled={sentenceWords.length === 0}
+            onClick={popWord}
+            >
+            Backspace
+            </button>
 
-      {WordList()}
+          </div>
+          <select onChange={e => appendWord(e.target.value)}>
+            {data ? data.wordlist.map(word => <option value={word.text}>{word.text}</option>) : null}
+            </select>
       </header>
     </div>
   );
