@@ -1,17 +1,22 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
+import React from 'react'
+import ReactDOM from 'react-dom'
+import './styles/index.css'
+import App from './components/App'
+
+import { Provider, Client, dedupExchange, fetchExchange } from 'urql'
+import { cacheExchange } from '@urql/exchange-graphcache'
+
+const cache = cacheExchange({})
+
+const client = new Client({
+  url: 'http://0.0.0.0:3003',
+  exchanges: [dedupExchange, cache, fetchExchange],
+})
 
 ReactDOM.render(
-  <React.StrictMode>
+  <Provider value={client}>
     <App />
-  </React.StrictMode>,
+  </Provider>,
   document.getElementById('root')
-);
+)
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();

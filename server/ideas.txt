@@ -16,3 +16,4 @@ at the fourth interval and higher must use at least one additional word from the
 
 
 
+must use every word atleast once as and additional word; authoring app should have a list of word that have not been used yet.
