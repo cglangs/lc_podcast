@@ -1,15 +1,15 @@
 Idea #1
 Can create a sentence at an interval if a sentence for the same word at the previous interval exists
 
-Can use any word for a which a third interval sentence exists (or a base word)
+Can use any word for a which a first interval sentence exists (or a base word)
 
 
 when querying the words:
 
-must wait for source word to have answered the third interval correctly in order to show the destination sentence 
+must wait for source word to have answered the first interval correctly in order to show the destination sentence 
 
 
-at the fourth interval and higher must use at least one additional word from the podcast that is not a base word
+at the second interval and higher must use at least one additional word from the podcast that is not a base word
 
 
 (when searching words order by have the fewest sentence in which they are found)
@@ -17,3 +17,41 @@ at the fourth interval and higher must use at least one additional word from the
 
 
 must use every word atleast once as and additional word; authoring app should have a list of word that have not been used yet.
+
+
+Time intervals and episode intervals
+
+if the episode interval is reached that word must be reviewed after all the new words have been learned
+
+
+In author app
+
+
+1. make user choose next word to teach (drop down order by lowest interval ascending then make add word button appear
+
+2. make use choose words to include (with backspace) make sure to only include words that they have the right to use (order by least recently used (in episodes)) (also include filter for words taught in this episode)
+
+3. if the user is at second interval or higher show message that they must include a word in the episode, make message dissapear when they have done it
+
+
+
+Episode 1
+
+Use "words": a1,b1,c1,d1,e1
+
+Episode 2
+
+Use "words": a2,b2,c2,d2,e2
+
+Episode 3
+
+Use "words": a3,b3,c3,d3,e3
+
+Episode 4
+
+Use "words": a4,b4,c4,d4,e4
+
+
+
+
+
