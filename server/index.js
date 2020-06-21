@@ -10,11 +10,12 @@ const driver = neo4j.driver(
 
 const typeDefs = `
 type Mutation {
-    AddSentenceDependencies(src_sentence: String! dest_words:[String]) : Sentence
+    AddSentenceDependencies(src_sentence: String! dest_words:[String]): Sentence
     @cypher(
     statement:"""MATCH (s:Sentence {text: $src_sentence}), (w:Word)
-                       WHERE w,text IN $dest_words
-                       MERGE (s)-[:CONTAINS]->(w) """)
+                       WHERE w.text IN $dest_words
+                       MERGE (s)-[:CONTAINS]->(w) 
+                       RETURN s """)
 }
 
 type Episode {

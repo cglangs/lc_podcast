@@ -22,21 +22,24 @@ const GET_WORDS = gql`
 const ADD_SENTENCE = gql`
   mutation AddSentence($rawSentenceText: String!, $displaySentenceText: String!, $wordToLearnText: String!, $sentenceWordList: [String!]) {
     CreateSentence(raw_text: $rawSentenceText, display_text: $displaySentenceText) {
-      text
+      raw_text
     }
     AddSentenceEpisode(from: {raw_text:  $rawSentenceText} to: {episode_number: 1}){
-      from {text}
+      from {raw_text}
       to {episode_number}
     }
     AddSentenceTime_interval(from: {raw_text: $rawSentenceText} to: {interval_order: 1}){
-      from {text}
+      from {raw_text}
       to {interval_order}
     }
     AddSentenceWord_taught(from: {raw_text: $rawSentenceText} to: {text: $wordToLearnText}){
-      from {text}
+      from {raw_text}
       to {text}
     }
-    AddSentenceDependencies(src_sentence: $rawSentenceText, dest_words: $sentenceWordList)
+    AddSentenceDependencies(src_sentence: $rawSentenceText, dest_words: $sentenceWordList){
+      raw_text
+      display_text
+    }
   }
 
 `
