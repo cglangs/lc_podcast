@@ -38,7 +38,8 @@ type TimeInterval {
   sentences: [Sentence] @relation(name: "LEVEL", direction: IN)
 }
 type Sentence {
-	text: String!,
+	raw_text: String!
+  display_text: String!
   episode: Episode @relation(name: "SHOWN_IN" direction: OUT)
   time_interval: TimeInterval @relation(name: "LEVEL" direction: OUT)
 	words_contained: [Word!]! @relation(name: "CONTAINS", direction: OUT)
