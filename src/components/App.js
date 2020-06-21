@@ -1,16 +1,47 @@
 import React from 'react';
 import gql from 'graphql-tag';
 import { useQuery } from 'urql'
+import { useMutation } from 'urql'
 import '../styles/App.css';
 
 
 const GET_WORDS = gql`
   query GetWords{
-      wordlist{
+      Episode(episode_number: 1){
+        episode_number
+        teachable_words{
           text
+        }
+        addable_words{
+          text
+        }
       }
   }
 `
+
+const ADD_SENTENCE = gql`
+  mutation AddSentence($sentenceText: String!) {
+    CreateSentence(text: $sentenceText) {
+      text
+    }
+    AddSentence
+  }
+
+`
+//Create relation between sentence and word
+//Create relation between sentence and episode
+
+function displayWordDropDown(episode, wordToTeachSelected){
+  let arr = []
+  if(episode){
+    if(wordToTeachSelected){
+      arr = episode.addable_words
+    } else{
+      arr = episode.teachable_words
+    }
+  }
+  return arr
+}
 
 function App() {
 
@@ -18,7 +49,15 @@ function App() {
   const [selectedWord, setSelectedWord] = React.useState('')
   const [wordToTeach, setWordToTeach] = React.useState('')
 
+
+  const [addSentenceState, executeMutation] = useMutation(ADD_SENTENCE)
+
+  const submit = React.useCallback((sentenceText) => {
+    executeMutation({sentenceText})
+  }, [executeMutation])
+
   const [result] = useQuery({ query: GET_WORDS })
+  console.log(result)
   const {data} = result
   const appendWord = (newWord) => setSentenceWords(words => [...words, newWord])
   const popWord = () => setSentenceWords(words => words.slice(0,-1))
@@ -38,12 +77,18 @@ function App() {
           </div>
           <select onChange={e => setSelectedWord(e.target.value)}>
             <option selected>Select Word</option>
-            {data ? data.wordlist.map(word => <option value={word.text}>{word.text}</option>) : null}
+            {data && displayWordDropDown(data.Episode[0],wordToTeach.length).map(word => <option value={word.text}>{word.text}</option>)}
             </select>
            <button
             onClick={wordToTeach.length ? () => appendWord(selectedWord) : () => setWordToTeach(selectedWord)}
             >
             {wordToTeach.length ? "Add" : "Learn"}
+            </button>
+            <button
+            onClick={() => submit(sentenceWords.join(''))}
+            disabled={addSentenceState.fetching}
+            >
+            Submit
             </button>
       </header>
     </div>

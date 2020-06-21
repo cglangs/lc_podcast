@@ -9,8 +9,14 @@ const driver = neo4j.driver(
 );
 
 const typeDefs = `
-type Query {
-  wordlist: [Word]
+type Episode {
+  episode_number: Int
+  teachable_words: [Word] @relation(name: "INTRODUCED_IN", direction: IN)
+  addable_words: [Word] @cypher(
+        statement: """MATCH (this)<-[:SHOWN_IN]-(:Setence)-[:TEACHES]->(w:Word)
+                      MATCH(w)<-[:CONTAINS]-(s:Sentence)
+                      WITH w, COUNT(s) AS usage
+                      RETURN w ORDER BY usage ASC """)
 }
 type Word {
   text: String
@@ -18,8 +24,14 @@ type Word {
 type User {
 	name: String!
 }
+type TimeInterval {
+  seconds: Int
+  sentences: [Sentence] @relation(name: "LEVEL", direction: IN)
+}
 type Sentence {
 	text: String!,
+  episode: Episode @relation(name: "SHOWN_IN" direction: OUT)
+  time_interval: TimeInterval @relation(name: "LEVEL" direction: OUT)
 	words_contained: [Word!]! @relation(name: "CONTAINS", direction: OUT)
 	word_taught: Word! @relation(name: "TEACHES", direction: OUT)
 }
