@@ -20,11 +20,23 @@ const GET_WORDS = gql`
 `
 
 const ADD_SENTENCE = gql`
-  mutation AddSentence($sentenceText: String!) {
+  mutation AddSentence($sentenceText: String!, $wordToLearnText: String!, $sentenceWordList: [String!]) {
     CreateSentence(text: $sentenceText) {
       text
     }
-    AddSentence
+    AddSentenceEpisode(from: {text:  $sentenceText} to: {episode_number: 1}){
+      from {text}
+      to {episode_number}
+    }
+    AddSentenceTime_interval(from: {text: $sentenceText} to: {interval_order: 1}){
+      from {text}
+      to {interval_order}
+    }
+    AddSentenceWord_taught(from: {text: $sentenceText} to: {text: $wordToLearnText}){
+      from {text}
+      to {text}
+    }
+    AddSentenceDependencies(src_sentence: $sentenceText, dest_words: $sentenceWordList)
   }
 
 `
@@ -52,14 +64,17 @@ function App() {
 
   const [addSentenceState, executeMutation] = useMutation(ADD_SENTENCE)
 
-  const submit = React.useCallback((sentenceText) => {
-    executeMutation({sentenceText})
-  }, [executeMutation])
+  const submit = React.useCallback(() => {
+    const sentenceText = sentenceWords.join('')
+    const sentenceWordList = sentenceWords.filter(word => word !== "*")
+
+    executeMutation({sentenceText, wordToTeach, sentenceWordList})
+  }, [executeMutation, sentenceWords, wordToTeach])
 
   const [result] = useQuery({ query: GET_WORDS })
   console.log(result)
   const {data} = result
-  const appendWord = (newWord) => setSentenceWords(words => [...words, newWord])
+  const appendWord = (newWord) => newWord === wordToTeach ? setSentenceWords(words => [...words, "*"])  : setSentenceWords(words => [...words, newWord])
   const popWord = () => setSentenceWords(words => words.slice(0,-1))
 
   return (
@@ -67,7 +82,7 @@ function App() {
       <header className="App-header">
           <p style={{fontSize: "50px;"}}>{"Word being learned: " + wordToTeach}</p>
           <div>
-          <p style={{fontSize: "30px;"}}>{sentenceWords.length ?  sentenceWords.join(''): null}</p>
+          <p style={{fontSize: "30px;"}}>{sentenceWords.length ?  sentenceWords.join('').replace("*", wordToTeach) : null}</p>
            <button
             disabled={sentenceWords.length === 0}
             onClick={popWord}
@@ -85,7 +100,7 @@ function App() {
             {wordToTeach.length ? "Add" : "Learn"}
             </button>
             <button
-            onClick={() => submit(sentenceWords.join(''))}
+            onClick={() => submit()}
             disabled={addSentenceState.fetching}
             >
             Submit

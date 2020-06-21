@@ -9,6 +9,14 @@ const driver = neo4j.driver(
 );
 
 const typeDefs = `
+type Mutation {
+    AddSentenceDependencies(src_sentence: String! dest_words:[String]) : Sentence
+    @cypher(
+    statement:"""MATCH (s:Sentence {text: $src_sentence}), (w:Word)
+                       WHERE w,text IN $dest_words
+                       MERGE (s)-[:CONTAINS]->(w) """)
+}
+
 type Episode {
   episode_number: Int
   teachable_words: [Word] @relation(name: "INTRODUCED_IN", direction: IN)
@@ -25,6 +33,7 @@ type User {
 	name: String!
 }
 type TimeInterval {
+  interval_order: Int
   seconds: Int
   sentences: [Sentence] @relation(name: "LEVEL", direction: IN)
 }
