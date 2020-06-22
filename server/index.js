@@ -1,6 +1,30 @@
-const { makeAugmentedSchema } = require("neo4j-graphql-js");
+const { neo4jgraphql, makeAugmentedSchema } = require("neo4j-graphql-js");
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+const { APP_SECRET, getUserId } = require('./utils')
 const { ApolloServer }  = require("apollo-server");
 const neo4j = require('neo4j-driver')
+
+
+async function stuff(object, params, ctx, resolveInfo) {
+  params.password = await bcrypt.hash(params.password, 10)
+  const user = await neo4jgraphql(object, params, ctx, resolveInfo)
+  //const tokenString = jwt.sign({ userId: user.id }, APP_SECRET)
+  return user
+
+
+}
+
+const resolvers = {
+  // entry point to GraphQL service
+  Mutation: {
+    CreateUser(object, params, ctx, resolveInfo) {
+      authpayload = stuff(object, params, ctx, resolveInfo)
+      return authpayload
+    }
+  }
+}
+
 
 
 const driver = neo4j.driver(
@@ -16,6 +40,11 @@ type Mutation {
                        WHERE w.text IN $dest_words
                        MERGE (s)-[:CONTAINS]->(w) 
                        RETURN s """)
+    CreateUser(user_name: String!, password: String!): User
+}
+
+type AuthPayload {
+  user: User
 }
 
 type Episode {
@@ -31,7 +60,9 @@ type Word {
   text: String
 }
 type User {
-	name: String!
+  _id: Int
+	user_name: String!
+  password: String!
 }
 type TimeInterval {
   interval_order: Int
@@ -49,12 +80,14 @@ type Sentence {
 `
 
 const schema = makeAugmentedSchema({
-  typeDefs
+  typeDefs,
+  resolvers
 });
 
 const server = new ApolloServer({
   schema: schema,
-  context: { driver }
+  context: { driver },
+  resolvers
 });
 
 server.listen(3003, '0.0.0.0').then(({ url }) => {

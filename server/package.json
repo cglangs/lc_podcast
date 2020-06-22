@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "apollo-server": "^2.15.0",
+    "bcryptjs": "^2.4.3",
     "neo4j-graphql-js": "^2.14.2"
   }
 }
