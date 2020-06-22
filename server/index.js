@@ -6,21 +6,46 @@ const { ApolloServer }  = require("apollo-server");
 const neo4j = require('neo4j-driver')
 
 
-async function stuff(object, params, ctx, resolveInfo) {
+async function signup(object, params, ctx, resolveInfo) {
   params.password = await bcrypt.hash(params.password, 10)
   const user = await neo4jgraphql(object, params, ctx, resolveInfo)
   const tokenString = jwt.sign({ userId: user.id }, APP_SECRET)
   user.token = tokenString
   return user
-
-
 }
+
+async function login(object, params, ctx, resolveInfo) {
+  const password = params.password
+  delete params.password
+  const user = await neo4jgraphql(object, params, ctx, resolveInfo)
+  if (!user) {
+    throw new Error('No such user found')
+  }
+
+  const valid = await bcrypt.compare(password, user.password)
+  if (!valid) {
+    throw new Error('Invalid password')
+  }
+
+  user.token = jwt.sign({ userId: user.id }, APP_SECRET)
+
+  return user
+}
+
 
 const resolvers = {
   // entry point to GraphQL service
   Mutation: {
     CreateUser(object, params, ctx, resolveInfo) {
-      return stuff(object, params, ctx, resolveInfo)   
+      return signup(object, params, ctx, resolveInfo)   
+    }
+  },
+
+  Query: {
+    User(object, params, ctx, resolveInfo) {
+      //console.log(object, params, ctx, resolveInfo)
+      return login(object, params, ctx, resolveInfo)   
+      //login(object, params, ctx, resolveInfo) 
     }
   }
 }
@@ -41,6 +66,10 @@ type Mutation {
                        MERGE (s)-[:CONTAINS]->(w) 
                        RETURN s """)
     CreateUser(user_name: String!, password: String!): User
+}
+
+type Query {
+  User(user_name: String!, password: String!): User
 }
 
 type Episode {
