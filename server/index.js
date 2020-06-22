@@ -9,7 +9,8 @@ const neo4j = require('neo4j-driver')
 async function stuff(object, params, ctx, resolveInfo) {
   params.password = await bcrypt.hash(params.password, 10)
   const user = await neo4jgraphql(object, params, ctx, resolveInfo)
-  //const tokenString = jwt.sign({ userId: user.id }, APP_SECRET)
+  const tokenString = jwt.sign({ userId: user.id }, APP_SECRET)
+  user.token = tokenString
   return user
 
 
@@ -19,8 +20,7 @@ const resolvers = {
   // entry point to GraphQL service
   Mutation: {
     CreateUser(object, params, ctx, resolveInfo) {
-      authpayload = stuff(object, params, ctx, resolveInfo)
-      return authpayload
+      return stuff(object, params, ctx, resolveInfo)   
     }
   }
 }
@@ -43,10 +43,6 @@ type Mutation {
     CreateUser(user_name: String!, password: String!): User
 }
 
-type AuthPayload {
-  user: User
-}
-
 type Episode {
   episode_number: Int
   teachable_words: [Word] @relation(name: "INTRODUCED_IN", direction: IN)
@@ -60,9 +56,10 @@ type Word {
   text: String
 }
 type User {
-  _id: Int
+  _id: Int!
 	user_name: String!
   password: String!
+  token: String
 }
 type TimeInterval {
   interval_order: Int
