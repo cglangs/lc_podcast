@@ -65,11 +65,11 @@ type Mutation {
                        WHERE w.text IN $dest_words
                        MERGE (s)-[:CONTAINS]->(w) 
                        RETURN s """)
-    CreateUser(user_name: String!, password: String!): User
+    CreateUser(user_name: String! email: String! password: String!): User
 }
 
 type Query {
-  User(user_name: String!, password: String!): User
+  User(user_name: String! email: String! password: String!): User
 }
 
 type Episode {
@@ -87,6 +87,7 @@ type Word {
 type User {
   _id: Int!
 	user_name: String!
+  email: String!
   password: String!
   token: String
 }

@@ -3,8 +3,9 @@ import { setToken } from '../token'
 import gql from 'graphql-tag'
 import { useMutation } from 'urql'
 
-//TODO: fix these
-/*const SIGNUP_MUTATION = gql`
+//instead of LOGIN_MUTATION use query
+/*
+const SIGNUP_MUTATION = gql`
   mutation SignupMutation($email: String!, $password: String!, $name: String!) {
     signup(email: $email, password: $password, name: $name) {
       token
@@ -70,7 +71,7 @@ const Login = props => {
         />
       </div>
 
-      <div className="flex mt3">
+      <div>
       <button
         type="button"
         disabled={state.fetching}
