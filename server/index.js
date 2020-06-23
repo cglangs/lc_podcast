@@ -26,6 +26,7 @@ async function login(object, params, ctx, resolveInfo) {
   if (!valid) {
     throw new Error('Invalid password')
   }
+  user.password = null
 
   user.token = jwt.sign({ userId: user.id }, APP_SECRET)
 
@@ -69,7 +70,7 @@ type Mutation {
 }
 
 type Query {
-  User(user_name: String! email: String! password: String!): User
+  User(email: String! password: String!): User
 }
 
 type Episode {
@@ -88,7 +89,7 @@ type User {
   _id: Int!
 	user_name: String
   email: String!
-  password: String!
+  password: String
   token: String
 }
 type TimeInterval {

@@ -14,6 +14,8 @@ at the second interval and higher must use at least one additional word from the
 
 (when searching words order by have the fewest sentence in which they are found)
 
+can't use a 2+ interval of a word if that a sentence containing that word at the previous interval as not been used
+
 
 
 must use every word atleast once as and additional word; authoring app should have a list of word that have not been used yet.
@@ -29,27 +31,57 @@ In author app
 
 1. make user choose next word to teach (drop down order by lowest interval ascending then make add word button appear
 
-2. make use choose words to include (with backspace) make sure to only include words that they have the right to use (order by least recently used (in episodes)) (also include filter for words taught in this episode)
+2. make user choose words to include (with backspace) make sure to only include words that they have the right to use (order by least recently used (in episodes)) (also include filter for words taught in this episode)
 
-3. if the user is at second interval or higher show message that they must include a word in the episode, make message dissapear when they have done it
+3. if the user is at second interval or higher show message that they must include a word in the episode that has not yet been contained in the interval(if there are some that remain), make message dissapear when they have done it
+
+4. Before being able to write second interval sentence for a word, it must be contained in a sentence teaching another word at .
+
+4. Have a store of sentences actually used in podcast, when all the necessary words have been introduced suggest the sentence to the user.
 
 
 
-Episode 1
+Rules Clearly:
 
-Use "words": a1,b1,c1,d1,e1
 
-Episode 2
+Interval 1:
 
-Use "words": a2,b2,c2,d2,e2
+Each sentence:
+Can Teach: any word
+Must Teach: 1 word
+Can Contain: word that has been taught at interval 1
 
-Episode 3
+Sum of sentences:
+Must teach: every word
 
-Use "words": a3,b3,c3,d3,e3
 
-Episode 4
+Interval 2:
 
-Use "words": a4,b4,c4,d4,e4
+Each sentence:
+
+Can Teach: any word
+Can Contain: word that has been taught as previous interval
+Must Contain: word besides word being taught that has not yet been contained at this interval
+
+
+Sum of sentences:
+Must teach: every word
+Must constain: every word
+
+
+
+Interval 3+:
+
+Each sentence:
+Can Teach: word that has been contained in previous interval sentence
+Must Contain: word besides word being taught at previous interval that has not yet been contained at this interval
+
+Sum of sentences:
+Must teach: every word
+Must constain: every word
+
+
+
 
 
 

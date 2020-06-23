@@ -1,7 +1,8 @@
 import React from 'react'
-import { setToken } from '../token'
+import { setToken, getToken } from '../token'
 import gql from 'graphql-tag'
 import { useMutation } from 'urql'
+import { useQuery } from 'urql'
 
 
 const SIGNUP_MUTATION = gql`
@@ -12,9 +13,10 @@ const SIGNUP_MUTATION = gql`
   }
 `
 
-const LOGIN_MUTATION = gql`
-  mutation LoginMutation($email: String!, $password: String!) {
-    login(email: $email, password: $password) {
+const LOGIN_QUERY = gql`
+  query LoginQuery($email: String!, $password: String!) {
+    User(email: $email, password: $password) {
+      password
       token
     }
   }
@@ -28,22 +30,44 @@ const Login = props => {
   const [password, setPassword] = React.useState('')
   const [user_name, setUserName] = React.useState('')
 
-  const [state, executeMutation] = useMutation(
-    isLogin ? LOGIN_MUTATION : SIGNUP_MUTATION
-  );
-  
 
-    const mutate = React.useCallback(() => {
+  const [loginResult, executeQuery] = useQuery({
+    query: LOGIN_QUERY,
+    variables: { email, password},
+    pause: true,
+  })
+  const login = React.useCallback(() => {
+    executeQuery()
+  }, [executeQuery]);
+
+  React.useEffect(() => {
+    if(!getToken() && loginResult.data && loginResult.data['User']){
+      const token = loginResult.data['User'].token
+        if (token) {
+          setToken(token)
+          props.history.push('/')
+       } else{
+        console.log("ERROR")
+       }
+    }
+  });
+
+  const [signUpState, executeMutation] = useMutation(SIGNUP_MUTATION);
+  
+  const signUp = React.useCallback(() => {
     executeMutation({ email, password, user_name })
       .then(({ data }) => {
-        console.log(data)
-        const token = data && data[isLogin ? 'login' : 'CreateUser'].token
+        const token = data && data['CreateUser'].token
         if (token) {
           setToken(token)
           props.history.push('/')
         }
       });
-  }, [executeMutation, props.history, isLogin, email, password, user_name]);
+  }, [executeMutation, props.history, email, password, user_name]);
+
+
+
+
   
   return (
     <div>
@@ -75,14 +99,14 @@ const Login = props => {
       <div>
       <button
         type="button"
-        disabled={state.fetching}
-        onClick={mutate}
+        disabled={signUpState.fetching}
+        onClick={isLogin ? login : signUp}
       >
         {isLogin ? "login" : "create account"}
       </button>
       <button
         type="button"
-        disabled={state.fetching}
+        disabled={signUpState.fetching}
         onClick={() => setIsLogin(!isLogin)}
       >
         {isLogin ? 'need to create an account?' : 'already have an account?'}
