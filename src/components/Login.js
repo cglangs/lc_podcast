@@ -3,11 +3,10 @@ import { setToken } from '../token'
 import gql from 'graphql-tag'
 import { useMutation } from 'urql'
 
-//instead of LOGIN_MUTATION use query
-/*
+
 const SIGNUP_MUTATION = gql`
-  mutation SignupMutation($email: String!, $password: String!, $name: String!) {
-    signup(email: $email, password: $password, name: $name) {
+  mutation SignupMutation($email: String!, $password: String!, $user_name: String!) {
+    CreateUser(email: $email, password: $password, user_name: $user_name) {
       token
     }
   }
@@ -19,7 +18,7 @@ const LOGIN_MUTATION = gql`
       token
     }
   }
-`*/
+`
 
 const Login = props => {
   // Used to switch between login and signup
@@ -27,22 +26,24 @@ const Login = props => {
 
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
-  const [name, setName] = React.useState('')
+  const [user_name, setUserName] = React.useState('')
 
   const [state, executeMutation] = useMutation(
     isLogin ? LOGIN_MUTATION : SIGNUP_MUTATION
   );
+  
 
-  const mutate = React.useCallback(() => {
-    executeMutation({ email, password, name })
+    const mutate = React.useCallback(() => {
+    executeMutation({ email, password, user_name })
       .then(({ data }) => {
-        const token = data && data[isLogin ? 'login' : 'signup'].token
+        console.log(data)
+        const token = data && data[isLogin ? 'login' : 'CreateUser'].token
         if (token) {
           setToken(token)
           props.history.push('/')
         }
       });
-  }, [executeMutation, props.history, isLogin, email, password, name]);
+  }, [executeMutation, props.history, isLogin, email, password, user_name]);
   
   return (
     <div>
@@ -51,8 +52,8 @@ const Login = props => {
       <div className="flex flex-column">
         {!isLogin && (
           <input
-            value={name}
-            onChange={e => setName(e.target.value)}
+            value={user_name}
+            onChange={e => setUserName(e.target.value)}
             type="text"
             placeholder="Your name"
           />

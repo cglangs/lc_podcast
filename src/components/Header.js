@@ -11,16 +11,14 @@ const Header = props => {
       <div>
         <div>Chinese App</div>
         <Link to="/">
-          new
+          author
         </Link>
-        {isLoggedIn && (
           <div className="flex">
             <div>|</div>
             <Link to="/play">
-              submit
+              play
             </Link>
           </div>
-        )}
       </div>
 
       <div className="flex flex-fixed">

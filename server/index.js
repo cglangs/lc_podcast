@@ -86,7 +86,7 @@ type Word {
 }
 type User {
   _id: Int!
-	user_name: String!
+	user_name: String
   email: String!
   password: String!
   token: String

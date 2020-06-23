@@ -66,6 +66,8 @@ const Author = props => {
 
 
   const [addSentenceState, executeMutation] = useMutation(ADD_SENTENCE)
+  const [result] = useQuery({ query: GET_WORDS })
+  const {data} = result
 
   const submit = React.useCallback(() => {
     const rawSentenceText = sentenceWords.join('')
@@ -75,8 +77,6 @@ const Author = props => {
     executeMutation({rawSentenceText, displaySentenceText, wordToTeach, sentenceWordList})
   }, [executeMutation, sentenceWords, wordToTeach])
 
-  const [result] = useQuery({ query: GET_WORDS })
-  const {data} = result
 
   const appendWord = (newWord) => setSentenceWords(words => [...words, newWord])
   const popWord = () => setSentenceWords(words => words.slice(0,-1))
