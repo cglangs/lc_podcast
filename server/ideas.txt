@@ -43,19 +43,21 @@ In author app
 
 Rules Clearly:
 
+Start with base words of hsk1-hsk3
+
 
 Interval 1:
 
 Each sentence:
 Can Teach: any word
 Must Teach: 1 word
-Can Contain: word that has been taught at interval 1
+Can Contain: only word being taught (besides base words)
 
 Sum of sentences:
 Must teach: every word
 
 
-Interval 2:
+Interval 2+:
 
 Each sentence:
 
@@ -68,17 +70,6 @@ Sum of sentences:
 Must teach: every word
 Must constain: every word
 
-
-
-Interval 3+:
-
-Each sentence:
-Can Teach: word that has been contained in previous interval sentence
-Must Contain: word besides word being taught at previous interval that has not yet been contained at this interval
-
-Sum of sentences:
-Must teach: every word
-Must constain: every word
 
 
 

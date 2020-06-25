@@ -5,8 +5,8 @@ import { useMutation } from 'urql'
 import '../styles/App.css';
 
 
-const GET_WORDS = gql`
-  query GetWords{
+export const GET_EPISODE_WORDS = gql`
+  query GetEpisodeWords{
       Episode(episode_number: 1){
         episode_number
         teachable_words{
@@ -20,7 +20,7 @@ const GET_WORDS = gql`
 `
 
 const ADD_SENTENCE = gql`
-  mutation AddSentence($rawSentenceText: String!, $displaySentenceText: String!, $wordToLearnText: String!, $sentenceWordList: [String!]) {
+  mutation addsentence($rawSentenceText: String!, $displaySentenceText: String!, $wordToTeach: String!, $sentenceWordList: [String!]) {
     CreateSentence(raw_text: $rawSentenceText, display_text: $displaySentenceText) {
       raw_text
     }
@@ -28,17 +28,17 @@ const ADD_SENTENCE = gql`
       from {raw_text}
       to {episode_number}
     }
-    AddSentenceTime_interval(from: {raw_text: $rawSentenceText} to: {interval_order: 1}){
-      from {raw_text}
-      to {interval_order}
-    }
-    AddSentenceWord_taught(from: {raw_text: $rawSentenceText} to: {text: $wordToLearnText}){
+    AddSentenceWord_taught(from: {raw_text: $rawSentenceText} to: {text: $wordToTeach}){
       from {raw_text}
       to {text}
     }
-    AddSentenceDependencies(src_sentence: $rawSentenceText, dest_words: $sentenceWordList){
+    AddSentenceDependencies(src_sentence: $rawSentenceText, dest_words: $sentenceWordList, word_to_teach: $wordToTeach){
       raw_text
       display_text
+    }
+    AddSentenceTime_interval(from: {raw_text: $rawSentenceText} to: {interval_order: 1}){
+      from {raw_text}
+      to {interval_order}
     }
   }
 
@@ -46,17 +46,16 @@ const ADD_SENTENCE = gql`
 //Create relation between sentence and word
 //Create relation between sentence and episode
 
-function displayWordDropDown(episode, wordToTeachSelected){
+  function displayWordDropDown(episode, wordToTeach) {
   let arr = []
-  if(episode){
-    if(wordToTeachSelected){
-      arr = episode.addable_words
+  if(wordToTeach){
+      arr = [{text:wordToTeach}, ...episode.addable_words]
     } else{
       arr = episode.teachable_words
     }
-  }
   return arr
-}
+  }
+
 
 const Author = props => { 
 
@@ -66,7 +65,7 @@ const Author = props => {
 
 
   const [addSentenceState, executeMutation] = useMutation(ADD_SENTENCE)
-  const [result] = useQuery({ query: GET_WORDS })
+  const [result] = useQuery({ query: GET_EPISODE_WORDS})
   const {data} = result
 
   const submit = React.useCallback(() => {
@@ -74,8 +73,14 @@ const Author = props => {
     const displaySentenceText = rawSentenceText.replace(wordToTeach,"#")
     const sentenceWordList = sentenceWords
 
-    executeMutation({rawSentenceText, displaySentenceText, wordToTeach, sentenceWordList})
-  }, [executeMutation, sentenceWords, wordToTeach])
+    executeMutation({rawSentenceText, displaySentenceText, wordToTeach, sentenceWordList}).then(() => {
+      setSentenceWords([])
+      setWordToTeach('')
+      setSelectedWord('')
+      props.history.push('/')
+    })
+  }, [executeMutation, props.history, sentenceWords, wordToTeach])
+
 
 
   const appendWord = (newWord) => setSentenceWords(words => [...words, newWord])
@@ -94,9 +99,9 @@ const Author = props => {
             Backspace
             </button>
           </div>
-          <select onChange={e => setSelectedWord(e.target.value)}>
-            <option selected>Select Word</option>
-            {data && displayWordDropDown(data.Episode[0],wordToTeach.length).map(word => <option value={word.text}>{word.text}</option>)}
+          <select onChange={e => setSelectedWord(e.target.value)} value={selectedWord}>
+            <option selected value=''>Select Word</option>
+            {data && displayWordDropDown(data.Episode[0],wordToTeach).map(word => <option value={word.text}>{word.text}</option>)}
             </select>
            <button
             onClick={wordToTeach.length ? () => appendWord(selectedWord) : () => setWordToTeach(selectedWord)}
@@ -105,7 +110,7 @@ const Author = props => {
             </button>
             <button
             onClick={() => submit()}
-            disabled={addSentenceState.fetching}
+            disabled={addSentenceState.fetching || (wordToTeach.length && !sentenceWords.length)}
             >
             Submit
             </button>

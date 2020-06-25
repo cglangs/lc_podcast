@@ -60,10 +60,10 @@ const driver = neo4j.driver(
 
 const typeDefs = `
 type Mutation {
-    AddSentenceDependencies(src_sentence: String! dest_words:[String]): Sentence
+    AddSentenceDependencies(src_sentence: String! dest_words:[String] word_to_teach: String!): Sentence
     @cypher(
-    statement:"""MATCH (s:Sentence {text: $src_sentence}), (w:Word)
-                       WHERE w.text IN $dest_words
+    statement:"""MATCH (s:Sentence {raw_text: $src_sentence}), (w:Word)
+                       WHERE w.text IN $dest_words AND NOT w.text = $word_to_teach
                        MERGE (s)-[:CONTAINS]->(w) 
                        RETURN s """)
     CreateUser(user_name: String! email: String! password: String!): User
@@ -75,12 +75,16 @@ type Query {
 
 type Episode {
   episode_number: Int
-  teachable_words: [Word] @relation(name: "INTRODUCED_IN", direction: IN)
+  teachable_words: [Word] @cypher(
+        statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word)
+                      OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)
+                      WHERE s is NULL
+                      RETURN w """)
   addable_words: [Word] @cypher(
-        statement: """MATCH (this)<-[:SHOWN_IN]-(:Setence)-[:TEACHES]->(w:Word)
-                      MATCH(w)<-[:CONTAINS]-(s:Sentence)
+        statement: """MATCH (this)<-[:SHOWN_IN]-(s:Sentence)-[:TEACHES | CONTAINS]->(w:Word)
                       WITH w, COUNT(s) AS usage
                       RETURN w ORDER BY usage ASC """)
+
 }
 type Word {
   text: String
