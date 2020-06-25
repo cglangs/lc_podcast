@@ -62,7 +62,7 @@ const typeDefs = `
 type Mutation {
     AddSentenceDependencies(src_sentence: String! dest_words:[String] word_to_teach: String!): Sentence
     @cypher(
-    statement:"""MATCH (s:Sentence {raw_text: $src_sentence}), (w:Word)
+    statement:"""MATCH (s:Sentence {raw_text: $src_sentence}), (w:Word:StudyWord)
                        WHERE w.text IN $dest_words AND NOT w.text = $word_to_teach
                        MERGE (s)-[:CONTAINS]->(w) 
                        RETURN s """)
@@ -76,14 +76,16 @@ type Query {
 type Episode {
   episode_number: Int
   teachable_words: [Word] @cypher(
-        statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word)
+        statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word:StudyWord)
                       OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)
                       WHERE s is NULL
                       RETURN w """)
   addable_words: [Word] @cypher(
         statement: """MATCH (this)<-[:SHOWN_IN]-(s:Sentence)-[:TEACHES | CONTAINS]->(w:Word)
                       WITH w, COUNT(s) AS usage
-                      RETURN w ORDER BY usage ASC """)
+                      RETURN w AS word ORDER BY usage ASC 
+                      UNION ALL MATCH(bw:Word:BaseWord)
+                      RETURN bw AS word""")
 
 }
 type Word {
