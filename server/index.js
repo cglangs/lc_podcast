@@ -89,6 +89,7 @@ type Episode {
   teachable_words: [Word] @cypher(
         statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word:StudyWord)
                       OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)
+                      WITH w,s
                       WHERE s is NULL
                       RETURN w """)
   addable_words: [Word] @cypher(

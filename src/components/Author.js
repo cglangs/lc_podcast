@@ -7,16 +7,22 @@ import '../styles/App.css';
 
 export const GET_EPISODE_WORDS = gql`
   query GetEpisodeWords{
-      Episode(episode_number: 1){
-        episode_number
-        teachable_words{
-          text
-        }
-        addable_words{
-          text
-        }
+  Author{
+    episode{
+      episode_number
+      teachable_words{
+        text
       }
+      addable_words{
+        text
+      }
+    }
+    interval{
+      interval_order
+      seconds
+    }
   }
+}
 `
 
 const ADD_SENTENCE = gql`
@@ -77,7 +83,7 @@ const Author = props => {
       setSentenceWords([])
       setWordToTeach('')
       setSelectedWord('')
-      props.history.push('/')
+      props.history.push('/author')
     })
   }, [executeMutation, props.history, sentenceWords, wordToTeach])
 
@@ -103,7 +109,7 @@ const Author = props => {
           </div>
           <select onChange={e => setSelectedWord(e.target.value)} value={selectedWord}>
             <option selected value=''>Select Word</option>
-            {data && displayWordDropDown(data.Episode[0],wordToTeach).map(word => <option value={word.text}>{word.text}</option>)}
+            {data && displayWordDropDown(data.Author[0].episode,wordToTeach).map(word => <option value={word.text}>{word.text}</option>)}
             </select>
            <button
             onClick={wordToTeach.length ? () => appendWord(selectedWord) : () => setWordToTeach(selectedWord)}

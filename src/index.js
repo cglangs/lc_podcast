@@ -15,9 +15,9 @@ const cache = cacheExchange({
         cache.updateQuery({ query: GET_EPISODE_WORDS}, data => {
           if (data !== null) {
             //if interval == 1
-            let index = data.Episode[0].teachable_words.findIndex((word) => word.text === result.AddSentenceWord_taught.to.text)
-            data.Episode[0].addable_words.push(data.Episode[0].teachable_words[index])
-            data.Episode[0].teachable_words.splice(index, 1);
+            let index = data.Author[0].episode.teachable_words.findIndex((word) => word.text === result.AddSentenceWord_taught.to.text)
+            data.Author[0].episode.addable_words.push(data.Author[0].episode.teachable_words[index])
+            data.Author[0].episode.teachable_words.splice(index, 1);
 
             return data
           } else {
