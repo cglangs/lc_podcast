@@ -79,6 +79,11 @@ enum Role {
   STUDENT
 }
 
+type Author {
+  episode: Episode @relation(name: "AUTHORING_EPISODE", direction: OUT)
+  interval: TimeInterval @relation(name: "AUTHORING_INTERVAL", direction: OUT)
+}
+
 type Episode {
   episode_number: Int
   teachable_words: [Word] @cypher(
