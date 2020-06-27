@@ -89,6 +89,8 @@ const Author = props => {
   return (
     <div className="App">
       <header className="App-header">
+      {data !== null ? (
+          <div>
           <p style={{fontSize: "50px;"}}>{"Word being learned: " + wordToTeach}</p>
           <div>
           <p style={{fontSize: "30px;"}}>{sentenceWords.length ?  sentenceWords.join('') : null}</p>
@@ -114,8 +116,19 @@ const Author = props => {
             >
             Submit
             </button>
+            </div>
+            ): (
+            <div> 
+              <button
+              onClick={null}
+              >
+              Start next episode
+              </button>
+            </div>)}
       </header>
+      
     </div>
+  
   );
 }
 

@@ -18,6 +18,7 @@ async function login(object, params, ctx, resolveInfo) {
   const password = params.password
   delete params.password
   const user = await neo4jgraphql(object, params, ctx, resolveInfo)
+  console.log(user)
   if (!user) {
     throw new Error('No such user found')
   }
@@ -66,11 +67,16 @@ type Mutation {
                        WHERE w.text IN $dest_words AND NOT w.text = $word_to_teach
                        MERGE (s)-[:CONTAINS]->(w) 
                        RETURN s """)
-    CreateUser(user_name: String! email: String! password: String!): User
+    CreateUser(user_name: String! email: String! password: String! role: Role! = STUDENT): User
 }
 
 type Query {
   User(email: String! password: String!): User
+}
+
+enum Role {
+  ADMIN
+  STUDENT
 }
 
 type Episode {
@@ -97,6 +103,7 @@ type User {
   email: String!
   password: String
   token: String
+  role: Role!
 }
 type TimeInterval {
   interval_order: Int

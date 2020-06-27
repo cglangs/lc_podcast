@@ -1,5 +1,5 @@
 import React from 'react'
-import { setToken, getToken } from '../token'
+import { setToken, getToken, setRole } from '../token'
 import gql from 'graphql-tag'
 import { useMutation } from 'urql'
 import { useQuery } from 'urql'
@@ -18,6 +18,7 @@ const LOGIN_QUERY = gql`
     User(email: $email, password: $password) {
       password
       token
+      role
     }
   }
 `
@@ -43,8 +44,10 @@ const Login = props => {
   React.useEffect(() => {
     if(!getToken() && loginResult.data && loginResult.data['User']){
       const token = loginResult.data['User'].token
-        if (token) {
+      const role = loginResult.data['User'].role
+        if (token && role) {
           setToken(token)
+          setRole(role)
           props.history.push('/')
        } else{
         console.log("ERROR")
