@@ -122,6 +122,8 @@ type User {
 type TimeInterval {
   interval_order: Int
   seconds: Int
+  min_length: Int
+  max_length: Int
   sentences: [Sentence] @relation(name: "LEVEL", direction: IN)
 }
 type Sentence {

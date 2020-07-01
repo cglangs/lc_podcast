@@ -20,6 +20,8 @@ export const GET_EPISODE_WORDS = gql`
     interval{
       interval_order
       seconds
+      min_length
+      max_length
     }
   }
 }

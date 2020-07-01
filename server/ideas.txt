@@ -74,22 +74,13 @@ Must constain: every word
 
 ALSO
 
-words have a numerical value 
-(
-5 for new words that have not been used at this interval
-4 for new words in this episode that have already been used at this interval
-3 for new words introduced in previous episodes
-2 for base words introduced in this episode
-1 for base words introduced in a previous episode
-)
+interval 1: 1-2
 
-interval 1: 0-2
+interval 2: 3-4
 
-interval 2: 2-4
+interval 3: 5-6
 
-interval 3: 4-6
-
-interval 4: 8-10
+interval 4: 7-8
 
 
 etc
