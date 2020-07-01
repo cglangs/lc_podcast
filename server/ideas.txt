@@ -72,9 +72,38 @@ Must constain: every word
 
 
 
+ALSO
+
+words have a numerical value 
+(
+5 for new words that have not been used at this interval
+4 for new words in this episode that have already been used at this interval
+3 for new words introduced in previous episodes
+2 for base words introduced in this episode
+1 for base words introduced in a previous episode
+)
+
+interval 1: 0-2
+
+interval 2: 2-4
+
+interval 3: 4-6
+
+interval 4: 8-10
 
 
+etc
+
+for place holders we can just use 1,2,3 etc
+
+MATCH (i2:TimeInterval)<-[:NEXT_TIME]-(i:TimeInterval)<-[r:AUTHORING_INTERVAL]-(:Author)
+CALL apoc.refactor.to(r, i2)
+RETURN i
 
 
-
-
+MATCH(w:StudyWord)-[:INTRODUCED_IN]->(:Episode {episode_number: 1})<-[:AUTHORING_EPISODE]-(:Author)
+MATCH(i:TimeInterval {interval_order: 1})<-[:AUTHORING_INTERVAL]-(:Author)
+WITH w, i
+MATCH (w)
+WHERE NOT EXISTS((w)<-[:TEACHES]-(:Sentence)-[:LEVEL]->(i))
+RETURN w

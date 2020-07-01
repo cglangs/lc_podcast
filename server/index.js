@@ -67,7 +67,15 @@ type Mutation {
                        WHERE w.text IN $dest_words AND NOT w.text = $word_to_teach
                        MERGE (i)<-[:LEVEL]-(s)-[:CONTAINS]->(w) 
                        RETURN s """)
+
     CreateUser(user_name: String! email: String! password: String! role: Role! = STUDENT): User
+
+    IncrementInterval(should_call: Boolean!): Int
+    @cypher(
+    statement:""" CALL apoc.do.when(true,
+                  "MATCH (i2:TimeInterval)<-[:NEXT_TIME]-(:TimeInterval)<-[r:AUTHORING_INTERVAL]-(:Author)
+                  CALL apoc.refactor.to(r, i2) YIELD input, output RETURN *") YIELD value
+                  RETURN *""")
 }
 
 type Query {

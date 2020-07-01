@@ -26,7 +26,7 @@ export const GET_EPISODE_WORDS = gql`
 `
 
 const ADD_SENTENCE = gql`
-  mutation addsentence($rawSentenceText: String!, $displaySentenceText: String!, $wordToTeach: String!, $sentenceWordList: [String!]) {
+  mutation addsentence($rawSentenceText: String!, $displaySentenceText: String!, $wordToTeach: String!, $sentenceWordList: [String!], $shouldCall: Boolean!) {
     CreateSentence(raw_text: $rawSentenceText, display_text: $displaySentenceText) {
       raw_text
     }
@@ -46,9 +46,16 @@ const ADD_SENTENCE = gql`
       from {raw_text}
       to {interval_order}
     }
+    IncrementInterval(should_call: $shouldCall)
   }
 
 `
+
+/*const CHANGE_INTERVAL = gql`
+  mutation changeInterval {
+    IncrementInterval
+  }
+`*/
 //Create relation between sentence and word
 //Create relation between sentence and episode
 
@@ -68,24 +75,34 @@ const Author = props => {
   const [sentenceWords, setSentenceWords] = React.useState([])
   const [selectedWord, setSelectedWord] = React.useState('')
   const [wordToTeach, setWordToTeach] = React.useState('')
+  const [shouldCall, setShouldCall] = React.useState(false)
 
 
   const [addSentenceState, executeMutation] = useMutation(ADD_SENTENCE)
+  //const [incrementIntervalState, executeIntervalMutation] = useMutation(CHANGE_INTERVAL)
   const [result] = useQuery({ query: GET_EPISODE_WORDS})
   const {data} = result
+
+  /*if(data && data.Author[0].episode.teachable_words.length === 0){
+    executeIntervalMutation()
+    props.history.push('/author')
+  }*/
 
   const submit = React.useCallback(() => {
     const rawSentenceText = sentenceWords.join('')
     const displaySentenceText = rawSentenceText.replace(wordToTeach,"#")
     const sentenceWordList = sentenceWords
 
-    executeMutation({rawSentenceText, displaySentenceText, wordToTeach, sentenceWordList}).then(() => {
+    executeMutation({rawSentenceText, displaySentenceText, wordToTeach, sentenceWordList, shouldCall}).then(() => {
       setSentenceWords([])
       setWordToTeach('')
       setSelectedWord('')
+      if(data.Author[0].episode.teachable_words.length === 0){
+        setShouldCall(true)
+      }
       props.history.push('/author')
     })
-  }, [executeMutation, props.history, sentenceWords, wordToTeach])
+  }, [executeMutation, props.history, sentenceWords, wordToTeach, data, shouldCall])
 
 
 
