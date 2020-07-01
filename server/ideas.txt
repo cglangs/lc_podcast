@@ -96,14 +96,11 @@ etc
 
 for place holders we can just use 1,2,3 etc
 
-MATCH (i2:TimeInterval)<-[:NEXT_TIME]-(i:TimeInterval)<-[r:AUTHORING_INTERVAL]-(:Author)
-CALL apoc.refactor.to(r, i2)
-RETURN i
 
+MATCH(i:TimeInterval)<-[r:AUTHORING_INTERVAL]-(a:Author)
+DELETE r
+RETURN i,a
 
-MATCH(w:StudyWord)-[:INTRODUCED_IN]->(:Episode {episode_number: 1})<-[:AUTHORING_EPISODE]-(:Author)
-MATCH(i:TimeInterval {interval_order: 1})<-[:AUTHORING_INTERVAL]-(:Author)
-WITH w, i
-MATCH (w)
-WHERE NOT EXISTS((w)<-[:TEACHES]-(:Sentence)-[:LEVEL]->(i))
-RETURN w
+MATCH(i:TimeInterval {interval_order: 1}),(a:Author)
+MERGE(a)-[:AUTHORING_INTERVAL]->(i) 
+RETURN i,a

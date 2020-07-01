@@ -26,7 +26,7 @@ export const GET_EPISODE_WORDS = gql`
 `
 
 const ADD_SENTENCE = gql`
-  mutation addsentence($rawSentenceText: String!, $displaySentenceText: String!, $wordToTeach: String!, $sentenceWordList: [String!], $shouldCall: Boolean!) {
+  mutation addsentence($rawSentenceText: String!, $displaySentenceText: String!, $wordToTeach: String!, $sentenceWordList: [String!], $currentInterval: Int!, $shouldCall: Boolean!) {
     CreateSentence(raw_text: $rawSentenceText, display_text: $displaySentenceText) {
       raw_text
     }
@@ -42,7 +42,7 @@ const ADD_SENTENCE = gql`
       raw_text
       display_text
     }
-    AddSentenceTime_interval(from: {raw_text: $rawSentenceText} to: {interval_order: 1}){
+    AddSentenceTime_interval(from: {raw_text: $rawSentenceText} to: {interval_order: $currentInterval}){
       from {raw_text}
       to {interval_order}
     }
@@ -92,8 +92,8 @@ const Author = props => {
     const rawSentenceText = sentenceWords.join('')
     const displaySentenceText = rawSentenceText.replace(wordToTeach,"#")
     const sentenceWordList = sentenceWords
-
-    executeMutation({rawSentenceText, displaySentenceText, wordToTeach, sentenceWordList, shouldCall}).then(() => {
+    const variables = {rawSentenceText, displaySentenceText, wordToTeach, sentenceWordList, currentInterval: data.Author[0].interval.interval_order, shouldCall}
+    executeMutation(variables).then(() => {
       setSentenceWords([])
       setWordToTeach('')
       setSelectedWord('')
