@@ -65,7 +65,7 @@ type Mutation {
     @cypher(
     statement:"""MATCH (s:Sentence {raw_text: $src_sentence}), (w:Word:StudyWord),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
                        WHERE w.text IN $dest_words AND NOT w.text = $word_to_teach
-                       MERGE (i)<-[:LEVEL]-(s)-[:CONTAINS]->(w) 
+                       MERGE (i)<-[:AT_INTERVAL]-(s)-[:CONTAINS]->(w) 
                        RETURN s """)
 
     CreateUser(user_name: String! email: String! password: String! role: Role! = STUDENT): User
@@ -88,12 +88,13 @@ enum Role {
 }
 
 type Author {
-  episode: Episode @relation(name: "AUTHORING_EPISODE", direction: OUT)
+  level: Level @relation(name: "AUTHORING_LEVEL", direction: OUT)
   interval: TimeInterval @relation(name: "AUTHORING_INTERVAL", direction: OUT)
 }
 
-type Episode {
-  episode_number: Int
+type Level {
+  level_number: Int
+  multiplier: Int
   teachable_words: [Word] @cypher(
         statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word:StudyWord),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
                       OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)-[:LEVEL]->(i)
@@ -104,12 +105,12 @@ type Episode {
         statement: """MATCH (this)<-[:SHOWN_IN]-(s:Sentence)-[:TEACHES | CONTAINS]->(w:Word)
                       WITH w, COUNT(s) AS usage
                       RETURN w AS word ORDER BY usage ASC 
-                      UNION ALL MATCH(bw:Word:BaseWord)
-                      RETURN bw AS word""")
+                      """)
 
 }
 type Word {
   text: String
+  level: Level @relation(name: "INTRODUCED_IN", direction: OUT)
 }
 type User {
   _id: Int!
@@ -124,13 +125,13 @@ type TimeInterval {
   seconds: Int
   min_length: Int
   max_length: Int
-  sentences: [Sentence] @relation(name: "LEVEL", direction: IN)
+  sentences: [Sentence] @relation(name: "AT_INTERVAL", direction: IN)
 }
 type Sentence {
 	raw_text: String!
   display_text: String!
-  episode: Episode @relation(name: "SHOWN_IN" direction: OUT)
-  time_interval: TimeInterval @relation(name: "LEVEL" direction: OUT)
+  level: Level @relation(name: "SHOWN_IN" direction: OUT)
+  time_interval: TimeInterval @relation(name: "AT_INTERVAL" direction: OUT)
 	words_contained: [Word!]! @relation(name: "CONTAINS", direction: OUT)
 	word_taught: Word! @relation(name: "TEACHES", direction: OUT)
 }

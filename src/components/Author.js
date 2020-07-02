@@ -5,16 +5,22 @@ import { useMutation } from 'urql'
 import '../styles/App.css';
 
 
-export const GET_EPISODE_WORDS = gql`
-  query GetEpisodeWords{
+export const GET_LEVEL_WORDS = gql`
+  query GetLevelWords{
   Author{
-    episode{
-      episode_number
+    level{
+      level_number
       teachable_words{
         text
+        level{
+          multiplier
+        }
       }
       addable_words{
         text
+        level{
+          multiplier
+        }
       }
     }
     interval{
@@ -32,9 +38,9 @@ const ADD_SENTENCE = gql`
     CreateSentence(raw_text: $rawSentenceText, display_text: $displaySentenceText) {
       raw_text
     }
-    AddSentenceEpisode(from: {raw_text:  $rawSentenceText} to: {episode_number: 1}){
+    AddSentenceLevel(from: {raw_text:  $rawSentenceText} to: {level_number: 1}){
       from {raw_text}
-      to {episode_number}
+      to {level_number}
     }
     AddSentenceWord_taught(from: {raw_text: $rawSentenceText} to: {text: $wordToTeach}){
       from {raw_text}
@@ -53,20 +59,12 @@ const ADD_SENTENCE = gql`
 
 `
 
-/*const CHANGE_INTERVAL = gql`
-  mutation changeInterval {
-    IncrementInterval
-  }
-`*/
-//Create relation between sentence and word
-//Create relation between sentence and episode
-
-  function displayWordDropDown(episode, wordToTeach) {
+  function displayWordDropDown(level, wordToTeach) {
   let arr = []
   if(wordToTeach){
-      arr = [{text:wordToTeach}, ...episode.addable_words]
+      arr = [{text:wordToTeach}, ...level.addable_words]
     } else{
-      arr = episode.teachable_words
+      arr = level.teachable_words
     }
   return arr
   }
@@ -78,17 +76,15 @@ const Author = props => {
   const [selectedWord, setSelectedWord] = React.useState('')
   const [wordToTeach, setWordToTeach] = React.useState('')
   const [shouldCall, setShouldCall] = React.useState(false)
+  //const [points, setPoints] = React.useState(0)
+
+
 
 
   const [addSentenceState, executeMutation] = useMutation(ADD_SENTENCE)
-  //const [incrementIntervalState, executeIntervalMutation] = useMutation(CHANGE_INTERVAL)
-  const [result] = useQuery({ query: GET_EPISODE_WORDS})
+  const [result] = useQuery({ query: GET_LEVEL_WORDS})
   const {data} = result
 
-  /*if(data && data.Author[0].episode.teachable_words.length === 0){
-    executeIntervalMutation()
-    props.history.push('/author')
-  }*/
 
   const submit = React.useCallback(() => {
     const rawSentenceText = sentenceWords.join('')
@@ -99,7 +95,7 @@ const Author = props => {
       setSentenceWords([])
       setWordToTeach('')
       setSelectedWord('')
-      if(data.Author[0].episode.teachable_words.length === 0){
+      if(data.Author[0].level.teachable_words.length === 0){
         setShouldCall(true)
       }
       props.history.push('/author')
@@ -128,7 +124,7 @@ const Author = props => {
           </div>
           <select onChange={e => setSelectedWord(e.target.value)} value={selectedWord}>
             <option selected value=''>Select Word</option>
-            {data && displayWordDropDown(data.Author[0].episode,wordToTeach).map(word => <option value={word.text}>{word.text}</option>)}
+            {data && displayWordDropDown(data.Author[0].level,wordToTeach).map(word => <option value={word.text}>{word.text}</option>)}
             </select>
            <button
             onClick={wordToTeach.length ? () => appendWord(selectedWord) : () => setWordToTeach(selectedWord)}
@@ -147,7 +143,7 @@ const Author = props => {
               <button
               onClick={null}
               >
-              Start next episode
+              Start next level
               </button>
             </div>)}
       </header>
