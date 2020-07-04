@@ -94,10 +94,10 @@ type Author {
 
 type Level {
   level_number: Int
-  multiplier: Int
+  points: Int
   teachable_words: [Word] @cypher(
         statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word:StudyWord),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
-                      OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)-[:LEVEL]->(i)
+                      OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)-[:AT_INTERVAL]->(i)
                       WITH w,s
                       WHERE s is NULL
                       RETURN w """)
@@ -109,6 +109,7 @@ type Level {
 
 }
 type Word {
+  word_id: Int
   text: String
   level: Level @relation(name: "INTRODUCED_IN", direction: OUT)
 }
