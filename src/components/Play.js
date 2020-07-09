@@ -1,16 +1,19 @@
-import React from 'react';
+import React, { Component } from 'react'
 import '../styles/App.css';
 
-const Play = props => {
 
-  return (
-    <div className="App">
-      <header className="App-header">
-        <p>PLAY</p>
+class Play extends Component {
+	render() {
+	  return (
+	    <div className="App">
+	      <header className="App-header">
+	        <p>PLAY</p>
 
-      </header>
-    </div>
-  );
+	      </header>
+	    </div>
+	  );		
+
+	}
 }
 
 export default Play;

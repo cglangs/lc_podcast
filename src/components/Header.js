@@ -1,51 +1,54 @@
-import React from 'react'
+import React, { Component } from 'react'
 import { withRouter } from 'react-router'
 import { Link } from 'react-router-dom'
-import { getToken, deleteToken, getRole } from '../token'
+import { getToken, deleteToken, getRole } from '../constants'
 
-const Header = props => {
-  const isLoggedIn = !!getToken();
+class Header extends Component {
 
-  return (
-    <div>
-      <div>Chinese App</div>
-      <Link to="/">
-          home
-        </Link>
-        <div>
-      {isLoggedIn && getRole() === 'ADMIN' && (
-          <div className="flex">
-            <Link to="/author">
-              author
-            </Link>
-          </div>
-        )}
-        {isLoggedIn && (
-          <div className="flex">
-            <Link to="/play">
-              play
-            </Link>
-          </div>
-        )}
-        </div>   
-      <div className="flex flex-fixed">
-        {isLoggedIn ? (
-          <div
-            onClick={() => {
-              deleteToken()
-              props.history.push('/')
-            }}
-          >
-            logout
-          </div>
-        ) : (
-          <Link to="/login">
-            login
+  render() {
+    const isLoggedIn = !!getToken();
+
+    return (
+      <div>
+        <div>Chinese App</div>
+        <Link to="/">
+            home
           </Link>
-        )}
+          <div>
+        {isLoggedIn && getRole() === 'ADMIN' && (
+            <div className="flex">
+              <Link to="/author">
+                author
+              </Link>
+            </div>
+          )}
+          {isLoggedIn && (
+            <div className="flex">
+              <Link to="/play">
+                play
+              </Link>
+            </div>
+          )}
+          </div>   
+        <div className="flex flex-fixed">
+          {isLoggedIn ? (
+            <div
+              onClick={() => {
+                deleteToken()
+                this.props.history.push('/')
+              }}
+            >
+              logout
+            </div>
+          ) : (
+            <Link to="/login">
+              login
+            </Link>
+          )}
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 }
 
 export default withRouter(Header)
