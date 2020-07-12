@@ -42,8 +42,14 @@ const resolvers = {
       return signup(object, params, ctx, resolveInfo)   
     },
     Login(object, params, ctx, resolveInfo) {
-      return login(object, params, ctx, resolveInfo)   
-
+     return login(object, params, ctx, resolveInfo)   
+    },
+    IncrementInterval(object, params, ctx, resolveInfo){
+      var return_val = 0
+      if(params.should_call){
+        return_val = neo4jgraphql(object, params, ctx, resolveInfo)
+      }
+      return return_val
     }
   }
 }
@@ -63,16 +69,17 @@ type Mutation {
     statement:"""MATCH (s:Sentence {raw_text: $src_sentence}), (w:Word:StudyWord),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
                        WHERE w.text IN $dest_words AND NOT w.text = $word_to_teach
                        MERGE (i)<-[:AT_INTERVAL]-(s)-[:CONTAINS]->(w) 
-                       RETURN s """)
+                       RETURN s """
+    )
 
     CreateUser(user_name: String! email: String! password: String! role: Role! = STUDENT): User
 
     IncrementInterval(should_call: Boolean!): Int
     @cypher(
-    statement:""" CALL apoc.do.when(true,
-                  "MATCH (i2:TimeInterval)<-[:NEXT_TIME]-(:TimeInterval)<-[r:AUTHORING_INTERVAL]-(:Author)
-                  CALL apoc.refactor.to(r, i2) YIELD input, output RETURN *") YIELD value
-                  RETURN *""")
+    statement:""" MATCH (i2:TimeInterval)<-[:NEXT_TIME]-(:TimeInterval)<-[r:AUTHORING_INTERVAL]-(:Author)
+                  CALL apoc.refactor.to(r, i2) YIELD input, output
+                  RETURN 1"""
+    )
 
     Login(email: String! password: String!): User
     @cypher(

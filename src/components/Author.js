@@ -93,20 +93,21 @@ class Author extends Component {
   const [points, setPoints] = React.useState(0)*/
 
 
-  getSentenceVariables() {
-    const {sentenceWords, wordToTeach, shouldCall, author} = this.state
+  getSentenceVariables(interval_order) {
+    const {sentenceWords, wordToTeach, shouldCall} = this.state
     const sentenceWordList = sentenceWords.map(word => word.text)
     const rawSentenceText = sentenceWordList.join('')
     const displaySentenceText = rawSentenceText.replace(wordToTeach.text,"#")
     const wordToTeachText = wordToTeach.text
     const wordToTeachId = wordToTeach.word_id
-    const currentInterval = author.interval.interval_order
+    const currentInterval = interval_order
     return{rawSentenceText,displaySentenceText,wordToTeachText,wordToTeachId,sentenceWordList,currentInterval,shouldCall}
   }
 
   appendWord(newWord) {
+    console.log(newWord)
     this.setState(prevState => 
-      ({points: prevState.points + newWord.points, sentenceWords: prevState.sentenceWords.push(newWord)}));
+      ({points: prevState.points + newWord.level.points, sentenceWords: [...prevState.sentenceWords,newWord]}));
   }
 
   popWord() {
@@ -143,6 +144,7 @@ class Author extends Component {
 
   render() {
     const { sentenceWords, wordToTeach, points, selectedWordId} = this.state
+    console.log(this.state)
     //const appendWord = (newWord) => {setPoints(points => points + newWord.level.points); setSentenceWords(words => [...words, newWord])}
     //const popWord = () => {setPoints(points => points - sentenceWords[sentenceWords.length - 1].level.points); setSentenceWords(words => words.slice(0,-1))}
 
@@ -153,7 +155,6 @@ class Author extends Component {
           {({ loading, error, data }) => {
               if (loading) return <div>Fetching</div>
               if (error) return <div>Error</div>
-                console.log(data)
               const wordArray = this.get_word_array(data.Author[0].level)
                return (
                 <div>
@@ -163,7 +164,7 @@ class Author extends Component {
                 <p style={{fontSize: "30px;"}}>{sentenceWords.length ?  sentenceWords.map(word => word.text).join('') : null}</p>
                  <button
                   disabled={sentenceWords.length === 0}
-                  onClick={this.popWord}
+                  onClick={this.popWord.bind(this)}
                   >
                   Backspace
                   </button>
@@ -181,19 +182,13 @@ class Author extends Component {
                    <Mutation mutation={ADD_SENTENCE}>
                         {addSentence => (
                           <button
-                            onClick={() => addSentence({ variables: this.getSentenceVariables() })}
+                            onClick={() => addSentence({ variables: this.getSentenceVariables(data.Author[0].interval.interval_order) })}
                             disabled={wordToTeach.text.length && !sentenceWords.length}
                           >
                           Submit
                           </button>
                         )}
                     </Mutation>
-                  <button
-                  onClick={this.submit}
-                  disabled={wordToTeach.text.length && !sentenceWords.length}
-                  >
-                  Submit
-                  </button>
                   </div>
                   )
                 }}
