@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { setToken, setRole } from '../constants'
 import gql from 'graphql-tag'
-import { Mutation, Query } from 'react-apollo'
+import { Mutation} from 'react-apollo'
 
 
 const SIGNUP_MUTATION = gql`
@@ -12,9 +12,9 @@ const SIGNUP_MUTATION = gql`
   }
 `
 
-const LOGIN_QUERY = gql`
-  query LoginQuery($email: String!, $password: String!) {
-    User(email: $email, password: $password) {
+const LOGIN_MUTATION = gql`
+  mutation LoginMutation($email: String!, $password: String!) {
+    Login(email: $email, password: $password) {
       password
       token
       role
@@ -46,23 +46,17 @@ class Login extends Component {
 
   // Used to switch between login and signup
   /*const [isLogin, setIsLogin] = React.useState(true)
-
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
   const [user_name, setUserName] = React.useState('')
-
-
   const [loginResult, executeQuery] = useQuery({
     query: LOGIN_QUERY,
     variables: { email, password},
     pause: true,
   })
-
   const login = React.useCallback(() => {
     executeQuery()
   }, [executeQuery]);
-
-
   const [signUpState, executeMutation] = useMutation(SIGNUP_MUTATION);
   
   const signUp = React.useCallback(() => {
@@ -106,37 +100,20 @@ class Login extends Component {
         />
       </div>
       <div>
-      {isLogin ? (
-          <Query
-            query={LOGIN_QUERY}
-            variables={{ email, password}}
-            onCompleted={data => this._confirm(data)}
+      <Mutation
+        mutation={isLogin ? LOGIN_MUTATION : SIGNUP_MUTATION}
+        variables={{ email, password, user_name}}
+        onCompleted={data => this._confirm(data)}
+      >
+        {mutation => (
+          <button
+            type="button"
+            onClick={mutation}
           >
-            {query => (
-              <button
-                type="button"
-                onClick={query}
-              >
-                login
-              </button>
-            )}
-          </Query>
-      ) : (
-          <Mutation
-            mutation={SIGNUP_MUTATION}
-            variables={{ email, password, user_name}}
-            onCompleted={data => this._confirm(data)}
-          >
-            {mutation => (
-              <button
-                type="button"
-                onClick={mutation}
-              >
-                create account
-              </button>
-            )}
-          </Mutation>
-      )}
+            {isLogin ? 'login' : 'create account'}
+          </button>
+        )}
+      </Mutation>
       <button
         type="button"
         onClick={() => this.setState({ isLogin: !this.state.isLogin })}

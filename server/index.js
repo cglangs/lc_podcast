@@ -40,14 +40,10 @@ const resolvers = {
   Mutation: {
     CreateUser(object, params, ctx, resolveInfo) {
       return signup(object, params, ctx, resolveInfo)   
-    }
-  },
-
-  Query: {
-    User(object, params, ctx, resolveInfo) {
-      //console.log(object, params, ctx, resolveInfo)
+    },
+    Login(object, params, ctx, resolveInfo) {
       return login(object, params, ctx, resolveInfo)   
-      //login(object, params, ctx, resolveInfo) 
+
     }
   }
 }
@@ -61,6 +57,7 @@ const driver = neo4j.driver(
 
 const typeDefs = `
 type Mutation {
+
     AddSentenceDependencies(src_sentence: String! dest_words:[String] word_to_teach: String!): Sentence
     @cypher(
     statement:"""MATCH (s:Sentence {raw_text: $src_sentence}), (w:Word:StudyWord),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
@@ -76,11 +73,15 @@ type Mutation {
                   "MATCH (i2:TimeInterval)<-[:NEXT_TIME]-(:TimeInterval)<-[r:AUTHORING_INTERVAL]-(:Author)
                   CALL apoc.refactor.to(r, i2) YIELD input, output RETURN *") YIELD value
                   RETURN *""")
+
+    Login(email: String! password: String!): User
+    @cypher(
+    statement:""" MATCH(u:User)
+                  WHERE u.email = $email
+                  RETURN u"""
+    )
 }
 
-type Query {
-  User(email: String! password: String!): User
-}
 
 enum Role {
   ADMIN
