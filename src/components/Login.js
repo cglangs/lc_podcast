@@ -30,47 +30,6 @@ class Login extends Component {
     user_name: '',
   }
 
-   /*componentDidMount() {
-    if(!getToken() && loginResult.data && loginResult.data['User']){
-      const token = loginResult.data['User'].token
-      const role = loginResult.data['User'].role
-        if (token && role) {
-          setToken(token)
-          setRole(role)
-          props.history.push('/')
-       } else{
-        console.log("ERROR")
-       }
-    }
-  }*/
-
-  // Used to switch between login and signup
-  /*const [isLogin, setIsLogin] = React.useState(true)
-  const [email, setEmail] = React.useState('')
-  const [password, setPassword] = React.useState('')
-  const [user_name, setUserName] = React.useState('')
-  const [loginResult, executeQuery] = useQuery({
-    query: LOGIN_QUERY,
-    variables: { email, password},
-    pause: true,
-  })
-  const login = React.useCallback(() => {
-    executeQuery()
-  }, [executeQuery]);
-  const [signUpState, executeMutation] = useMutation(SIGNUP_MUTATION);
-  
-  const signUp = React.useCallback(() => {
-    executeMutation({ email, password, user_name })
-      .then(({ data }) => {
-        const token = data && data['CreateUser'].token
-        if (token) {
-          setToken(token)
-          props.history.push('/')
-        }
-      });
-  }, [executeMutation, props.history, email, password, user_name]);*/
-
-
  render() {
     const { isLogin, email, password, user_name } = this.state
     return (
