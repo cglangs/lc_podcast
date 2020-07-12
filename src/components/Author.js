@@ -64,14 +64,16 @@ const ADD_SENTENCE = gql`
 
 
 class Author extends Component {
-  state = {
-    author: {},
-    sentenceWords: [],
-    selectedWordId: null,
-    wordToTeach: {text: ''},
-    shouldCall: false,
-    points: 0
-
+  constructor(){
+    super()
+    this.state = {
+      sentenceWords: [],
+      selectedWordId: null,
+      wordToTeach: {text: ''},
+      shouldCall: false,
+      points: 0
+    }
+    this.baseState = this.state 
   }
 
   get_word_array(level) {
@@ -182,7 +184,12 @@ class Author extends Component {
                    <Mutation mutation={ADD_SENTENCE}>
                         {addSentence => (
                           <button
-                            onClick={() => addSentence({ variables: this.getSentenceVariables(data.Author[0].interval.interval_order) })}
+                            onClick={() => 
+                              {
+                                addSentence({ variables: this.getSentenceVariables(data.Author[0].interval.interval_order) })
+                                this.setState(this.baseState)
+                              }
+                          }
                             disabled={wordToTeach.text.length && !sentenceWords.length}
                           >
                           Submit
