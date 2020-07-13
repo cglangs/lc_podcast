@@ -71,6 +71,7 @@ class Author extends Component {
       selectedWordId: null,
       wordToTeach: {text: ''},
       shouldCall: false,
+      containsWordToTeach: false,
       points: 0
     }
     this.baseState = this.state 
@@ -80,19 +81,12 @@ class Author extends Component {
     let arr = []
     const wordToTeach = this.state.wordToTeach
     if(wordToTeach && wordToTeach.text.length){
-      console.log(wordToTeach,...level.addable_words)
         arr = [wordToTeach, ...level.addable_words]
       } else{
         arr = level.teachable_words
       }
     return arr
   }
-
-  /*const [sentenceWords, setSentenceWords] = React.useState([])
-  const [selectedWordId, setselectedWordId] = React.useState(null)
-  const [wordToTeach, setWordToTeach] = React.useState({text: ''})
-  const [shouldCall, setShouldCall] = React.useState(false)
-  const [points, setPoints] = React.useState(0)*/
 
 
   getSentenceVariables(interval_order) {
@@ -107,9 +101,9 @@ class Author extends Component {
   }
 
   appendWord(newWord) {
-    console.log(newWord)
     this.setState(prevState => 
-      ({points: prevState.points + newWord.level.points, sentenceWords: [...prevState.sentenceWords,newWord]}));
+      ({points: prevState.points + newWord.level.points, sentenceWords: [...prevState.sentenceWords,newWord], 
+        containsWordToTeach: newWord.word_id === this.state.wordToTeach.word_id ? true : prevState.containsWordToTeach}));
   }
 
   popWord() {
@@ -122,41 +116,21 @@ class Author extends Component {
 
   updateStoreAfterAddSentence(store, wordToTeach){
     const data = store.readQuery({ query: GET_LEVEL_WORDS })
-    data.Author[0].level.addable_words.push(wordToTeach)
-    //TODO: remove word from teachable
+    if(data.Author[0].interval.interval_order === 1){
+          data.Author[0].level.addable_words.push(wordToTeach)
+        }
+    console.log(data.Author[0].level.teachable_words)
+    data.Author[0].level.teachable_words = data.Author[0].level.teachable_words
+      .filter((word=> word.word_id !== wordToTeach.word_id))
+    console.log(data.Author[0].level.teachable_words)
     store.writeQuery({ query: GET_LEVEL_WORDS, data })
 
   }
 
 
-
-  /*const [addSentenceState, executeMutation] = useMutation(ADD_SENTENCE)
-  const [result] = useQuery({ query: GET_LEVEL_WORDS})
-  const {data} = result*/
-
-  /*const submit = React.useCallback(() => {
-    const sentenceWordList = sentenceWords.map(word => word.text)
-    const rawSentenceText = sentenceWordList.join('')
-    const displaySentenceText = rawSentenceText.replace(wordToTeach.text,"#")
-    const wordToTeachText = wordToTeach.text
-    const wordToTeachId = wordToTeach.word_id
-    const variables = {rawSentenceText, displaySentenceText, wordToTeachText,wordToTeachId, sentenceWordList, currentInterval: data.Author[0].interval.interval_order, shouldCall}
-    executeMutation(variables).then(() => {
-      setSentenceWords([])
-      setWordToTeach({text: ''})
-      setselectedWordId(null)
-      if(data.Author[0].level.teachable_words.length === 0){
-        setShouldCall(true)
-      }
-      props.history.push('/author')
-    })
-  }, [executeMutation, props.history, sentenceWords, wordToTeach, data, shouldCall])*/
-
   render() {
-    const { sentenceWords, wordToTeach, points, selectedWordId} = this.state
+    const { sentenceWords, wordToTeach, points, selectedWordId, containsWordToTeach} = this.state
     console.log(this.state)
-    //const appendWord = (newWord) => {setPoints(points => points + newWord.level.points); setSentenceWords(words => [...words, newWord])}
-    //const popWord = () => {setPoints(points => points - sentenceWords[sentenceWords.length - 1].level.points); setSentenceWords(words => words.slice(0,-1))}
 
     return (
       <div className="App">
@@ -190,8 +164,10 @@ class Author extends Component {
                   {wordToTeach.text.length ? "Add" : "Learn"}
                   </button>
                    <Mutation mutation={ADD_SENTENCE}
-                      update={(store) =>
+                      update={(store) => {
                         this.updateStoreAfterAddSentence(store, wordToTeach)
+                        this.setState(this.baseState)                        
+                      }
                       }
 
                    >
@@ -200,10 +176,10 @@ class Author extends Component {
                             onClick={() => 
                               {
                                 addSentence({ variables: this.getSentenceVariables(data.Author[0].interval.interval_order) })
-                                this.setState(this.baseState)
+
                               }
                           }
-                            disabled={wordToTeach.text.length && !sentenceWords.length}
+                            disabled={(wordToTeach.text.length && !sentenceWords.length) || !containsWordToTeach }
                           >
                           Submit
                           </button>
