@@ -120,6 +120,14 @@ class Author extends Component {
       }))
   }
 
+  updateStoreAfterAddSentence(store, wordToTeach){
+    const data = store.readQuery({ query: GET_LEVEL_WORDS })
+    data.Author[0].level.addable_words.push(wordToTeach)
+    //TODO: remove word from teachable
+    store.writeQuery({ query: GET_LEVEL_WORDS, data })
+
+  }
+
 
 
   /*const [addSentenceState, executeMutation] = useMutation(ADD_SENTENCE)
@@ -181,7 +189,12 @@ class Author extends Component {
                   >
                   {wordToTeach.text.length ? "Add" : "Learn"}
                   </button>
-                   <Mutation mutation={ADD_SENTENCE}>
+                   <Mutation mutation={ADD_SENTENCE}
+                      update={(store) =>
+                        this.updateStoreAfterAddSentence(store, wordToTeach)
+                      }
+
+                   >
                         {addSentence => (
                           <button
                             onClick={() => 
