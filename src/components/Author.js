@@ -63,13 +63,11 @@ const ADD_SENTENCE = gql`
 
 `
 
-
-
 class Author extends Component {
   constructor(){
     super()
     this.state = {
-      sentenceWords: [],
+      SentenceElements: [],
       selectedWordId: null,
       wordToTeach: {text: ''},
       shouldCall: false,
@@ -94,8 +92,8 @@ class Author extends Component {
 
 
   getSentenceVariables(interval_order) {
-    const {sentenceWords, wordToTeach, shouldCall} = this.state
-    const sentenceWordList = sentenceWords.map(word => word.text)
+    const {SentenceElements, wordToTeach, shouldCall} = this.state
+    const sentenceWordList = SentenceElements.map(word => word.text)
     const rawSentenceText = sentenceWordList.join('')
     const displaySentenceText = rawSentenceText.replace(wordToTeach.text,"#")
     const wordToTeachText = wordToTeach.text
@@ -104,18 +102,28 @@ class Author extends Component {
     return{rawSentenceText,displaySentenceText,wordToTeachText,wordToTeachId,sentenceWordList,currentInterval,shouldCall}
   }
 
-  appendWord(newWord) {
-    this.setState(prevState => 
-      ({points: prevState.points + newWord.level.points, sentenceWords: [...prevState.sentenceWords,newWord], 
-        containsWordToTeach: newWord.word_id === this.state.wordToTeach.word_id ? true : prevState.containsWordToTeach}));
+  appendElement(newWord) {
+    if(this.state.punctuationMode){
+    } else {
+      this.setState(prevState => 
+        ({
+          points: prevState.points + newWord.level.points, 
+          containsWordToTeach: newWord.word_id === this.state.wordToTeach.word_id ? true : prevState.containsWordToTeach,
+          SentenceElements: [...prevState.SentenceElements,newWord]
+        }))
+    }
   }
 
-  popWord() {
+  popElement() {
+    if(this.state.punctuationMode){
+    } else {
     this.setState(prevState => 
       ({
-        points: prevState.points - prevState.sentenceWords[prevState.sentenceWords.length - 1], 
-        sentenceWords: prevState.sentenceWords.slice(0,-1)
+        points: prevState.points - prevState.SentenceElements[prevState.SentenceElements.length - 1], 
+        containsWordToTeach: prevState.SentenceElements[prevState.SentenceElements.length - 1] === this.state.wordToTeach.word_id ? false : prevState.containsWordToTeach,
+        SentenceElements: prevState.SentenceElements.slice(0,-1)
       }))
+    }
   }
 
   updateStoreAfterAddSentence(store, wordToTeach){
@@ -130,7 +138,7 @@ class Author extends Component {
 
 
   render() {
-    const { sentenceWords, wordToTeach, points, selectedWordId, containsWordToTeach, punctuationMode,selectedPunctuationId} = this.state
+    const { SentenceElements, wordToTeach, points, selectedWordId, containsWordToTeach, punctuationMode,selectedPunctuationId} = this.state
     console.log(this.state)
 
     return (
@@ -146,10 +154,10 @@ class Author extends Component {
                 <p style={{fontSize: "50px;"}}>{"Current Points: " + points}</p>
                 <p style={{fontSize: "50px;"}}>Word being learned: {wordToTeach.text.length && wordToTeach.text}</p>
                 <div>
-                <p style={{fontSize: "30px;"}}>{sentenceWords.length ?  sentenceWords.map(word => word.text).join('') : null}</p>
+                <p style={{fontSize: "30px;"}}>{SentenceElements.length ?  SentenceElements.map(word => word.text).join('') : null}</p>
                  <button
-                  disabled={sentenceWords.length === 0}
-                  onClick={this.popWord.bind(this)}
+                  disabled={SentenceElements.length === 0}
+                  onClick={() => this.popElement.bind(this)}
                   >
                   Backspace
                   </button>
@@ -158,23 +166,30 @@ class Author extends Component {
                   this.setState(prevState => ({punctuationMode: !prevState.punctuationMode}))} />
                   {punctuationMode ?
                     (
+                      <div>
                      <select onChange={e => this.setState({selectedPunctuationId: e.target.value})} value={selectedPunctuationId}>
                       <option selected value=''> Select Punctuation</option>
                       {punctuations.map(mark => <option value={mark.id}>{mark.text}</option>)}
                     </select>
+                   <button onClick={() => this.appendElement(punctuations.find(mark=> mark.id === selectedPunctuationId))}>
+                    Add
+                    </button>
+                    </div>
                   ) : (
+                  <div>
                     <select onChange={e => this.setState({selectedWordId: parseInt(e.target.value)})} value={selectedWordId}>
                       <option selected value=''>Select Word</option>
                       {wordArray.map(word => <option value={word.word_id}>{word.text}</option>)}
                     </select>
+                   <button
+                    onClick={wordToTeach.text.length ? () => this.appendElement(wordArray.find(word=> word.word_id === selectedWordId)) : 
+                      () => this.setState({wordToTeach: wordArray.find(word=> word.word_id === selectedWordId)})}
+                    >
+                    {wordToTeach.text.length ? "Add" : "Learn"}
+                    </button>
+                    </div>
                   )
                 }
-                 <button
-                  onClick={wordToTeach.text.length ? () => this.appendWord(wordArray.find(word=> word.word_id === selectedWordId)) : 
-                    () => this.setState({wordToTeach: wordArray.find(word=> word.word_id === selectedWordId)})}
-                  >
-                  {wordToTeach.text.length ? "Add" : "Learn"}
-                  </button>
                    <Mutation mutation={ADD_SENTENCE}
                       update={(store) => {
                         this.updateStoreAfterAddSentence(store, wordToTeach)
@@ -189,7 +204,7 @@ class Author extends Component {
                                 addSentence({ variables: this.getSentenceVariables(data.Author[0].interval.interval_order) })
                               }
                           }
-                            disabled={(wordToTeach.text.length && !sentenceWords.length) || !containsWordToTeach }
+                            disabled={(wordToTeach.text.length && !SentenceElements.length) || !containsWordToTeach }
                           >
                           Submit
                           </button>
