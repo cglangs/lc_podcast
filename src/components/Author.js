@@ -102,20 +102,28 @@ class Author extends Component {
     return{rawSentenceText,displaySentenceText,wordToTeachText,wordToTeachId,sentenceWordList,currentInterval,shouldCall}
   }
 
-  appendElement(newWord) {
-    if(this.state.punctuationMode){
+  appendElement(newElement) {
+    if(!newElement.hasOwnProperty('word_id')){
+      this.setState(prevState => 
+      ({
+        SentenceElements: [...prevState.SentenceElements, newElement]
+      })) 
     } else {
       this.setState(prevState => 
         ({
-          points: prevState.points + newWord.level.points, 
-          containsWordToTeach: newWord.word_id === this.state.wordToTeach.word_id ? true : prevState.containsWordToTeach,
-          SentenceElements: [...prevState.SentenceElements,newWord]
+          points: prevState.points + newElement.level.points, 
+          containsWordToTeach: newElement.word_id === this.state.wordToTeach.word_id ? true : prevState.containsWordToTeach,
+          SentenceElements: [...prevState.SentenceElements, newElement]
         }))
     }
   }
 
   popElement() {
-    if(this.state.punctuationMode){
+    if(!this.state.SentenceElements[this.state.SentenceElements.length - 1].hasOwnProperty('word_id')){
+     this.setState(prevState => 
+      ({
+        SentenceElements: prevState.SentenceElements.slice(0,-1)
+      }))     
     } else {
     this.setState(prevState => 
       ({
@@ -167,7 +175,7 @@ class Author extends Component {
                   {punctuationMode ?
                     (
                       <div>
-                     <select onChange={e => this.setState({selectedPunctuationId: e.target.value})} value={selectedPunctuationId}>
+                     <select onChange={e => this.setState({selectedPunctuationId: parseInt(e.target.value)})} value={selectedPunctuationId}>
                       <option selected value=''> Select Punctuation</option>
                       {punctuations.map(mark => <option value={mark.id}>{mark.text}</option>)}
                     </select>
