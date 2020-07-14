@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import gql from 'graphql-tag';
 import { Mutation, Query} from 'react-apollo';
 import '../styles/App.css';
+import {punctuations} from '../constants.js'
+import Switch from "./Switch";
 
 
 export const GET_LEVEL_WORDS = gql`
@@ -72,7 +74,9 @@ class Author extends Component {
       wordToTeach: {text: ''},
       shouldCall: false,
       containsWordToTeach: false,
-      points: 0
+      points: 0,
+      punctuationMode: false,
+      selectedPunctuationId: null
     }
     this.baseState = this.state 
   }
@@ -118,18 +122,15 @@ class Author extends Component {
     const data = store.readQuery({ query: GET_LEVEL_WORDS })
     if(data.Author[0].interval.interval_order === 1){
           data.Author[0].level.addable_words.push(wordToTeach)
-        }
-    console.log(data.Author[0].level.teachable_words)
+    }
     data.Author[0].level.teachable_words = data.Author[0].level.teachable_words
       .filter((word=> word.word_id !== wordToTeach.word_id))
-    console.log(data.Author[0].level.teachable_words)
     store.writeQuery({ query: GET_LEVEL_WORDS, data })
-
   }
 
 
   render() {
-    const { sentenceWords, wordToTeach, points, selectedWordId, containsWordToTeach} = this.state
+    const { sentenceWords, wordToTeach, points, selectedWordId, containsWordToTeach, punctuationMode,selectedPunctuationId} = this.state
     console.log(this.state)
 
     return (
@@ -153,10 +154,21 @@ class Author extends Component {
                   Backspace
                   </button>
                 </div>
-                <select onChange={e => this.setState({selectedWordId: parseInt(e.target.value)})} value={selectedWordId}>
-                  <option selected value=''>Select Word</option>
-                  {wordArray.map(word => <option value={word.word_id}>{word.text}</option>)}
-                  </select>
+                <Switch isOn={punctuationMode} handleToggle={() => 
+                  this.setState(prevState => ({punctuationMode: !prevState.punctuationMode}))} />
+                  {punctuationMode ?
+                    (
+                     <select onChange={e => this.setState({selectedPunctuationId: e.target.value})} value={selectedPunctuationId}>
+                      <option selected value=''> Select Punctuation</option>
+                      {punctuations.map(mark => <option value={mark.id}>{mark.text}</option>)}
+                    </select>
+                  ) : (
+                    <select onChange={e => this.setState({selectedWordId: parseInt(e.target.value)})} value={selectedWordId}>
+                      <option selected value=''>Select Word</option>
+                      {wordArray.map(word => <option value={word.word_id}>{word.text}</option>)}
+                    </select>
+                  )
+                }
                  <button
                   onClick={wordToTeach.text.length ? () => this.appendWord(wordArray.find(word=> word.word_id === selectedWordId)) : 
                     () => this.setState({wordToTeach: wordArray.find(word=> word.word_id === selectedWordId)})}
@@ -167,16 +179,14 @@ class Author extends Component {
                       update={(store) => {
                         this.updateStoreAfterAddSentence(store, wordToTeach)
                         this.setState(this.baseState)                        
+                        }
                       }
-                      }
-
                    >
                         {addSentence => (
                           <button
                             onClick={() => 
                               {
                                 addSentence({ variables: this.getSentenceVariables(data.Author[0].interval.interval_order) })
-
                               }
                           }
                             disabled={(wordToTeach.text.length && !sentenceWords.length) || !containsWordToTeach }

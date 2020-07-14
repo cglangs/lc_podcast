@@ -9,3 +9,13 @@ export const deleteToken = () => localStorage.removeItem(AUTH_TOKEN);
 export const getRole = () => localStorage.getItem(ROLE);
 export const setRole = role => localStorage.setItem(ROLE, role);
 export const deleteRole = () => localStorage.removeItem(ROLE);
+
+export const punctuations = [
+	{id: 1, text: ',', type: 'COMMA'},
+	{id: 2, text: '.', type: 'PERIOD'},
+	{id: 3, text: ' ', type: 'SPACE'},
+	{id: 4, text: '"', type: 'QUOTE'},
+	{id: 5, text: '!', type: 'EXCLAMATION'},
+	{id: 6, text: '?', type: 'QUESTION'},
+	{id: 7, text: ':', type: 'COLON'}
+]
