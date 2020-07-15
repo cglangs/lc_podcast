@@ -70,7 +70,7 @@ class Author extends Component {
       SentenceElements: [],
       selectedWordId: null,
       wordToTeach: {text: ''},
-      containsWordToTeach: false,
+      containsWordToTeach: 0,
       points: 0,
       punctuationMode: false,
       selectedPunctuationId: null
@@ -114,7 +114,7 @@ class Author extends Component {
       this.setState(prevState => 
         ({
           points: prevState.points + newElement.level.points, 
-          containsWordToTeach: newElement.word_id === this.state.wordToTeach.word_id ? true : prevState.containsWordToTeach,
+          containsWordToTeach: newElement.word_id === this.state.wordToTeach.word_id ? prevState.containsWordToTeach + 1 : prevState.containsWordToTeach,
           SentenceElements: [...prevState.SentenceElements, newElement]
         }))
     }
@@ -130,7 +130,7 @@ class Author extends Component {
     this.setState(prevState => 
       ({
         points: prevState.points - prevState.SentenceElements[prevState.SentenceElements.length - 1].level.points, 
-        containsWordToTeach: prevState.SentenceElements[prevState.SentenceElements.length - 1] === this.state.wordToTeach.word_id ? false : prevState.containsWordToTeach,
+        containsWordToTeach: prevState.SentenceElements[prevState.SentenceElements.length - 1].word_id === this.state.wordToTeach.word_id ? prevState.containsWordToTeach - 1 : prevState.containsWordToTeach,
         SentenceElements: prevState.SentenceElements.slice(0,-1)
       }))
     }
