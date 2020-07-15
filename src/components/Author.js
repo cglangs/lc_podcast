@@ -92,8 +92,10 @@ class Author extends Component {
 
   getSentenceVariables(interval_order, words_left) {
     const {SentenceElements, wordToTeach} = this.state
-    const sentenceWordList = SentenceElements.map(word => word.text)
-    const rawSentenceText = sentenceWordList.join('')
+    const sentenceWords = SentenceElements.filter( element => element.hasOwnProperty('word_id'))
+    const sentenceWordList = sentenceWords.map(word => word.text)
+    const SentenceElementList = SentenceElements.map(element => element.text)
+    const rawSentenceText = SentenceElementList.join('')
     const displaySentenceText = rawSentenceText.replace(wordToTeach.text,"#")
     const wordToTeachText = wordToTeach.text
     const wordToTeachId = wordToTeach.word_id
@@ -198,7 +200,7 @@ class Author extends Component {
                     </select>
                    <button
                     onClick={wordToTeach.text.length ? () => this.appendElement(wordArray.find(word=> word.word_id === selectedWordId)) : 
-                      () => {console.log(wordArray,selectedWordId); this.setState({wordToTeach: wordArray.find(word=> word.word_id === selectedWordId)})}}
+                      () => {this.setState({wordToTeach: wordArray.find(word=> word.word_id === selectedWordId)})}}
                     >
                     {wordToTeach.text.length ? "Add" : "Learn"}
                     </button>
