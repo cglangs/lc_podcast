@@ -66,7 +66,7 @@ type Mutation {
 
     AddSentenceDependencies(src_sentence: String! dest_words:[String] word_to_teach: String!): Sentence
     @cypher(
-    statement:"""MATCH (s:Sentence {raw_text: $src_sentence}), (w:Word:StudyWord),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
+    statement:"""MATCH (s:Sentence {raw_text: $src_sentence}), (w:Word),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
                        WHERE w.text IN $dest_words AND NOT w.text = $word_to_teach
                        MERGE (i)<-[:AT_INTERVAL]-(s)-[:CONTAINS]->(w) 
                        RETURN s """
@@ -104,7 +104,7 @@ type Level {
   level_number: Int
   points: Int
   teachable_words: [Word] @cypher(
-        statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word:StudyWord),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
+        statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word:Word),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
                       OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)-[:AT_INTERVAL]->(i)
                       WITH w,s
                       WHERE s is NULL

@@ -70,7 +70,6 @@ class Author extends Component {
       SentenceElements: [],
       selectedWordId: null,
       wordToTeach: {text: ''},
-      shouldCall: false,
       containsWordToTeach: false,
       points: 0,
       punctuationMode: false,
@@ -84,21 +83,22 @@ class Author extends Component {
     const wordToTeach = this.state.wordToTeach
     if(wordToTeach && wordToTeach.text.length){
         arr = [wordToTeach, ...level.addable_words]
-      } else{
+      }else{
         arr = level.teachable_words
       }
     return arr
   }
 
 
-  getSentenceVariables(interval_order) {
-    const {SentenceElements, wordToTeach, shouldCall} = this.state
+  getSentenceVariables(interval_order, words_left) {
+    const {SentenceElements, wordToTeach} = this.state
     const sentenceWordList = SentenceElements.map(word => word.text)
     const rawSentenceText = sentenceWordList.join('')
     const displaySentenceText = rawSentenceText.replace(wordToTeach.text,"#")
     const wordToTeachText = wordToTeach.text
     const wordToTeachId = wordToTeach.word_id
     const currentInterval = interval_order
+    const shouldCall =  words_left === 1
     return{rawSentenceText,displaySentenceText,wordToTeachText,wordToTeachId,sentenceWordList,currentInterval,shouldCall}
   }
 
@@ -127,48 +127,55 @@ class Author extends Component {
     } else {
     this.setState(prevState => 
       ({
-        points: prevState.points - prevState.SentenceElements[prevState.SentenceElements.length - 1], 
+        points: prevState.points - prevState.SentenceElements[prevState.SentenceElements.length - 1].level.points, 
         containsWordToTeach: prevState.SentenceElements[prevState.SentenceElements.length - 1] === this.state.wordToTeach.word_id ? false : prevState.containsWordToTeach,
         SentenceElements: prevState.SentenceElements.slice(0,-1)
       }))
     }
   }
 
-  updateStoreAfterAddSentence(store, wordToTeach){
+  updateStoreAfterAddSentence(store, refetch){
     const data = store.readQuery({ query: GET_LEVEL_WORDS })
-    if(data.Author[0].interval.interval_order === 1){
-          data.Author[0].level.addable_words.push(wordToTeach)
+    if(data.Author[0].level.teachable_words.length > 1){
+      if(data.Author[0].interval.interval_order === 1){
+            data.Author[0].level.addable_words.push(this.state.wordToTeach)
+      }
+      data.Author[0].level.teachable_words = data.Author[0].level.teachable_words
+        .filter((word=> word.word_id !== this.state.wordToTeach.word_id))
+
+      store.writeQuery({ query: GET_LEVEL_WORDS, data })
+    } else {
+      refetch()
     }
-    data.Author[0].level.teachable_words = data.Author[0].level.teachable_words
-      .filter((word=> word.word_id !== wordToTeach.word_id))
-    store.writeQuery({ query: GET_LEVEL_WORDS, data })
   }
 
 
   render() {
     const { SentenceElements, wordToTeach, points, selectedWordId, containsWordToTeach, punctuationMode,selectedPunctuationId} = this.state
-    console.log(this.state)
 
     return (
       <div className="App">
         <header className="App-header">
           <Query query={GET_LEVEL_WORDS}>
-          {({ loading, error, data }) => {
+          {({ loading, error, data, refetch }) => {
               if (loading) return <div>Fetching</div>
               if (error) return <div>Error</div>
               const wordArray = this.get_word_array(data.Author[0].level)
                return (
                 <div>
+                <p style={{fontSize: "50px;"}}>{"Interval: " + data.Author[0].interval.interval_order}</p>
+                <p style={{fontSize: "50px;"}}>{"Minimum points: " + data.Author[0].interval.min_length}</p>
+                <p style={{fontSize: "50px;"}}>{"Maximum points:: " + data.Author[0].interval.max_length}</p>
                 <p style={{fontSize: "50px;"}}>{"Current Points: " + points}</p>
                 <p style={{fontSize: "50px;"}}>Word being learned: {wordToTeach.text.length && wordToTeach.text}</p>
                 <div>
                 <p style={{fontSize: "30px;"}}>{SentenceElements.length ?  SentenceElements.map(word => word.text).join('') : null}</p>
-                 <button
-                  disabled={SentenceElements.length === 0}
-                  onClick={() => this.popElement.bind(this)}
-                  >
-                  Backspace
-                  </button>
+               <button
+                onClick={this.popElement.bind(this)}
+                hidden={SentenceElements.length === 0}
+                >
+                Backspace
+                </button>
                 </div>
                 <Switch isOn={punctuationMode} handleToggle={() => 
                   this.setState(prevState => ({punctuationMode: !prevState.punctuationMode}))} />
@@ -185,13 +192,13 @@ class Author extends Component {
                     </div>
                   ) : (
                   <div>
-                    <select onChange={e => this.setState({selectedWordId: parseInt(e.target.value)})} value={selectedWordId}>
-                      <option selected value=''>Select Word</option>
+                    <select onChange={e => this.setState({selectedWordId: parseInt(e.target.value)})} value={selectedWordId || '0'}>
+                      <option selected value='0'>Select Word</option>
                       {wordArray.map(word => <option value={word.word_id}>{word.text}</option>)}
                     </select>
                    <button
                     onClick={wordToTeach.text.length ? () => this.appendElement(wordArray.find(word=> word.word_id === selectedWordId)) : 
-                      () => this.setState({wordToTeach: wordArray.find(word=> word.word_id === selectedWordId)})}
+                      () => {console.log(wordArray,selectedWordId); this.setState({wordToTeach: wordArray.find(word=> word.word_id === selectedWordId)})}}
                     >
                     {wordToTeach.text.length ? "Add" : "Learn"}
                     </button>
@@ -200,7 +207,7 @@ class Author extends Component {
                 }
                    <Mutation mutation={ADD_SENTENCE}
                       update={(store) => {
-                        this.updateStoreAfterAddSentence(store, wordToTeach)
+                        this.updateStoreAfterAddSentence(store, refetch)
                         this.setState(this.baseState)                        
                         }
                       }
@@ -209,15 +216,20 @@ class Author extends Component {
                           <button
                             onClick={() => 
                               {
-                                addSentence({ variables: this.getSentenceVariables(data.Author[0].interval.interval_order) })
+                                addSentence({ variables: this.getSentenceVariables(data.Author[0].interval.interval_order,data.Author[0].level.teachable_words.length) })
                               }
                           }
-                            disabled={(wordToTeach.text.length && !SentenceElements.length) || !containsWordToTeach }
+                            disabled={!containsWordToTeach || points <  data.Author[0].interval.min_length || points >  data.Author[0].interval.max_length}
                           >
                           Submit
                           </button>
                         )}
                     </Mutation>
+                    <div>
+                    <button onClick={() => this.setState(this.baseState) }>
+                    Clear Sentence
+                    </button>
+                    </div>
                   </div>
                   )
                 }}
