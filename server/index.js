@@ -139,6 +139,8 @@ type TimeInterval {
 type Sentence {
 	raw_text: String!
   display_text: String!
+  pinyin: String!
+  english: String!
   level: Level @relation(name: "SHOWN_IN" direction: OUT)
   time_interval: TimeInterval @relation(name: "AT_INTERVAL" direction: OUT)
 	words_contained: [Word!]! @relation(name: "CONTAINS", direction: OUT)

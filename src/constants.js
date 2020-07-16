@@ -16,6 +16,6 @@ export const punctuations = [
 	{id: 3, text: '“', type: 'QUOTE'},
 	{id: 4, text: '！', type: 'EXCLAMATION'},
 	{id: 5, text: '？', type: 'QUESTION'},
-	{id: 6, text: '：', type: 'COLON'}，
+	{id: 6, text: '：', type: 'COLON'},
 	{id: 7, text: ' ', type: 'SPACE'}
 ]
