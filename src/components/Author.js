@@ -4,6 +4,7 @@ import { Mutation, Query} from 'react-apollo';
 import '../styles/App.css';
 import {punctuations} from '../constants.js'
 import Switch from "./Switch";
+import Select from "react-select";
 
 
 export const GET_LEVEL_WORDS = gql`
@@ -166,7 +167,7 @@ class Author extends Component {
 
   render() {
     const { SentenceElements, wordToTeach, points, selectedWordId, containsWordToTeach, punctuationMode,selectedPunctuationId} = this.state
-
+    console.log(this.state)
     return (
       <div className="App">
         <header className="App-header">
@@ -177,13 +178,13 @@ class Author extends Component {
               const wordArray = this.get_word_array(data.Author[0].level)
                return (
                 <div>
-                <p style={{fontSize: "50px;"}}>{"Interval: " + data.Author[0].interval.interval_order}</p>
-                <p style={{fontSize: "50px;"}}>{"Minimum points: " + data.Author[0].interval.min_length}</p>
-                <p style={{fontSize: "50px;"}}>{"Maximum points:: " + data.Author[0].interval.max_length}</p>
-                <p style={{fontSize: "50px;"}}>{"Current Points: " + points}</p>
-                <p style={{fontSize: "50px;"}}>Word being learned: {wordToTeach.text.length && wordToTeach.text}</p>
+                <p>{"Interval: " + data.Author[0].interval.interval_order}</p>
+                <p>{"Minimum points: " + data.Author[0].interval.min_length}</p>
+                <p>{"Maximum points:: " + data.Author[0].interval.max_length}</p>
+                <p>{"Current Points: " + points}</p>
+                <p>Word being learned: {wordToTeach.text.length && wordToTeach.text}</p>
                 <div>
-                <p style={{fontSize: "30px;"}}>{SentenceElements.length ?  SentenceElements.map(word => word.text).join('') : null}</p>
+                <p style={{fontSize: "30px"}}>{SentenceElements.length ?  SentenceElements.map(word => word.text).join('') : null}</p>
                <button
                 onClick={this.popElement.bind(this)}
                 hidden={SentenceElements.length === 0}
@@ -205,19 +206,21 @@ class Author extends Component {
                     </button>
                     </div>
                   ) : (
-                  <div>
-                    <select onChange={e => this.setState({selectedWordId: parseInt(e.target.value)})} value={selectedWordId || '0'}>
-                      <option selected value='0'>Select Word</option>
-                      {wordArray.map(word => <option value={word.word_id}>{word.text}</option>)}
-                    </select>
-                   <button
-                    onClick={wordToTeach.text.length ? () => this.appendElement(wordArray.find(word=> word.word_id === selectedWordId)) : 
-                      () => {this.setState({wordToTeach: wordArray.find(word=> word.word_id === selectedWordId)})}}
-                    >
-                    {wordToTeach.text.length ? "Add" : "Learn"}
-                    </button>
+                    <div>
+                  <Select
+                    value={selectedWordId || '0'}
+                    placeholder={"Selcect Word"}
+                    options={wordArray.map(word =>  { return { label: word.text, value: word.word_id }})}
+                    onChange={option => this.setState({selectedWordId: parseInt(option.value)})}>
+                    </Select>                    
+                     <button
+                      onClick={wordToTeach.text.length ? () => this.appendElement(wordArray.find(word=> word.word_id === selectedWordId)) : 
+                        () => {this.setState({wordToTeach: wordArray.find(word=> word.word_id === selectedWordId)})}}
+                      >
+                      {wordToTeach.text.length ? "Add" : "Learn"}
+                      </button>
                     </div>
-                  )
+                    )
                 }
                     <input
                       value={this.state.pinyin}
