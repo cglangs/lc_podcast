@@ -66,6 +66,17 @@ const ADD_SENTENCE = gql`
 
 `
 
+const customStyles = {
+
+  option: (styles, { data}) => {
+    return {
+      ...styles,
+      color: "black"
+    }
+  }
+
+}
+
 class Author extends Component {
   constructor(){
     super()
@@ -208,8 +219,8 @@ class Author extends Component {
                   ) : (
                     <div>
                   <Select
-                    value={selectedWordId || '0'}
-                    placeholder={"Selcect Word"}
+                    styles={customStyles}
+                    value={{value: selectedWordId, label: selectedWordId && wordArray.find(word=> word.word_id === selectedWordId).text}}
                     options={wordArray.map(word =>  { return { label: word.text, value: word.word_id }})}
                     onChange={option => this.setState({selectedWordId: parseInt(option.value)})}>
                     </Select>                    
