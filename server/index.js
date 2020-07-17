@@ -66,9 +66,9 @@ type Mutation {
 
     AddSentenceDependencies(src_sentence: String! dest_words:[String] word_to_teach: String!): Sentence
     @cypher(
-    statement:"""MATCH (s:Sentence {raw_text: $src_sentence}), (w:Word),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
+    statement:"""MATCH (s:Sentence {raw_text: $src_sentence}), (w:Word)
                        WHERE w.text IN $dest_words AND NOT w.text = $word_to_teach
-                       MERGE (i)<-[:AT_INTERVAL]-(s)-[:CONTAINS]->(w) 
+                       MERGE (s)-[:CONTAINS]->(w)
                        RETURN s """
     )
 
@@ -119,6 +119,7 @@ type Level {
 type Word {
   word_id: Int
   text: String
+  alt_text: String
   level: Level @relation(name: "INTRODUCED_IN", direction: OUT)
 }
 type User {
@@ -139,6 +140,8 @@ type TimeInterval {
 type Sentence {
 	raw_text: String!
   display_text: String!
+  alt_raw_text: String!
+  alt_display_text: String!
   pinyin: String!
   english: String!
   level: Level @relation(name: "SHOWN_IN" direction: OUT)

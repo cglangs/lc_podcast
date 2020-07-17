@@ -14,6 +14,7 @@ export const GET_LEVEL_WORDS = gql`
       points
       teachable_words{
         text
+        alt_text
         word_id
         level{
           points
@@ -21,6 +22,7 @@ export const GET_LEVEL_WORDS = gql`
       }
       addable_words{
         text
+        alt_text
         word_id
         level{
           points
@@ -38,23 +40,23 @@ export const GET_LEVEL_WORDS = gql`
 `
 
 const ADD_SENTENCE = gql`
-  mutation addsentence($rawSentenceText: String!, $displaySentenceText: String!, $pinyin: String!, $english: String!, $wordToTeachText: String!, $wordToTeachId: Int!, $sentenceWordList: [String!], $currentInterval: Int!, $shouldCall: Boolean!) {
-    CreateSentence(raw_text: $rawSentenceText, display_text: $displaySentenceText, pinyin: $pinyin, english: $english) {
+  mutation addsentence($rawSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $wordToTeachText: String!, $wordToTeachId: Int!, $sentenceWordListSimplified: [String!], $currentInterval: Int!, $shouldCall: Boolean!) {
+    CreateSentence(raw_text: $rawSentenceTextSimplified, display_text: $displaySentenceTextSimplified, alt_raw_text: $rawSentenceTextTraditional, alt_display_text: $displaySentenceTextTraditional, pinyin: $pinyin, english: $english) {
       raw_text
     }
-    AddSentenceLevel(from: {raw_text:  $rawSentenceText} to: {level_number: 1}){
+    AddSentenceLevel(from: {raw_text:  $rawSentenceTextSimplified} to: {level_number: 1}){
       from {raw_text}
       to {level_number}
     }
-    AddSentenceWord_taught(from: {raw_text: $rawSentenceText} to: {word_id: $wordToTeachId}){
+    AddSentenceWord_taught(from: {raw_text: $rawSentenceTextSimplified} to: {word_id: $wordToTeachId}){
       from {raw_text}
       to {text}
     }
-    AddSentenceDependencies(src_sentence: $rawSentenceText, dest_words: $sentenceWordList, word_to_teach: $wordToTeachText){
+    AddSentenceDependencies(src_sentence: $rawSentenceTextSimplified, dest_words: $sentenceWordListSimplified, word_to_teach: $wordToTeachText){
       raw_text
       display_text
     }
-    AddSentenceTime_interval(from: {raw_text: $rawSentenceText} to: {interval_order: $currentInterval}){
+    AddSentenceTime_interval(from: {raw_text: $rawSentenceTextSimplified} to: {interval_order: $currentInterval}){
       from {raw_text}
       to {interval_order}
     }
@@ -95,15 +97,23 @@ class Author extends Component {
   getSentenceVariables(interval_order, words_left) {
     const {SentenceElements, wordToTeach, pinyin, english} = this.state
     const sentenceWords = SentenceElements.filter( element => element.hasOwnProperty('word_id'))
-    const sentenceWordList = sentenceWords.map(word => word.text)
-    const SentenceElementList = SentenceElements.map(element => element.text)
-    const rawSentenceText = SentenceElementList.join('')
-    const displaySentenceText = rawSentenceText.replace(wordToTeach.text,"#")
+
+    const sentenceWordListSimplified = sentenceWords.map(word => word.text)
+    const SentenceElementListSimplified = SentenceElements.map(element => element.text)
+    const rawSentenceTextSimplified = SentenceElementListSimplified.join('')
+    const displaySentenceTextSimplified = rawSentenceTextSimplified.replace(wordToTeach.text,"#")
+
+    //const sentenceWordListTraditional = sentenceWords.map(word => word.alt_text)
+    const SentenceElementListTraditional = SentenceElements.map(element => element.alt_text || element.text)
+    const rawSentenceTextTraditional = SentenceElementListTraditional.join('')
+    const displaySentenceTextTraditional = rawSentenceTextTraditional.replace(wordToTeach.alt_text,"#")
+
+
     const wordToTeachText = wordToTeach.text
     const wordToTeachId = wordToTeach.word_id
     const currentInterval = interval_order
     const shouldCall =  words_left === 1
-    return{rawSentenceText,displaySentenceText, pinyin, english, wordToTeachText,wordToTeachId,sentenceWordList,currentInterval,shouldCall}
+    return{rawSentenceTextSimplified,displaySentenceTextSimplified,rawSentenceTextTraditional,displaySentenceTextTraditional, pinyin, english, wordToTeachText,wordToTeachId,sentenceWordListSimplified,currentInterval,shouldCall}
   }
 
   appendElement(newElement) {
