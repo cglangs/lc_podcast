@@ -17,5 +17,15 @@ export const punctuations = [
 	{id: 4, text: '！', type: 'EXCLAMATION'},
 	{id: 5, text: '？', type: 'QUESTION'},
 	{id: 6, text: '：', type: 'COLON'},
-	{id: 7, text: ' ', type: 'SPACE'}
+	{id: 7, text: '0', type: 'ZERO'},
+	{id: 8, text: '1', type: 'ONE'},
+	{id: 9, text: '2', type: 'TWO'},
+	{id: 10, text: '3', type: 'THREE'},
+	{id: 11, text: '4', type: 'FOUR'},
+	{id: 12, text: '5', type: 'FIVE'},
+	{id: 13, text: '6', type: 'SIX'},
+	{id: 14, text: '7', type: 'SEVEN'},
+	{id: 15, text: '8', type: 'EIGHT'},
+	{id: 16, text: '9', type: 'NINE'},
+	{id: 17, text: ' ', type: 'SPACE'}
 ]

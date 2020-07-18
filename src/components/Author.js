@@ -189,11 +189,13 @@ class Author extends Component {
               const wordArray = this.get_word_array(data.Author[0].level)
                return (
                 <div>
-                <p>{"Interval: " + data.Author[0].interval.interval_order}</p>
-                <p>{"Minimum points: " + data.Author[0].interval.min_length}</p>
-                <p>{"Maximum points:: " + data.Author[0].interval.max_length}</p>
-                <p>{"Current Points: " + points}</p>
-                <p>Word being learned: {wordToTeach.text.length && wordToTeach.text}</p>
+                <div className="Author-dashboard">
+                  <p>{"Interval: " + data.Author[0].interval.interval_order}</p>
+                  <p>{"Minimum points: " + data.Author[0].interval.min_length}</p>
+                  <p>{"Maximum points:: " + data.Author[0].interval.max_length}</p>
+                  <p>{"Current Points: " + points}</p>
+                </div>
+                <p>Word being learned: {wordToTeach.text}</p>
                 <div>
                 <p style={{fontSize: "30px"}}>{SentenceElements.length ?  SentenceElements.map(word => word.text).join('') : null}</p>
                <button
@@ -208,10 +210,12 @@ class Author extends Component {
                   {punctuationMode ?
                     (
                       <div>
-                     <select onChange={e => this.setState({selectedPunctuationId: parseInt(e.target.value)})} value={selectedPunctuationId}>
-                      <option selected value=''> Select Punctuation</option>
-                      {punctuations.map(mark => <option value={mark.id}>{mark.text}</option>)}
-                    </select>
+                    <Select
+                    styles={customStyles}
+                    value={{value: selectedPunctuationId, label: selectedPunctuationId && punctuations.find(mark=> mark.id === selectedPunctuationId).text}}
+                    options={punctuations.map(mark =>  { return { label: mark.text, value: mark.id }})}
+                    onChange={option => this.setState({selectedPunctuationId: parseInt(option.value)})}>
+                    </Select>    
                    <button onClick={() => this.appendElement(punctuations.find(mark=> mark.id === selectedPunctuationId))}>
                     Add
                     </button>
@@ -233,18 +237,24 @@ class Author extends Component {
                     </div>
                     )
                 }
+                  <div>
                     <input
                       value={this.state.pinyin}
                       onChange={e => this.setState({ pinyin: e.target.value })}
                       type="pinyin"
                       placeholder="Enter sentence's pinyin"
+                      style={{width: "250px"}}
                     />
+                  </div>
+                  <div>
                     <input
                       value={this.state.english}
                       onChange={e => this.setState({ english: e.target.value })}
                       type="english"
                       placeholder="Enter sentence's english translation"
+                      style={{width: "250px"}}
                     />
+                  </div>
                    <Mutation mutation={ADD_SENTENCE}
                       update={(store) => {
                         this.updateStoreAfterAddSentence(store, refetch)
