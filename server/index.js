@@ -104,15 +104,20 @@ type Level {
   level_number: Int
   points: Int
   teachable_words: [Word] @cypher(
-        statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word:Word),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
+        statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:StudyWord),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
                       OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)-[:AT_INTERVAL]->(i)
                       WITH w,s
                       WHERE s is NULL
                       RETURN w """)
   addable_words: [Word] @cypher(
         statement: """MATCH (this)<-[:SHOWN_IN]-(s:Sentence)-[:TEACHES | CONTAINS]->(w:Word)
-                      WITH w, COUNT(s) AS usage
-                      RETURN w AS word ORDER BY usage ASC 
+                      RETURN w AS word
+                      UNION
+                      MATCH (dw:DependentWord)-[:DERIVED_FROM]->(sw:StudyWord),(this)
+                      WITH dw, collect(sw) AS dependencies,this
+                      WHERE dw.require_all AND ALL(sw in dependencies WHERE (this)<-[:SHOWN_IN]-(:Sentence)-[:TEACHES | CONTAINS]->(sw))
+                      OR dw.require_all = FALSE AND ANY(sw in dependencies WHERE (this)<-[:SHOWN_IN]-(:Sentence)-[:TEACHES | CONTAINS]->(sw))
+                      RETURN dw AS word
                       """)
 
 }

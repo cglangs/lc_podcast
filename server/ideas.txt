@@ -94,6 +94,17 @@ interval 9: 9-10
 interval 10: 10-11
 
 
+Dependent words that are not learned:
+in HSK1:
+他们，她们，吃饭/饭
+
+HSK3:
+以后，后面
+
+Seperable words:
+in HSK1 
+
+
 
 add 你们，他们 to hsk1
 etc
