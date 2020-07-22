@@ -122,3 +122,174 @@ MATCH (i2:TimeInterval)-[:NEXT_TIME]->(:TimeInterval)<-[r:AUTHORING_INTERVAL]-(:
 
 CALL apoc.export.cypher.all(null)
 YIELD cypherStatements
+
+import React , { Component } from 'react';
+//import LongButton from './shared/LongButton.js'
+import PropTypes from 'prop-types';
+import constants from './shared/constants.js'
+import Select from "react-select";
+
+
+const customStyles = {
+
+	control: (provided, state) => ({
+		...provided,
+		"background-color": state.selectProps.show_answer  ? "default" : state.selectProps.menuColor,
+		"border-color": state.selectProps.show_answer ? state.selectProps.borderColor: "default",
+		"border-width": state.selectProps.show_answer ? "5px" : "default",
+
+	}),
+	option: (styles, { data}) => {
+		return {
+		  ...styles,
+		  backgroundColor: data.color,
+		  color: "black",
+		  fontWeight: "bold",
+		  height: "40px",
+		  fontSize: "45px"
+		}
+	},
+	valueContainer: (provided) => ({
+		...provided,
+		paddingRight: "25px"
+	 }),
+	container: (provided,state) => ({
+		...provided,
+		width: "fit-content",
+		float: state.selectProps.characterCount > 1 || state.selectProps.hasDescription ? "left" : "none",
+		marginLeft: state.selectProps.characterCount > 1 ? "40px" : "80px",
+	}),
+	singleValue: (provided) => ({
+	...provided,
+	"fontWeight": "bold"
+	}),
+
+}
+
+
+class Chinese extends Component {
+
+	state = {
+		dd_array: [],
+		word_to_study: {},
+		show_answer: false
+	}
+
+	componentDidUpdate(prevProps, prevState) {
+		if(prevProps.show_answer === true && this.props.show_answer === false){
+			this.replaceWords()
+		} else if(this.state.show_answer !== this.props.show_answer){
+			this.setState({show_answer: this.props.show_answer})
+		}
+	}
+
+	componentDidMount() {
+		this.replaceWords()
+	}
+
+	handleChange = (selectedOption) => {
+		var updatedWords = this.state.dd_array 
+		console.log("selected option:", selectedOption)
+		updatedWords[selectedOption.word_index].word_attributes[selectedOption.attribute_index].color = selectedOption.color
+		updatedWords[selectedOption.word_index].word_attributes[selectedOption.attribute_index].selected_tone = selectedOption.value
+		updatedWords[selectedOption.word_index].word_attributes[selectedOption.attribute_index].is_correct = (selectedOption.value === updatedWords[selectedOption.word_index].word_attributes[selectedOption.attribute_index].correct_tone)
+		console.log("correct tone:",updatedWords[selectedOption.word_index].word_attributes[selectedOption.attribute_index].correct_tone)
+		console.log("selected tone:",selectedOption.selected_tone)
+		console.log("is_correct:",updatedWords[selectedOption.word_index].word_attributes[selectedOption.attribute_index].is_correct)
+		this.setState({dd_array: updatedWords})
+   }
+
+	replaceWords () {
+		var newWords = []
+		this.props.all_words.forEach(function(word,word_index){
+			newWords.push({word_text: word.word_text, pinyin: word.alt_word_text2, english: word.english, word_attributes: []})
+			word.word_attributes.forEach(function(attr,attr_index){
+				newWords[word_index].word_attributes.push({
+					label: attr.word_attribute_alt_text, value: 0, interval_id: attr.interval_id, color: 'default', selected_tone: 0,
+				 	correct_tone: parseInt(attr.word_attribute_text.slice(-1)), word_attribute_id: attr.word_attribute_id, is_correct: false, word_attr_ready: attr.word_attr_ready})
+			})
+
+		})
+		this.setState({ dd_array: newWords, word_to_study: Object.assign({},this.props.word_to_study), all_words: [...this.props.all_words], show_answer: this.props.show_answer})
+	}
+
+
+	renderDropDowns = (word, word_index) => {
+		let _this = this
+		let button_array = []
+		let english
+		if (_this.state.dd_array.length) {
+				english = word.english
+ 	    		_this.state.dd_array[word_index].word_attributes.forEach(function(dd,dd_index){
+		 	    	button_array.push
+		 	    	(
+		 	    			<div>
+		 	    			<Select
+		 	    				value={dd}
+		 	    				styles={customStyles}
+		 	    				menuColor={dd.color}
+		 	    				borderColor={dd.is_correct ? "green" : "red"}
+		 	    				show_answer={_this.state.show_answer}
+		 	    				hasDescription={english.length}
+		 	    				characterCount={word.word_attributes.length}
+		 	    				options={constants.TONES.map(tone => Object.assign(Object.assign({},tone), { word_index: word_index, attribute_index: dd_index }))}
+		 	    				onChange={_this.handleChange}>
+       						</Select>
+       						<p style={{"fontSize": "12px"}}>{english}</p>
+       						</div>
+       				)
+				})
+
+		}
+
+		return button_array
+	}
+
+	getAttemptList = () => {
+		var attempt_list = []
+	    let _this = this
+		_this.state.dd_array.forEach(function(word,word_index){
+			word.word_attributes.forEach(function(dd,dd_index) {
+	  			attempt_list.push([_this.props.userId, dd.word_attribute_id, dd.word_attr_ready ? _this.props.calculateInterval(dd.interval_id, dd.is_correct): dd.interval_id])
+  			})
+  		})	
+      	return attempt_list
+    }
+
+
+	render() {
+		console.log(this.state.show_answer)
+	    let _this = this
+	    return (
+	    	<div style={{ "width": "100%"}}>
+	    	{_this.props.wordsButton(_this.getAttemptList)}
+	    	<p> Pick the correct tones for "{Object.keys(_this.state.word_to_study).length && _this.state.word_to_study.alt_word_text.replace(/[0-9]/g, '')}"</p>
+	    	{_this.state.dd_array.map((word,index) => 
+	    		<div style={word.word_attributes.length > 1 ? { "marginBottom": "140px", "marginLeft": "35%"} : {"marginBottom": "90px", "marginLeft": "35%"}}>
+	    			<div>
+		    		{_this.renderDropDowns(word,index)}
+		    		</div>
+		    		{_this.state.show_answer ? `Correct answer: ${word.pinyin}`: null}
+	    		</div>
+	    	
+	    	)}
+	    	</div>
+	    )
+
+
+	}
+
+
+}
+
+Chinese.propTypes = {
+	word_to_study: PropTypes.object.isRequired,
+	all_words: PropTypes.array.isRequired,
+	handleWordClick: PropTypes.func.isRequired,
+	show_answer: PropTypes.bool.isRequired,
+	wordsButton: PropTypes.func.isRequired,
+	userId: PropTypes.number.isRequired,
+	calculateInterval: PropTypes.func.isRequired
+}
+
+export default Chinese;
