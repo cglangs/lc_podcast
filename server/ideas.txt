@@ -75,17 +75,17 @@ ALSO
 
 interval 1: 1-4
 
-interval 2: 5-6
+interval 2: 4-5
 
-interval 3: 7-8
+interval 3: 5-6
 
-interval 4: 9-10
+interval 4: 6-7
 
-interval 5: 11-12
+interval 5: 7-8
 
-interval 6: 13-14x
+interval 6: 8-9
 
-interval 7: 15-16
+interval 7: 9-10
 
 
 
@@ -115,3 +115,10 @@ RETURN i,a
 MATCH(i:TimeInterval {interval_order: 1}),(a:Author)
 MERGE(a)-[:AUTHORING_INTERVAL]->(i) 
 RETURN i,a
+
+MATCH (i2:TimeInterval)-[:NEXT_TIME]->(:TimeInterval)<-[r:AUTHORING_INTERVAL]-(:Author)
+                  CALL apoc.refactor.to(r, i2) YIELD input, output
+                  RETURN 1
+
+CALL apoc.export.cypher.all(null)
+YIELD cypherStatements

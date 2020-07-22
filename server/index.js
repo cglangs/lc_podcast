@@ -103,6 +103,7 @@ type Author {
 type Level {
   level_number: Int
   points: Int
+  sentences: [Sentence] @relation(name: "SHOWN_IN", direction: IN)
   teachable_words: [Word] @cypher(
         statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:StudyWord),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
                       OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)-[:AT_INTERVAL]->(i)
