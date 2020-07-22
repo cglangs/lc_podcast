@@ -103,10 +103,10 @@ class Author extends Component {
     this.baseState = this.state 
   }
 
-  get_word_array(level) {
+  get_word_array(level, interval_order) {
     let arr = []
     const wordToTeach = this.state.wordToTeach
-    if(wordToTeach && wordToTeach.text.length){
+    if(wordToTeach && wordToTeach.text.length && interval_order === 1){
         arr = [wordToTeach, ...level.addable_words]
       }else{
         arr = level.teachable_words
@@ -195,7 +195,7 @@ class Author extends Component {
           {({ loading, error, data, refetch }) => {
               if (loading) return <div>Fetching</div>
               if (error) return <div>Error</div>
-              const wordArray = this.get_word_array(data.Author[0].level)
+              const wordArray = this.get_word_array(data.Author[0].level,data.Author[0].interval.interval_order)
                return (
                 <div>
                 <div className="Author-dashboard">

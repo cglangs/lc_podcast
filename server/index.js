@@ -109,16 +109,20 @@ type Level {
                       OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)-[:AT_INTERVAL]->(i)
                       WITH w,s
                       WHERE s is NULL
-                      RETURN w """)
-  addable_words: [Word] @cypher(
-        statement: """MATCH (this)<-[:SHOWN_IN]-(s:Sentence)-[:TEACHES | CONTAINS]->(w:Word)
                       RETURN w AS word
                       UNION
                       MATCH (dw:DependentWord)-[:DERIVED_FROM]->(sw:StudyWord),(this)
                       WITH dw, collect(sw) AS dependencies,this
                       WHERE dw.require_all AND ALL(sw in dependencies WHERE (this)<-[:SHOWN_IN]-(:Sentence)-[:TEACHES | CONTAINS]->(sw))
                       OR dw.require_all = FALSE AND ANY(sw in dependencies WHERE (this)<-[:SHOWN_IN]-(:Sentence)-[:TEACHES | CONTAINS]->(sw))
+                      OPTIONAL MATCH (dw)<-[:TEACHES]-(s:Sentence)-[:AT_INTERVAL]->(i)
+                      WITH dw,s
+                      WHERE s is NULL
                       RETURN dw AS word
+                      """)
+  addable_words: [Word] @cypher(
+        statement: """MATCH (this)<-[:SHOWN_IN]-(s:Sentence)-[:TEACHES | CONTAINS]->(w:Word)
+                      RETURN DISTINCT w AS word
                       """)
 
 }

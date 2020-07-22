@@ -108,6 +108,13 @@ etc
 for place holders we can just use 1,2,3 etc
 
 
+CREATE (:DependentWord{text:'哪里', alt_text:'哪裡', english:'where', pinyin:'nǎlǐ', require_all: TRUE, tones:'na3li3', word_id: 156})
+
+MATCH(w:StudyWord),(dw:DependentWord {word_id: 156})
+WHERE w.text = '哪儿' OR w.text = '里' 
+CREATE(dw)-[:DERIVED_FROM]->(w)
+RETURN w,dw
+
 MATCH(i:TimeInterval)<-[r:AUTHORING_INTERVAL]-(a:Author)
 DELETE r
 RETURN i,a
