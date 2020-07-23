@@ -107,6 +107,9 @@ etc
 
 for place holders we can just use 1,2,3 etc
 
+CALL apoc.export.cypher.all(null)
+YIELD cypherStatements 
+RETURN cypherStatements
 
 CREATE (:DependentWord{text:'哪里', alt_text:'哪裡', english:'where', pinyin:'nǎlǐ', require_all: TRUE, tones:'na3li3', word_id: 156})
 
