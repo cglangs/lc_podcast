@@ -105,20 +105,11 @@ type Level {
   points: Int
   sentences: [Sentence] @relation(name: "SHOWN_IN", direction: IN)
   teachable_words: [Word] @cypher(
-        statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:StudyWord),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
+        statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
                       OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)-[:AT_INTERVAL]->(i)
                       WITH w,s
                       WHERE s is NULL
                       RETURN w AS word
-                      UNION
-                      MATCH (dw:DependentWord)-[:DERIVED_FROM]->(sw:StudyWord),(this)
-                      WITH dw, collect(sw) AS dependencies,this
-                      WHERE dw.require_all AND ALL(sw in dependencies WHERE (this)<-[:SHOWN_IN]-(:Sentence)-[:TEACHES | CONTAINS]->(sw))
-                      OR dw.require_all = FALSE AND ANY(sw in dependencies WHERE (this)<-[:SHOWN_IN]-(:Sentence)-[:TEACHES | CONTAINS]->(sw))
-                      OPTIONAL MATCH (dw)<-[:TEACHES]-(s:Sentence)-[:AT_INTERVAL]->(i)
-                      WITH dw,s
-                      WHERE s is NULL
-                      RETURN dw AS word
                       """)
   addable_words: [Word] @cypher(
         statement: """MATCH (this)<-[:SHOWN_IN]-(s:Sentence)-[:TEACHES | CONTAINS]->(w:Word)

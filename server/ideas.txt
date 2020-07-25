@@ -1,3 +1,24 @@
+
+for interval 2 add words 有点儿，有点，一点，没，天，它们
+
+MATCH(w:Word)
+WHERE SIZE(w.text) > 1
+WITH w as current_word, w.word_id AS word_id, split(w.text,'') AS x, split(w.alt_text,'') AS x2
+WITH current_word, word_id, x,x2, RANGE(0, SIZE(x) - 1) AS indexes
+FOREACH(index in indexes | 
+	MERGE(nw:Word {text: x[index]})
+    ON CREATE set 
+    nw.word_id = '0',
+    nw.is_test = TRUE,
+    nw.alt_text=x2[index]
+    ON MATCH set 
+    nw.word_id = nw.word_id,
+    nw.tones = nw.tones,
+    nw.pinyin = nw.pinyin,
+    nw.english = nw.english,
+    nw.alt_text=x2[index]
+)
+
 Idea #1
 Can create a sentence at an interval if a sentence for the same word at the previous interval exists
 
@@ -139,6 +160,15 @@ import PropTypes from 'prop-types';
 import constants from './shared/constants.js'
 import Select from "react-select";
 
+                   UNION
+                      MATCH (dw:DependentWord)-[:DERIVED_FROM]->(sw:StudyWord),(this)
+                      WITH dw, collect(sw) AS dependencies,this
+                      WHERE dw.require_all AND ALL(sw in dependencies WHERE (this)<-[:SHOWN_IN]-(:Sentence)-[:TEACHES | CONTAINS]->(sw))
+                      OR dw.require_all = FALSE AND ANY(sw in dependencies WHERE (this)<-[:SHOWN_IN]-(:Sentence)-[:TEACHES | CONTAINS]->(sw))
+                      OPTIONAL MATCH (dw)<-[:TEACHES]-(s:Sentence)-[:AT_INTERVAL]->(i)<-[:AUTHORING_INTERVAL]-(:Author)
+                      WITH dw,s
+                      WHERE s is NULL
+                      RETURN dw AS word
 
 const customStyles = {
 
