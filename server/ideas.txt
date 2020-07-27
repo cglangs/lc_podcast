@@ -19,6 +19,8 @@ FOREACH(index in indexes |
     nw.alt_text=x2[index]
 )
 
+cat import/07-26-2020-copy | ./bin/cypher-shell -a bolt://localhost:7687 -u neo4j -p password --format verbose
+
 Idea #1
 Can create a sentence at an interval if a sentence for the same word at the previous interval exists
 
