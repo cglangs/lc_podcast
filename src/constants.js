@@ -13,7 +13,7 @@ export const deleteRole = () => localStorage.removeItem(ROLE);
 export const punctuations = [
 	{id: 1, text: '，', type: 'COMMA'},
 	{id: 2, text: '。', type: 'PERIOD'},
-	{id: 3, text: '“', type: 'QUOTE'},
+	{id: 3, text: '”', type: 'QUOTE'},
 	{id: 4, text: '！', type: 'EXCLAMATION'},
 	{id: 5, text: '？', type: 'QUESTION'},
 	{id: 6, text: '：', type: 'COLON'},

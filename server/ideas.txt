@@ -19,6 +19,33 @@ FOREACH(index in indexes |
     nw.alt_text=x2[index]
 )
 
+MATCH(s:Sentence),(w:Word {text: '他们'})
+WHERE EXISTS((s)-[:CONTAINS]->(w))
+SET
+s.display_text = REPLACE(s.display_text,'他们','他'),
+s.alt_display_text = REPLACE(s.alt_display_text,'他們','他'),
+s.raw_text = REPLACE(s.raw_text,'他们','他'),
+s.alt_raw_text = REPLACE(s.alt_raw_text,'他們','他')
+RETURN s
+
+MATCH(s:Sentence),(w1:Word {text: '他们'}),(w2:Word {text: '他'})
+WHERE EXISTS((s)-[:CONTAINS]->(w1))
+CREATE (s)-[:CONTAINS]->(w2)
+RETURN s,w1,w2
+
+
+CALL apoc.export.cypher.all("all-plain.cypher", {
+    format: "plain",
+    useOptimizations: {type: "UNWIND_BATCH", unwindBatchSize: 20}
+})
+YIELD file, batches, source, format, nodes, relationships, properties, time, rows, batchSize
+RETURN file, batches, source, format, nodes, relationships, properties, time, rows, batchSize;
+
+
+
+MATCH(s:Sentence)-[rel:CONTAINS]->(w1:Word {text: '他们'})
+DELETE rel
+
 cat import/07-26-2020-copy | ./bin/cypher-shell -a bolt://localhost:7687 -u neo4j -p password --format verbose
 
 Idea #1
