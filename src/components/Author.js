@@ -108,7 +108,9 @@ class Author extends Component {
     const wordToTeach = this.state.wordToTeach
     if(wordToTeach && wordToTeach.text.length && interval_order === 1){
         arr = [wordToTeach, ...level.addable_words]
-      }else{
+      } else if (wordToTeach && wordToTeach.text.length && interval_order > 1){
+          arr = level.addable_words
+      } else{
         arr = level.teachable_words
       }
     return arr
