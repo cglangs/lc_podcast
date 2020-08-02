@@ -139,6 +139,17 @@ interval 7: 9-10
 
 
 
+sentence 1: 1-5
+
+sentence 2: 6-8
+
+sentence 3: 9-10
+
+
+
+
+
+
 
 Dependent words that are not learned:
 in HSK1:

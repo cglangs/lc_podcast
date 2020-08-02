@@ -89,6 +89,15 @@ type Mutation {
     )
 }
 
+type Query {
+    getNextSentence(dummy: Int): Sentence
+    @cypher(
+    statement:""" MATCH(s:Sentence)
+                  WITH s, rand() AS r
+                  RETURN s ORDER BY r LIMIT 1"""
+    )
+}
+
 
 enum Role {
   ADMIN
@@ -121,6 +130,7 @@ type Word {
   word_id: Int
   text: String
   alt_text: String
+  english: String
   level: Level @relation(name: "INTRODUCED_IN", direction: OUT)
 }
 type User {
