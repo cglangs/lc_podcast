@@ -1,3 +1,9 @@
+	mutation {
+    makeClozeAttempt(userId: 234, sentenceId: 34, isCorrect: true, nextSentenceId: 184)
+
+
+  }
+
                   CALL apoc.do.when(isCorrect,
                     "CALL apoc.refactor.to(r, i2) YIELD input RETURN 1") YIELD value
 "CREATE (u)-[:LEARNING]->(s)",{s:s, u:u}

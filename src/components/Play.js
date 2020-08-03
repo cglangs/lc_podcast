@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import {Query} from 'react-apollo';
+import {Query, Mutation} from 'react-apollo';
 import gql from 'graphql-tag';
 
 import '../styles/App.css';
@@ -17,6 +17,7 @@ const GET_SENTENCE = gql`
   query getSentence {
 	getNextSentence(dummy: 1) {
 		_id
+		next_sentence_id
 		raw_text
 		display_text
 		pinyin
@@ -67,18 +68,18 @@ class Play extends Component {
          			  <div>
          			  <input style={{float: "left"}} onChange={e => this.setState({ userResponse: e.target.value })}/>
          			  <p>{data.getNextSentence.display_text.replace("#","")}</p>
- 						<Mutation mutation={TEST_MUTATION}
+ 						<Mutation mutation={MAKE_ATTEMPT}
                       	update={(store) => {
                         
                         	}
                       	}
                   		 >
-                        {testMutation => (
+                        {makeAttempt => (
                           <button
                             onClick={() => 
                               {
 
-                                testMutation()
+                                makeAttempt()
                               }
                           	}
                           >
@@ -86,11 +87,12 @@ class Play extends Component {
                           </button>
                         )}
                     </Mutation>
-         			  <button onClick={() => this.checkAnswer(data.getNextSentence.word_taught.text)}>Submit</button>
-         			  </div>
+                    </div>
+                    <div>
          			  <p>{data.getNextSentence.english}</p>
          			  <p>{data.getNextSentence.word_taught.english}</p>
          			</div>
+         </div>
               	) 
 
 

@@ -87,18 +87,16 @@ type Mutation {
                   WHERE u.email = $email
                   RETURN u"""
     )
-    makeClozeAttempt(userId: Int!, sentenceId: Int!, isCorrect: Boolean!): Int
+    makeClozeAttempt(userId: Int!, sentenceId: Int!, isCorrect: Boolean!, nextSentenceId: Int): Int
     @cypher(
-    statement:""" MATCH(u:User),(s:Sentence)
+    statement:""" MATCH(u:User),(s:Sentence)-[:TEACHES]->(w:Word)
                   WHERE ID(u) = userId AND ID(s) = sentenceId
-                  MERGE (u)-[:LEARNING]->(s)
-                  WITH u,s,isCorrect
-                  CALL apoc.do.when(isCorrect, '
-                  MATCH(s)-[:TEACHES]->(w:Word),(u)
-                    WITH s,w,u
-                    MATCH (w)<-[:TEACHES]-(s2:Sentence)-[:AT_INTERVAL]->(i2:TimeInterval)<-[:NEXT_TIME]-(i:TimeInterval)<-[:AT_INTERVAL]-(s)<-[r:LEARNING]-(u)
-                    CALL apoc.refactor.to(r, s2) YIELD input RETURN 1
-                  ') YIELD value
+                  OPTIONAL MATCH (s2:Sentence)
+                  WHERE ID(s2) = nextSentenceId
+                  MERGE (u)-[r:LEARNING]->(s)
+                  WITH u,s,s2,w,r,isCorrect,nextSentenceId
+                  CALL apoc.do.when(isCorrect AND nextSentenceId IS NOT NULL,
+                   'CALL apoc.refactor.to(r, s2) YIELD input RETURN 1','',{r:r,s2:s2}) YIELD value
                   RETURN 1
                     """
     )
@@ -176,6 +174,12 @@ type Sentence {
   time_interval: TimeInterval @relation(name: "AT_INTERVAL" direction: OUT)
 	words_contained: [Word!]! @relation(name: "CONTAINS", direction: OUT)
 	word_taught: Word! @relation(name: "TEACHES", direction: OUT)
+  next_sentence_id: Int @cypher(
+        statement: """MATCH(this)-[:TEACHES]->(w:Word)
+                      WITH this, w
+                      MATCH (w)<-[:TEACHES]-(s2:Sentence)-[:AT_INTERVAL]->(i2:TimeInterval)<-[:NEXT_TIME]-(i:TimeInterval)<-[:AT_INTERVAL]-(this)
+                      RETURN ID(s2)
+                      """)
 }
 `
 
