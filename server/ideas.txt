@@ -1,3 +1,6 @@
+                  CALL apoc.do.when(isCorrect,
+                    "CALL apoc.refactor.to(r, i2) YIELD input RETURN 1") YIELD value
+"CREATE (u)-[:LEARNING]->(s)",{s:s, u:u}
 
 for interval 2 add words 有点儿，有点，一点，没，天，它们
 

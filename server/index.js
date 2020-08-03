@@ -77,7 +77,7 @@ type Mutation {
     IncrementInterval(should_call: Boolean!): Int
     @cypher(
     statement:""" MATCH (i2:TimeInterval)<-[:NEXT_TIME]-(:TimeInterval)<-[r:AUTHORING_INTERVAL]-(:Author)
-                  CALL apoc.refactor.to(r, i2) YIELD input, output
+                  CALL apoc.refactor.to(r, i2) YIELD input
                   RETURN 1"""
     )
 
@@ -87,6 +87,21 @@ type Mutation {
                   WHERE u.email = $email
                   RETURN u"""
     )
+    makeClozeAttempt(userId: Int!, sentenceId: Int!, isCorrect: Boolean!): Int
+    @cypher(
+    statement:""" MATCH(u:User),(s:Sentence)
+                  WHERE ID(u) = userId AND ID(s) = sentenceId
+                  MERGE (u)-[:LEARNING]->(s)
+                  WITH u,s,isCorrect
+                  CALL apoc.do.when(isCorrect, '
+                  MATCH(s)-[:TEACHES]->(w:Word),(u)
+                    WITH s,w,u
+                    MATCH (w)<-[:TEACHES]-(s2:Sentence)-[:AT_INTERVAL]->(i2:TimeInterval)<-[:NEXT_TIME]-(i:TimeInterval)<-[:AT_INTERVAL]-(s)<-[r:LEARNING]-(u)
+                    CALL apoc.refactor.to(r, s2) YIELD input RETURN 1
+                  ') YIELD value
+                  RETURN 1
+                    """
+    )
 }
 
 type Query {
@@ -94,6 +109,7 @@ type Query {
     @cypher(
     statement:""" MATCH(s:Sentence)
                   WITH s, rand() AS r
+                  WHERE NOT EXISTS((s)-[:CONTAINS]->())
                   RETURN s ORDER BY r LIMIT 1"""
     )
 }
@@ -149,6 +165,7 @@ type TimeInterval {
   sentences: [Sentence] @relation(name: "AT_INTERVAL", direction: IN)
 }
 type Sentence {
+  _id: Int!
 	raw_text: String!
   display_text: String!
   alt_raw_text: String!
