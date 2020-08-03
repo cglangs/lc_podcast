@@ -95,8 +95,12 @@ type Mutation {
                   WHERE ID(s2) = nextSentenceId
                   MERGE (u)-[r:LEARNING]->(s)
                   WITH u,s,s2,w,r,isCorrect,nextSentenceId
-                  CALL apoc.do.when(isCorrect AND nextSentenceId IS NOT NULL,
-                   'CALL apoc.refactor.to(r, s2) YIELD input RETURN 1','',{r:r,s2:s2}) YIELD value
+                  CALL apoc.do.case(
+                  [
+                  isCorrect AND nextSentenceId IS NOT NULL,'CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
+                  isCorrect AND nextSentenceId IS NULL,'CREATE (u)-[:LEARNED]->(w) DELETE r'
+                  ],'',{r:r,s2:s2, u:u, w:w}) YIELD value
+
                   RETURN 1
                     """
     )
