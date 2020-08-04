@@ -26,6 +26,10 @@ const GET_SENTENCE = gql`
 		word_taught{
 			text
 			english
+			characters{
+				text
+				english
+			}
 		}
 
 	}
@@ -38,17 +42,9 @@ class Play extends Component {
 	constructor(){
     super()
     this.state = {
-    	isCorrect: false,
     	showAnswer: false,
-    	userResponse: '',
-    	correctResponse: {
-    		text: '',
-    		characters: []
-    	}
-    		
-
+    	userResponse: ''
     }
-    this.baseState = this.state 
   }
 
 
@@ -70,11 +66,13 @@ class Play extends Component {
               return(
               	    <div>
          			  <div>
-         			  <input style={{float: "left"}} onChange={e => this.setState({ userResponse: e.target.value })}/>
+         			  <input style={{float: "left"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}/>
          			  <p>{data.getNextSentence.display_text.replace("#","")}</p>
  						<Mutation mutation={MAKE_ATTEMPT}
                       	update={(store) => {
-                        
+                      		this.setState({
+                      			showAnswer: true
+                      		})
                         	}
                       	}
                   		 >
@@ -82,17 +80,26 @@ class Play extends Component {
                           <button
                             onClick={() => 
                               {
-                              	//console.log(getUserId(),data.getNextSentence._id, this.checkAnswer(data.getNextSentence.word_taught.text),data.getNextSentence.next_interval_sentence_id)
-                                makeAttempt({variables:{
-                                	userId: userId,
-                                	sentenceId: sentenceId,
-                                	isCorrect: this.checkAnswer(data.getNextSentence.word_taught.text),
-                                	nextIntervalSentenceId: nextIntervalSentenceId
-                                }})
+                              	if(!this.state.showAnswer){
+                              		makeAttempt({variables:{
+	                                	userId: userId,
+	                                	sentenceId: sentenceId,
+	                                	isCorrect: this.checkAnswer(data.getNextSentence.word_taught.text),
+	                                	nextIntervalSentenceId: nextIntervalSentenceId
+                                	}})
+                              	} else{
+								    this.setState({
+								        showAnswer: false,
+								        userResponse: '',
+								    }, () => {
+								    	refetch()
+								    })
+                              	}
+
                               }
                           	}
                           >
-                          Submit
+                          {this.state.showAnswer ? "Next Sentence" : "Submit Answer"}
                           </button>
                         )}
                     </Mutation>
@@ -101,6 +108,22 @@ class Play extends Component {
          			  <p>{data.getNextSentence.english}</p>
          			  <p>{data.getNextSentence.word_taught.english}</p>
          			</div>
+         			{this.state.showAnswer && (
+         					<div>
+         					<p>{data.getNextSentence.pinyin}</p>
+         					{data.getNextSentence.word_taught.characters.map(char => 
+         						<div>
+         						<p>{char.text}</p>
+         						<p>{char.english}</p>
+         						</div>
+
+         					)}
+         					</div>
+
+
+         				)
+
+         			}
          </div>
               	) 
 

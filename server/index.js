@@ -149,6 +149,10 @@ type Word {
   alt_text: String
   english: String
   level: Level @relation(name: "INTRODUCED_IN", direction: OUT)
+  characters: [Word] @cypher(
+        statement: """MATCH (this)-[r:COMPOSED_OF]->(w:Word)
+                      RETURN w ORDER BY r.word_order
+                      """)
 }
 type User {
   _id: Int!
