@@ -9,7 +9,7 @@ const neo4j = require('neo4j-driver')
 async function signup(object, params, ctx, resolveInfo) {
   params.password = await bcrypt.hash(params.password, 10)
   const user = await neo4jgraphql(object, params, ctx, resolveInfo)
-  const tokenString = jwt.sign({ userId: user.id }, APP_SECRET)
+  const tokenString = jwt.sign({ userId: user._id }, APP_SECRET)
   user.token = tokenString
   return user
 }
@@ -18,7 +18,6 @@ async function login(object, params, ctx, resolveInfo) {
   const password = params.password
   delete params.password
   const user = await neo4jgraphql(object, params, ctx, resolveInfo)
-  console.log(user)
   if (!user) {
     throw new Error('No such user found')
   }
@@ -29,7 +28,7 @@ async function login(object, params, ctx, resolveInfo) {
   }
   user.password = null
 
-  user.token = jwt.sign({ userId: user.id }, APP_SECRET)
+  user.token = jwt.sign({ userId: user._id }, APP_SECRET)
 
   return user
 }
@@ -87,18 +86,18 @@ type Mutation {
                   WHERE u.email = $email
                   RETURN u"""
     )
-    makeClozeAttempt(userId: Int!, sentenceId: Int!, isCorrect: Boolean!, nextSentenceId: Int): Int
+    makeClozeAttempt(userId: Int!, sentenceId: Int!, isCorrect: Boolean!, nextIntervalSentenceId: Int): Int
     @cypher(
     statement:""" MATCH(u:User),(s:Sentence)-[:TEACHES]->(w:Word)
                   WHERE ID(u) = userId AND ID(s) = sentenceId
                   OPTIONAL MATCH (s2:Sentence)
-                  WHERE ID(s2) = nextSentenceId
+                  WHERE ID(s2) = nextIntervalSentenceId
                   MERGE (u)-[r:LEARNING]->(s)
-                  WITH u,s,s2,w,r,isCorrect,nextSentenceId
+                  WITH u,s,s2,w,r,isCorrect,nextIntervalSentenceId
                   CALL apoc.do.case(
                   [
-                  isCorrect AND nextSentenceId IS NOT NULL,'CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
-                  isCorrect AND nextSentenceId IS NULL,'CREATE (u)-[:LEARNED]->(w) DELETE r'
+                  isCorrect AND nextIntervalSentenceId IS NOT NULL,'CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
+                  isCorrect AND nextIntervalSentenceId IS NULL,'CREATE (u)-[:LEARNED]->(w) DELETE r'
                   ],'',{r:r,s2:s2, u:u, w:w}) YIELD value
 
                   RETURN 1
@@ -178,7 +177,7 @@ type Sentence {
   time_interval: TimeInterval @relation(name: "AT_INTERVAL" direction: OUT)
 	words_contained: [Word!]! @relation(name: "CONTAINS", direction: OUT)
 	word_taught: Word! @relation(name: "TEACHES", direction: OUT)
-  next_sentence_id: Int @cypher(
+  next_interval_sentence_id: Int @cypher(
         statement: """MATCH(this)-[:TEACHES]->(w:Word)
                       WITH this, w
                       MATCH (w)<-[:TEACHES]-(s2:Sentence)-[:AT_INTERVAL]->(i2:TimeInterval)<-[:NEXT_TIME]-(i:TimeInterval)<-[:AT_INTERVAL]-(this)

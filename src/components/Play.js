@@ -1,13 +1,14 @@
 import React, { Component } from 'react'
 import {Query, Mutation} from 'react-apollo';
 import gql from 'graphql-tag';
+import {getUserId} from '../constants.js'
 
 import '../styles/App.css';
 
 
 const MAKE_ATTEMPT = gql`
-  mutation makeAttempt($userId: Int!, $sentenceId: Int!, $isCorrect: Boolean!) {
-	makeClozeAttempt(userId: $userId, sentenceId: $sentenceId, isCorrect: $isCorrect)
+  mutation makeAttempt($userId: Int!, $sentenceId: Int!, $isCorrect: Boolean!, $nextIntervalSentenceId: Int,) {
+	makeClozeAttempt(userId: $userId, sentenceId: $sentenceId, isCorrect: $isCorrect, nextIntervalSentenceId: $nextIntervalSentenceId)
   }
 
 `
@@ -17,7 +18,7 @@ const GET_SENTENCE = gql`
   query getSentence {
 	getNextSentence(dummy: 1) {
 		_id
-		next_sentence_id
+		next_interval_sentence_id
 		raw_text
 		display_text
 		pinyin
@@ -63,6 +64,9 @@ class Play extends Component {
 	      	{({ loading, error, data, refetch }) => {
 	      	  if (loading) return <div>Fetching</div>
               if (error) return <div>Error</div>
+              const nextIntervalSentenceId = data.getNextSentence.next_interval_sentence_id ? parseInt(data.getNextSentence.next_interval_sentence_id) : null
+     		  const sentenceId = parseInt(data.getNextSentence._id)
+          	  const userId = parseInt(getUserId())
               return(
               	    <div>
          			  <div>
@@ -78,8 +82,13 @@ class Play extends Component {
                           <button
                             onClick={() => 
                               {
-
-                                makeAttempt()
+                              	//console.log(getUserId(),data.getNextSentence._id, this.checkAnswer(data.getNextSentence.word_taught.text),data.getNextSentence.next_interval_sentence_id)
+                                makeAttempt({variables:{
+                                	userId: userId,
+                                	sentenceId: sentenceId,
+                                	isCorrect: this.checkAnswer(data.getNextSentence.word_taught.text),
+                                	nextIntervalSentenceId: nextIntervalSentenceId
+                                }})
                               }
                           	}
                           >
