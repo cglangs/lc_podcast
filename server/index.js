@@ -111,7 +111,9 @@ type Query {
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:TimeInterval),(u)-[:LEARNING]->(ds)
                   WITH w,s,u,i,collect({word_text: wd.text, current_interval:COALESCE(di.interval_order,0)}) AS word_dependencies
-                  WHERE NOT EXISTS((u)-[:LEARNED]->(w)) AND (i.interval_order = 1 OR EXISTS((u)-[:LEARNING]->(s)))
+                  WHERE 
+                  ((u)-[:LEARNING]->(s) OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND  i.interval_order = 1)) AND
+                  NOT EXISTS((u)-[:LEARNED]->(w)) AND (i.interval_order = 1 OR EXISTS((u)-[:LEARNING]->(s)))
                   AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order)
                   RETURN s LIMIT 1
                   """
