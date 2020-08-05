@@ -107,14 +107,23 @@ type Mutation {
 type Query {
     getNextSentence(userName: String): Sentence
     @cypher(
-    statement:""" MATCH (i:TimeInterval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word), (u:User{user_name: userName})
+    statement:""" 
+                  MATCH  (u:User{user_name: userName}),(u)-[:LEARNING]->(:Sentence)-[:AT_INTERVAL]->(ti:TimeInterval)
+                  //get user and the farthest interval that they have gotten to
+                  WITH u, COALESCE(MAX(ti.interval_order),1) AS current_max_interval
+                  MATCH (i:TimeInterval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
+                  //get word dependencies
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:TimeInterval),(u)-[:LEARNING]->(ds)
-                  WITH w,s,u,i,collect({word_text: wd.text, current_interval:COALESCE(di.interval_order,0)}) AS word_dependencies
+                  //find the interval the the sentence dependencies that the user is learning
+                  WITH u,w,i,s,collect({word_text: wd.text, current_interval:COALESCE(di.interval_order,0)}) AS word_dependencies, current_max_interval
+                  //aggregate progress for every dependent word's farthest interval
                   WHERE 
-                  ((u)-[:LEARNING]->(s) OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND  i.interval_order = 1)) AND
-                  NOT EXISTS((u)-[:LEARNED]->(w)) AND (i.interval_order = 1 OR EXISTS((u)-[:LEARNING]->(s)))
+                  ((EXISTS((u)-[:LEARNING]->(s)) OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1)))
+                  //Check that user is either learning at that interval 
                   AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order)
+                  //Check that every dependent word is at the same interval
+                  // CASE STATEMENT HERE TO ORDER BY IF IT IS LINKED TO LATEST INTERVALS AND (current_max_interval = 1 OR EXISTS((s)->[:TEACHES]-)
                   RETURN s LIMIT 1
                   """
     )
