@@ -86,10 +86,10 @@ type Mutation {
                   WHERE u.email = $email
                   RETURN u"""
     )
-    makeClozeAttempt(userId: Int!, sentenceId: Int!, isCorrect: Boolean!, nextIntervalSentenceId: Int): Int
+    makeClozeAttempt(userName: String!, sentenceId: Int!, isCorrect: Boolean!, nextIntervalSentenceId: Int): Int
     @cypher(
-    statement:""" MATCH(u:User),(s:Sentence)-[:TEACHES]->(w:Word)
-                  WHERE ID(u) = userId AND ID(s) = sentenceId
+    statement:""" MATCH(u:User {user_name: userName}),(s:Sentence)-[:TEACHES]->(w:Word)
+                  WHERE ID(s) = sentenceId
                   OPTIONAL MATCH (s2:Sentence)
                   WHERE ID(s2) = nextIntervalSentenceId
                   MERGE (u)-[r:LEARNING]->(s)
@@ -99,19 +99,22 @@ type Mutation {
                   isCorrect AND nextIntervalSentenceId IS NOT NULL,'CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
                   isCorrect AND nextIntervalSentenceId IS NULL,'CREATE (u)-[:LEARNED]->(w) DELETE r'
                   ],'',{r:r,s2:s2, u:u, w:w}) YIELD value
-
                   RETURN 1
                     """
     )
 }
 
 type Query {
-    getNextSentence(dummy: Int): Sentence
+    getNextSentence(userName: String): Sentence
     @cypher(
-    statement:""" MATCH(s:Sentence)
-                  WITH s, rand() AS r
-                  WHERE NOT EXISTS((s)-[:CONTAINS]->())
-                  RETURN s ORDER BY r LIMIT 1"""
+    statement:""" MATCH (i:TimeInterval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word), (u:User{user_name: userName})
+                  OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
+                  OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:TimeInterval),(u)-[:LEARNING]->(ds)
+                  WITH w,s,u,i,collect({word_text: wd.text, current_interval:COALESCE(di.interval_order,0)}) AS word_dependencies
+                  WHERE NOT EXISTS((u)-[:LEARNED]->(w)) AND (i.interval_order = 1 OR EXISTS((u)-[:LEARNING]->(s)))
+                  AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order)
+                  RETURN s LIMIT 1
+                  """
     )
 }
 

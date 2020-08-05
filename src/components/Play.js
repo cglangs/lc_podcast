@@ -1,22 +1,22 @@
 import React, { Component } from 'react'
 import {Query, Mutation} from 'react-apollo';
 import gql from 'graphql-tag';
-import {getUserId} from '../constants.js'
+import {getUserName} from '../constants.js'
 
 import '../styles/App.css';
 
 
 const MAKE_ATTEMPT = gql`
-  mutation makeAttempt($userId: Int!, $sentenceId: Int!, $isCorrect: Boolean!, $nextIntervalSentenceId: Int,) {
-	makeClozeAttempt(userId: $userId, sentenceId: $sentenceId, isCorrect: $isCorrect, nextIntervalSentenceId: $nextIntervalSentenceId)
+  mutation makeAttempt($userName: String!, $sentenceId: Int!, $isCorrect: Boolean!, $nextIntervalSentenceId: Int) {
+	makeClozeAttempt(userName: $userName, sentenceId: $sentenceId, isCorrect: $isCorrect, nextIntervalSentenceId: $nextIntervalSentenceId)
   }
 
 `
 
 
 const GET_SENTENCE = gql`
-  query getSentence {
-	getNextSentence(dummy: 1) {
+  query getSentence($userName: String!) {
+	getNextSentence(userName: $userName) {
 		_id
 		next_interval_sentence_id
 		raw_text
@@ -53,16 +53,16 @@ class Play extends Component {
 	}
 
 	render() {
+	  const userName = getUserName()
 	  return (
 	    <div className="App">
 	      <header className="App-header">
-	      <Query query={GET_SENTENCE}>
+	      <Query query={GET_SENTENCE} variables={{userName: userName}}>
 	      	{({ loading, error, data, refetch }) => {
 	      	  if (loading) return <div>Fetching</div>
               if (error) return <div>Error</div>
               const nextIntervalSentenceId = data.getNextSentence.next_interval_sentence_id ? parseInt(data.getNextSentence.next_interval_sentence_id) : null
      		  const sentenceId = parseInt(data.getNextSentence._id)
-          	  const userId = parseInt(getUserId())
               return(
               	    <div>
          			  <div>
@@ -82,7 +82,7 @@ class Play extends Component {
                               {
                               	if(!this.state.showAnswer){
                               		makeAttempt({variables:{
-	                                	userId: userId,
+	                                	userName: userName,
 	                                	sentenceId: sentenceId,
 	                                	isCorrect: this.checkAnswer(data.getNextSentence.word_taught.text),
 	                                	nextIntervalSentenceId: nextIntervalSentenceId
