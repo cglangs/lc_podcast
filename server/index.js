@@ -4,7 +4,8 @@ const jwt = require('jsonwebtoken')
 const { APP_SECRET, getUserId } = require('./utils')
 const { ApolloServer }  = require("apollo-server");
 const neo4j = require('neo4j-driver')
-
+                  // CASE STATEMENT HERE TO ORDER BY IF IT IS LINKED TO LATEST INTERVALS AND (c OR EXISTS((s)->[:TEACHES]-)
+                  //ORDER BY i.interval_order, then exists(Sentence - teaches - word - contains - sentence - at interval{interval_order: })
 
 async function signup(object, params, ctx, resolveInfo) {
   params.password = await bcrypt.hash(params.password, 10)
@@ -108,22 +109,20 @@ type Query {
     getNextSentence(userName: String): Sentence
     @cypher(
     statement:""" 
-                  MATCH  (u:User{user_name: userName}),(u)-[:LEARNING]->(:Sentence)-[:AT_INTERVAL]->(ti:TimeInterval)
-                  //get user and the farthest interval that they have gotten to
-                  WITH u, COALESCE(MAX(ti.interval_order),1) AS current_max_interval
-                  MATCH (i:TimeInterval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
+
+                  MATCH (i:TimeInterval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word),(u:User{user_name: userName})
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
                   //get word dependencies
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:TimeInterval),(u)-[:LEARNING]->(ds)
                   //find the interval the the sentence dependencies that the user is learning
-                  WITH u,w,i,s,collect({word_text: wd.text, current_interval:COALESCE(di.interval_order,0)}) AS word_dependencies, current_max_interval
+                  WITH u,w,i,s,collect({word_text: wd.text, current_interval:COALESCE(di.interval_order,1)}) AS word_dependencies
                   //aggregate progress for every dependent word's farthest interval
                   WHERE 
+                  NOT EXISTS((u)-[:LEARNED]->(w)) AND 
                   ((EXISTS((u)-[:LEARNING]->(s)) OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1)))
-                  //Check that user is either learning at that interval 
+                  //Check that user is either learning at that interval or it's the first interval
                   AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order)
                   //Check that every dependent word is at the same interval
-                  // CASE STATEMENT HERE TO ORDER BY IF IT IS LINKED TO LATEST INTERVALS AND (current_max_interval = 1 OR EXISTS((s)->[:TEACHES]-)
                   RETURN s LIMIT 1
                   """
     )

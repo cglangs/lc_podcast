@@ -66,8 +66,11 @@ class Play extends Component {
               return(
               	    <div>
          			  <div>
-         			  <input style={{float: "left"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}/>
-         			  <p>{data.getNextSentence.display_text.replace("#","")}</p>
+	         			  <div>
+	         			  <p style={{float: "left"}}>{data.getNextSentence.display_text.substr(0,data.getNextSentence.display_text.indexOf('#'))}</p>
+	         			  <input style={{float: "left", width: `${data.getNextSentence.word_taught.text.length * 20}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 5px 5px"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}/>
+	         			  <p style={{float: "left"}}>{data.getNextSentence.display_text.substr(data.getNextSentence.display_text.indexOf('#') + 1,data.getNextSentence.display_text.length)}</p>
+	         			  </div>
  						<Mutation mutation={MAKE_ATTEMPT}
                       	update={(store) => {
                       		this.setState({
