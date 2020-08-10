@@ -19,7 +19,7 @@ MATCH (i:TimeInterval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word),(u:User
                   AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order)
                   //Check that every dependent word is at the same interval
                   //HERE DO A MATCH TO FIND THOSE THAT TEACH THE WORD WITH THE MOST UPSTREAM DEPENDENCIES
-MATCH (u:User {user_name: "admin"})
+MATCH (u)
 CALL apoc.path.expandConfig(u, {
     relationshipFilter: "LEARNING|TEACHES, CONTAINS",
     terminatorNodes: [s],
@@ -27,9 +27,8 @@ CALL apoc.path.expandConfig(u, {
     maxLevel: 4
 })
 YIELD path
-RETURN path, length(path) AS hops
-ORDER BY hops
-
+RETURN  last(nodes(path)), length(path) AS hops
+ORDER BY hops DESC
 
 
                   CALL apoc.do.when(isCorrect,
