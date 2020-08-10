@@ -109,9 +109,9 @@ type Query {
     getNextSentence(userName: String): Sentence
     @cypher(
     statement:""" 
-                  MATCH(u:User{user_name: userName})-[:LEARNING]->(:Sentence)-[:AT_INTERVAL]->(maxIntervals:TimeInterval)
-                  WITH u, COALESCE(max(maxIntervals.interval_order),1) AS max_interval_order
-                  MATCH (i:TimeInterval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
+                  MATCH(:User{user_name: userName})-[:LEARNING]->(:Sentence)-[:AT_INTERVAL]->(maxIntervals:TimeInterval)
+                  WITH COALESCE(max(maxIntervals.interval_order),0) AS max_interval_order
+                  MATCH (i:TimeInterval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word),(u:User{user_name: userName})
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
                   //get word dependencies
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:TimeInterval),(u)-[:LEARNING]->(ds)
@@ -125,7 +125,8 @@ type Query {
                   AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order)
                   //Check that every dependent word is at the same interval
                   //HERE DO A MATCH TO FIND THOSE THAT TEACH THE WORD WITH THE MOST UPSTREAM DEPENDENCIES
-                  MATCH (u)
+                  CALL apoc.do.when(max_interval_order > 0,
+                  'MATCH (u)
                   CALL apoc.path.expandConfig(u, {
                       relationshipFilter: "LEARNING|TEACHES, CONTAINS",
                       terminatorNodes: [s],
@@ -133,7 +134,11 @@ type Query {
                       maxLevel: max_interval_order + 1
                   })
                   YIELD path
-                  RETURN  last(nodes(path)), length(path) AS hops ORDER BY hops DESC LIMIT 1
+                  RETURN last(nodes(path)) AS selection, length(path) AS hops AS ordering',
+                  'RETURN s AS selection, 1 AS ordering',
+                  {max_interval_order: max_interval_order, u: u, s:s})
+                  YIELD value
+                  RETURN value.selection ORDER BY value.ordering DESC LIMIT 1
                   """
     )
 }
