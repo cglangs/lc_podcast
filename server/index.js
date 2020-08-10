@@ -109,13 +109,12 @@ type Query {
     getNextSentence(userName: String): Sentence
     @cypher(
     statement:""" 
-
                   MATCH (i:TimeInterval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word),(u:User{user_name: userName})
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
                   //get word dependencies
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:TimeInterval),(u)-[:LEARNING]->(ds)
                   //find the interval the the sentence dependencies that the user is learning
-                  WITH u,w,i,s,collect({word_text: wd.text, current_interval:COALESCE(di.interval_order,1)}) AS word_dependencies
+                  WITH u,w,i,s,collect({word_text: wd.text, current_interval:COALESCE(di.interval_order,0)}) AS word_dependencies
                   //aggregate progress for every dependent word's farthest interval
                   WHERE 
                   NOT EXISTS((u)-[:LEARNED]->(w)) AND 
@@ -123,6 +122,7 @@ type Query {
                   //Check that user is either learning at that interval or it's the first interval
                   AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order)
                   //Check that every dependent word is at the same interval
+                  //HERE DO A MATCH TO FIND THOSE THAT TEACH THE WORD WITH THE MOST UPSTREAM DEPENDENCIES
                   RETURN s LIMIT 1
                   """
     )
