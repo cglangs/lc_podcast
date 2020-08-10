@@ -109,12 +109,14 @@ type Query {
     getNextSentence(userName: String): Sentence
     @cypher(
     statement:""" 
-                  MATCH (i:TimeInterval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word),(u:User{user_name: userName})
+                  MATCH(u:User{user_name: userName})-[:LEARNING]->(:Sentence)-[:AT_INTERVAL]->(maxIntervals:TimeInterval)
+                  WITH u, COALESCE(max(maxIntervals.interval_order),1) AS max_interval_order
+                  MATCH (i:TimeInterval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
                   //get word dependencies
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:TimeInterval),(u)-[:LEARNING]->(ds)
                   //find the interval the the sentence dependencies that the user is learning
-                  WITH u,w,i,s,collect({word_text: wd.text, current_interval:COALESCE(di.interval_order,0)}) AS word_dependencies
+                  WITH u,w,i,s, max_interval_order, collect({word_text: wd.text, current_interval:COALESCE(di.interval_order,0)}) AS word_dependencies
                   //aggregate progress for every dependent word's farthest interval
                   WHERE 
                   NOT EXISTS((u)-[:LEARNED]->(w)) AND 
@@ -123,7 +125,15 @@ type Query {
                   AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order)
                   //Check that every dependent word is at the same interval
                   //HERE DO A MATCH TO FIND THOSE THAT TEACH THE WORD WITH THE MOST UPSTREAM DEPENDENCIES
-                  RETURN s LIMIT 1
+                  MATCH (u)
+                  CALL apoc.path.expandConfig(u, {
+                      relationshipFilter: "LEARNING|TEACHES, CONTAINS",
+                      terminatorNodes: [s],
+                      minLevel: 1,
+                      maxLevel: max_interval_order + 1
+                  })
+                  YIELD path
+                  RETURN  last(nodes(path)), length(path) AS hops ORDER BY hops DESC LIMIT 1
                   """
     )
 }
