@@ -93,10 +93,11 @@ type Mutation {
                   OPTIONAL MATCH (s2:Sentence)
                   WHERE ID(s2) = nextIntervalSentenceId
                   MERGE (u)-[r:LEARNING]->(s)
+                  SET r.last_seen = time()
                   WITH u,s,s2,w,r,isCorrect,nextIntervalSentenceId
                   CALL apoc.do.case(
                   [
-                  isCorrect AND nextIntervalSentenceId IS NOT NULL,'CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
+                  isCorrect AND nextIntervalSentenceId IS NOT NULL,'CALL apoc.refactor.to(r, s2) YIELD input RETURN 1 ',
                   isCorrect AND nextIntervalSentenceId IS NULL,'CREATE (u)-[:LEARNED]->(w) DELETE r'
                   ],'',{r:r,s2:s2, u:u, w:w}) YIELD value
                   RETURN 1
@@ -127,23 +128,28 @@ type Query {
                   //Check that every dependent word is at the same interval
                   //HERE DO A MATCH TO FIND THOSE THAT TEACH THE WORD WITH THE MOST UPSTREAM DEPENDENCIES
                   CALL {
-                  WITH u,s, max_interval_order
+                  WITH u,s
                   MATCH(s)
-                  RETURN s AS selection, 100 AS ordering
+                  WHERE NOT EXISTS((u)-[:LEARNING]->(s))
+                  RETURN s AS selection, 0  AS ordering, NULL AS last_seen
                   UNION
-                  WITH u,s, max_interval_order
+                  WITH u,s,max_interval_order
                   CALL apoc.path.expandConfig(u, {
                       relationshipFilter: 'LEARNING,CONTAINS>,TEACHES<',
                       labelFilter: '>Sentence',
+                      endNodes: [s],
                       beginSequenceAtStart: false,
-                      terminatorNodes: [s],
+                      uniqueness: 'NODE_PATH',
                       minLevel: 1,
                       maxLevel: max_interval_order + 1
                   })
                   YIELD path
-                  RETURN last(nodes(path)) AS selection, length(path) AS ordering
+                  WITH last(nodes(path)) AS selection, nodes(path)[1] AS sourceSentence, length(path) AS hops
+                  OPTIONAL MATCH (u)-[rSource:LEARNING]->(sourceSentence)
+                  OPTIONAL MATCH (u)-[rDest:LEARNING]->(selection)
+                  RETURN selection, COALESCE(rDest.last_seen, rSource.last_seen) AS last_seen, MIN(hops) AS ordering
                   }
-                  RETURN selection ORDER BY ordering ASC LIMIT 1
+                  RETURN selection ORDER BY last_seen ASC, ordering DESC LIMIT 1
                   """
     )
 }
