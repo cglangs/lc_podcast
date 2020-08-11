@@ -137,7 +137,7 @@ type Query {
                   CALL apoc.path.expandConfig(u, {
                       relationshipFilter: 'LEARNING,CONTAINS>,TEACHES<',
                       labelFilter: '>Sentence',
-                      endNodes: [s],
+                      terminatorNodes: [s],
                       beginSequenceAtStart: false,
                       uniqueness: 'NODE_PATH',
                       minLevel: 1,
