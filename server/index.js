@@ -55,9 +55,8 @@ const resolvers = {
 }
 
 
-
 const driver = neo4j.driver(
-  'bolt://localhost:7687',
+  'bolt://localhost:11003',
   neo4j.auth.basic('neo4j','password')
 );
 
@@ -109,9 +108,11 @@ type Query {
     getNextSentence(userName: String): Sentence
     @cypher(
     statement:""" 
-                  MATCH(:User{user_name: userName})-[:LEARNING]->(:Sentence)-[:AT_INTERVAL]->(maxIntervals:TimeInterval)
-                  WITH COALESCE(max(maxIntervals.interval_order),0) AS max_interval_order
-                  MATCH (i:TimeInterval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word),(u:User{user_name: userName})
+                  MATCH (u:User{user_name: userName})
+                  WITH u
+                  OPTIONAL MATCH (u)-[:LEARNING]->(:Sentence)-[:AT_INTERVAL]->(maxIntervals:TimeInterval)
+                  WITH COALESCE(max(maxIntervals.interval_order),0) AS max_interval_order, u
+                  MATCH (i:TimeInterval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
                   //get word dependencies
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:TimeInterval),(u)-[:LEARNING]->(ds)
@@ -125,20 +126,24 @@ type Query {
                   AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order)
                   //Check that every dependent word is at the same interval
                   //HERE DO A MATCH TO FIND THOSE THAT TEACH THE WORD WITH THE MOST UPSTREAM DEPENDENCIES
-                  CALL apoc.do.when(max_interval_order > 0,
-                  'MATCH (u)
+                  CALL {
+                  WITH u,s, max_interval_order
+                  MATCH(s)
+                  RETURN s AS selection, 100 AS ordering
+                  UNION
+                  WITH u,s, max_interval_order
                   CALL apoc.path.expandConfig(u, {
-                      relationshipFilter: "LEARNING|TEACHES, CONTAINS",
+                      relationshipFilter: 'LEARNING,CONTAINS>,TEACHES<',
+                      labelFilter: '>Sentence',
+                      beginSequenceAtStart: false,
                       terminatorNodes: [s],
                       minLevel: 1,
                       maxLevel: max_interval_order + 1
                   })
                   YIELD path
-                  RETURN last(nodes(path)) AS selection, length(path) AS hops AS ordering',
-                  'RETURN s AS selection, 1 AS ordering',
-                  {max_interval_order: max_interval_order, u: u, s:s})
-                  YIELD value
-                  RETURN value.selection ORDER BY value.ordering DESC LIMIT 1
+                  RETURN last(nodes(path)) AS selection, length(path) AS ordering
+                  }
+                  RETURN selection ORDER BY ordering ASC LIMIT 1
                   """
     )
 }
