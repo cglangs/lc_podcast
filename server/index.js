@@ -75,7 +75,7 @@ type Mutation {
 
     IncrementInterval(should_call: Boolean!): Int
     @cypher(
-    statement:""" MATCH (i2:TimeInterval)<-[:NEXT_TIME]-(:TimeInterval)<-[r:AUTHORING_INTERVAL]-(:Author)
+    statement:""" MATCH (i2:Interval)<-[:NEXT_TIME]-(:Interval)<-[r:AUTHORING_INTERVAL]-(:Author)
                   CALL apoc.refactor.to(r, i2) YIELD input
                   RETURN 1"""
     )
@@ -111,12 +111,12 @@ type Query {
     statement:""" 
                   MATCH (u:User{user_name: userName})
                   WITH u
-                  OPTIONAL MATCH (u)-[:LEARNING]->(:Sentence)-[:AT_INTERVAL]->(maxIntervals:TimeInterval)
+                  OPTIONAL MATCH (u)-[:LEARNING]->(:Sentence)-[:AT_INTERVAL]->(maxIntervals:Interval)
                   WITH COALESCE(max(maxIntervals.interval_order),0) AS max_interval_order, u
-                  MATCH (i:TimeInterval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
+                  MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
                   //get word dependencies
-                  OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:TimeInterval),(u)-[:LEARNING]->(ds)
+                  OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)
                   //find the interval the the sentence dependencies that the user is learning
                   WITH u,w,i,s, max_interval_order, collect({word_text: wd.text, current_interval:COALESCE(di.interval_order,0)}) AS word_dependencies
                   //aggregate progress for every dependent word's farthest interval
@@ -152,6 +152,14 @@ type Query {
                   RETURN selection ORDER BY last_seen ASC, ordering DESC LIMIT 1
                   """
     )
+
+    getSentenceList(levelNumber: Int! intervalOrder: Int!): [Sentence]
+    @cypher(
+    statement:""" 
+              MATCH (l:Level {level_number: levelNumber})<-[:SHOWN_IN]-(s:Sentence)-[:AT_INTERVAL]->(i:Interval {interval_order: intervalOrder})
+              RETURN s
+              """
+              )
 }
 
 
@@ -162,7 +170,7 @@ enum Role {
 
 type Author {
   level: Level @relation(name: "AUTHORING_LEVEL", direction: OUT)
-  interval: TimeInterval @relation(name: "AUTHORING_INTERVAL", direction: OUT)
+  interval: Interval @relation(name: "AUTHORING_INTERVAL", direction: OUT)
 }
 
 type Level {
@@ -170,7 +178,7 @@ type Level {
   points: Int
   sentences: [Sentence] @relation(name: "SHOWN_IN", direction: IN)
   teachable_words: [Word] @cypher(
-        statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word),(a:Author)-[:AUTHORING_INTERVAL]->(i:TimeInterval)
+        statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word),(a:Author)-[:AUTHORING_INTERVAL]->(i:Interval)
                       OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)-[:AT_INTERVAL]->(i)
                       WITH w,s
                       WHERE s is NULL
@@ -201,7 +209,7 @@ type User {
   token: String
   role: Role!
 }
-type TimeInterval {
+type Interval {
   interval_order: Int
   seconds: Int
   min_length: Int
@@ -217,13 +225,13 @@ type Sentence {
   pinyin: String!
   english: String!
   level: Level @relation(name: "SHOWN_IN" direction: OUT)
-  time_interval: TimeInterval @relation(name: "AT_INTERVAL" direction: OUT)
+  time_interval: Interval @relation(name: "AT_INTERVAL" direction: OUT)
 	words_contained: [Word!]! @relation(name: "CONTAINS", direction: OUT)
 	word_taught: Word! @relation(name: "TEACHES", direction: OUT)
   next_interval_sentence_id: Int @cypher(
         statement: """MATCH(this)-[:TEACHES]->(w:Word)
                       WITH this, w
-                      MATCH (w)<-[:TEACHES]-(s2:Sentence)-[:AT_INTERVAL]->(i2:TimeInterval)<-[:NEXT_TIME]-(i:TimeInterval)<-[:AT_INTERVAL]-(this)
+                      MATCH (w)<-[:TEACHES]-(s2:Sentence)-[:AT_INTERVAL]->(i2:Interval)<-[:NEXT_TIME]-(i:Interval)<-[:AT_INTERVAL]-(this)
                       RETURN ID(s2)
                       """)
 }

@@ -16,11 +16,18 @@ class Header extends Component {
           </Link>
           <div>
         {isLoggedIn && getRole() === 'ADMIN' && (
+          <div>
             <div className="flex">
               <Link to="/author">
                 author
               </Link>
             </div>
+            <div className="flex">
+              <Link to="/editor">
+                editor
+              </Link>
+            </div>
+          </div>
           )}
           {isLoggedIn && (
             <div className="flex">
