@@ -135,7 +135,7 @@ class Author extends Component {
     const wordToTeachText = wordToTeach.text
     const wordToTeachId = wordToTeach.word_id
     const currentInterval = interval_order
-    const shouldCall =  words_left === 1
+    const shouldCall =  words_left === 1 && currentInterval < 5
     return{rawSentenceTextSimplified,displaySentenceTextSimplified,rawSentenceTextTraditional,displaySentenceTextTraditional, pinyin, english, wordToTeachText,wordToTeachId,sentenceWordListSimplified,currentInterval,shouldCall}
   }
 

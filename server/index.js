@@ -160,12 +160,27 @@ type Query {
               RETURN s
               """
               )
+
+    getIntervalsAndLevels(userName: String): levelIntervalLists
+    @cypher(
+    statement:""" 
+              MATCH(l:Level),(i:Interval)
+              WITH l, i
+              ORDER BY l.level_number,i.interval_order
+              RETURN {levels: COLLECT(DISTINCT l.level_number),intervals: COLLECT( DISTINCT i.interval_order)[0..-1]}
+              """
+              )
 }
 
 
 enum Role {
   ADMIN
   STUDENT
+}
+
+type levelIntervalLists{
+  levels: [Int]
+  intervals: [Int]
 }
 
 type Author {
