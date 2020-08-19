@@ -111,14 +111,15 @@ type Query {
     statement:""" 
                   MATCH (u:User{user_name: userName})
                   WITH u
-                  OPTIONAL MATCH (u)-[:LEARNING]->(:Sentence)-[:AT_INTERVAL]->(maxIntervals:Interval)
-                  WITH COALESCE(max(maxIntervals.interval_order),0) AS max_interval_order, u
                   MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
                   //get word dependencies
+                  OPTIONAL MATCH (u)-[is_learned:LEARNED]->(wd)
+                  //check if learned
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)
                   //find the interval the the sentence dependencies that the user is learning
-                  WITH u,w,i,s, max_interval_order, collect({word_text: wd.text, current_interval:COALESCE(di.interval_order,0)}) AS word_dependencies
+                  WITH u,w,i,s,
+                  collect({word_text: wd.text, current_interval:COALESCE(di.interval_order, CASE WHEN EXISTS((u)-[:LEARNED]->(wd)) THEN 6 ELSE 0 END)}) AS word_dependencies
                   //aggregate progress for every dependent word's farthest interval
                   WHERE 
                   NOT EXISTS((u)-[:LEARNED]->(w)) AND 
@@ -129,11 +130,6 @@ type Query {
                   //HERE DO A MATCH TO FIND THOSE THAT TEACH THE WORD WITH THE MOST UPSTREAM DEPENDENCIES
                   CALL {
                   WITH u,s
-                  MATCH(s)
-                  WHERE NOT EXISTS((u)-[:LEARNING]->(s))
-                  RETURN s AS selection, 0  AS ordering, NULL AS last_seen
-                  UNION
-                  WITH u,s,max_interval_order
                   CALL apoc.path.expandConfig(u, {
                       relationshipFilter: 'LEARNING,CONTAINS>,TEACHES<',
                       labelFilter: '>Sentence',
@@ -141,13 +137,18 @@ type Query {
                       beginSequenceAtStart: false,
                       uniqueness: 'NODE_PATH',
                       minLevel: 1,
-                      maxLevel: max_interval_order + 1
+                      maxLevel: 5
                   })
                   YIELD path
                   WITH last(nodes(path)) AS selection, nodes(path)[1] AS sourceSentence, length(path) AS hops
                   OPTIONAL MATCH (u)-[rSource:LEARNING]->(sourceSentence)
                   OPTIONAL MATCH (u)-[rDest:LEARNING]->(selection)
                   RETURN selection, COALESCE(rDest.last_seen, rSource.last_seen) AS last_seen, MIN(hops) AS ordering
+                  UNION
+                  WITH u,s
+                  MATCH(s)
+                  WHERE NOT EXISTS((u)-[:LEARNING]->(s))
+                  RETURN s AS selection, 0  AS ordering, NULL AS last_seen
                   }
                   RETURN selection ORDER BY last_seen ASC, ordering DESC LIMIT 1
                   """

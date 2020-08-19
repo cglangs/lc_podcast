@@ -41,8 +41,8 @@ class Editor extends Component {
           if (error) return <div>Error</div>
           return(
           	<div>
-          	Levels: <select onChange={(e) => this.setState({selectedLevel: parseInt(e.target.value)})}>{data.getIntervalsAndLevels.levels.map((level) => <option value={level} selected={level === this.state.selectedLevel}>{level}</option>)}</select>
-          	Intervals: <select onChange={(e) => this.setState({selectedInterval: parseInt(e.target.value)})}>{data.getIntervalsAndLevels.intervals.map((interval) => <option value={interval} selected={interval === this.state.selectedInterval}>{interval}</option>)}</select>
+          	Level: <select onChange={(e) => this.setState({selectedLevel: parseInt(e.target.value)})}>{data.getIntervalsAndLevels.levels.map((level) => <option value={level} selected={level === this.state.selectedLevel}>{level}</option>)}</select>
+          	Interval: <select onChange={(e) => this.setState({selectedInterval: parseInt(e.target.value)})}>{data.getIntervalsAndLevels.intervals.map((interval) => <option value={interval} selected={interval === this.state.selectedInterval}>{interval}</option>)}</select>
           	</div>
           )
       	}
@@ -84,6 +84,11 @@ class Editor extends Component {
 		              			 <td>{sentence.word_taught.text}</td>
 		              			 <td>{sentence.pinyin}</td>
 		              			 <td>{sentence.english}</td>
+		              			 <td><button onClick={() =>  
+		              			 	this.props.history.push({
+     									pathname: '/author',
+     									state: {sentenceElements: []}  
+ })									}>Edit</button></td>
 		              			</tr>
 		              		)
 	              		})}
