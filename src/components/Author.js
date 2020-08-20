@@ -50,7 +50,7 @@ export const GET_LEVEL_WORDS = gql`
 `
 
 const ADD_SENTENCE = gql`
-  mutation addsentence($rawSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $wordToTeachText: String!, $wordToTeachId: Int!, $sentenceWordListSimplified: [String!], $currentInterval: Int!, $shouldCall: Boolean!) {
+  mutation addsentence($rawSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $wordToTeachText: String!, $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $shouldCall: Boolean!) {
     CreateSentence(raw_text: $rawSentenceTextSimplified, display_text: $displaySentenceTextSimplified, alt_raw_text: $rawSentenceTextTraditional, alt_display_text: $displaySentenceTextTraditional, pinyin: $pinyin, english: $english) {
       raw_text
     }
@@ -66,7 +66,7 @@ const ADD_SENTENCE = gql`
       from {raw_text}
       to {interval_order}
     }
-    AddSentenceDependencies(src_sentence: $rawSentenceTextSimplified, dest_words: $sentenceWordListSimplified, word_to_teach: $wordToTeachText){
+    AddSentenceDependencies(src_sentence: $rawSentenceTextSimplified, dest_words: $sentenceContainedWordListSimplified, word_to_teach: $wordToTeachText){
       raw_text
       display_text
     }
@@ -119,9 +119,10 @@ class Author extends Component {
 
   getSentenceVariables(interval_order, words_left) {
     const {SentenceElements, wordToTeach, pinyin, english} = this.state
-    const sentenceWords = SentenceElements.filter( element => element.hasOwnProperty('word_id'))
+    const sentenceWords = SentenceElements.filter( element => element.hasOwnProperty('word_id') )
 
     const sentenceWordListSimplified = sentenceWords.map(word => word.text)
+    const sentenceContainedWordListSimplified = sentenceWordListSimplified.filter(word => word !== wordToTeach.text)
     const SentenceElementListSimplified = SentenceElements.map(element => element.text)
     const rawSentenceTextSimplified = SentenceElementListSimplified.join('')
     const displaySentenceTextSimplified = rawSentenceTextSimplified.replace(new RegExp(wordToTeach.text, 'g'), '#')
@@ -135,7 +136,7 @@ class Author extends Component {
     const wordToTeachId = wordToTeach.word_id
     const currentInterval = interval_order
     const shouldCall =  words_left === 1 && currentInterval < 5
-    return{rawSentenceTextSimplified,displaySentenceTextSimplified,rawSentenceTextTraditional,displaySentenceTextTraditional, pinyin, english, wordToTeachText,wordToTeachId,sentenceWordListSimplified,currentInterval,shouldCall}
+    return{rawSentenceTextSimplified,displaySentenceTextSimplified,rawSentenceTextTraditional,displaySentenceTextTraditional, pinyin, english, wordToTeachText,wordToTeachId,sentenceContainedWordListSimplified,currentInterval,shouldCall}
   }
 
   appendElement(newElement) {
