@@ -62,13 +62,13 @@ const ADD_SENTENCE = gql`
       from {raw_text}
       to {text}
     }
-    AddSentenceDependencies(src_sentence: $rawSentenceTextSimplified, dest_words: $sentenceWordListSimplified, word_to_teach: $wordToTeachText){
-      raw_text
-      display_text
-    }
     AddSentenceTime_interval(from: {raw_text: $rawSentenceTextSimplified} to: {interval_order: $currentInterval}){
       from {raw_text}
       to {interval_order}
+    }
+    AddSentenceDependencies(src_sentence: $rawSentenceTextSimplified, dest_words: $sentenceWordListSimplified, word_to_teach: $wordToTeachText){
+      raw_text
+      display_text
     }
     IncrementInterval(should_call: $shouldCall)
   }
@@ -124,13 +124,12 @@ class Author extends Component {
     const sentenceWordListSimplified = sentenceWords.map(word => word.text)
     const SentenceElementListSimplified = SentenceElements.map(element => element.text)
     const rawSentenceTextSimplified = SentenceElementListSimplified.join('')
-    const displaySentenceTextSimplified = rawSentenceTextSimplified.replace(wordToTeach.text,"#")
+    const displaySentenceTextSimplified = rawSentenceTextSimplified.replace(new RegExp(wordToTeach.text, 'g'), '#')
 
     //const sentenceWordListTraditional = sentenceWords.map(word => word.alt_text)
     const SentenceElementListTraditional = SentenceElements.map(element => element.alt_text || element.text)
     const rawSentenceTextTraditional = SentenceElementListTraditional.join('')
-    const displaySentenceTextTraditional = rawSentenceTextTraditional.replace(wordToTeach.alt_text,"#")
-
+    const displaySentenceTextTraditional = rawSentenceTextTraditional.replace(new RegExp(wordToTeach.alt_text, 'g'), '#')
 
     const wordToTeachText = wordToTeach.text
     const wordToTeachId = wordToTeach.word_id

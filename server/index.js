@@ -65,9 +65,12 @@ type Mutation {
 
     AddSentenceDependencies(src_sentence: String! dest_words:[String] word_to_teach: String!): Sentence
     @cypher(
-    statement:"""MATCH (s:Sentence {raw_text: $src_sentence}), (w:Word)
+    statement:"""      MATCH (s:Sentence {raw_text: $src_sentence})-[:AT_INTERVAL]->(i:Interval), (w:Word)
                        WHERE w.text IN $dest_words AND NOT w.text = $word_to_teach
-                       MERGE (s)-[:CONTAINS]->(w)
+                       OPTIONAL MATCH (i)<-[:NEXT_TIME]-(iPrev)
+                       WITH s,w,iPrev
+                       OPTIONAL MATCH(:Interval{interval_order: COALESCE(iPrev.interval_order, 1)})<-[:AT_INTERVAL]-(ds:Sentence)-[:TEACHES]->(w)
+                       MERGE (ds)<-[:DEPENDS_ON]-(s)-[:CONTAINS]->(w)
                        RETURN s """
     )
 
@@ -111,7 +114,7 @@ type Query {
     statement:""" 
                   MATCH (u:User{user_name: userName})
                   WITH u
-                   OPTIONAL MATCH (u)-[:LEARNING]->(:Sentence)-[:AT_INTERVAL]->(maxIntervals:Interval)
+                  OPTIONAL MATCH (u)-[:LEARNING]->(:Sentence)-[:AT_INTERVAL]->(maxIntervals:Interval)
                   WITH COALESCE(max(maxIntervals.interval_order),0) AS max_interval_order, u
                   MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
@@ -139,7 +142,7 @@ type Query {
                       beginSequenceAtStart: false,
                       uniqueness: 'NODE_PATH',
                       minLevel: 1,
-                      maxLevel: max_interval_order
+                      maxLevel: max_interval_order + 1
                   })
                   YIELD path
                   WITH last(nodes(path)) AS selection, nodes(path)[1] AS sourceSentence, length(path) AS hops
@@ -150,9 +153,9 @@ type Query {
                   WITH u,s
                   MATCH(s)
                   WHERE NOT EXISTS((u)-[:LEARNING]->(s))
-                  RETURN s AS selection, 0  AS ordering, NULL AS last_seen
+                  RETURN s AS selection, 100 AS ordering, NULL AS last_seen
                   }
-                  RETURN selection ORDER BY last_seen ASC, ordering DESC LIMIT 1
+                  RETURN selection ORDER BY last_seen ASC, ordering ASC LIMIT 1
                   """
     )
 

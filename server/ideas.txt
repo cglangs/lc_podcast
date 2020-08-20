@@ -223,9 +223,10 @@ MATCH(i:TimeInterval {interval_order: 1}),(a:Author)
 MERGE(a)-[:AUTHORING_INTERVAL]->(i) 
 RETURN i,a
 
-MATCH (i2:TimeInterval)-[:NEXT_TIME]->(:TimeInterval)<-[r:AUTHORING_INTERVAL]-(:Author)
-                  CALL apoc.refactor.to(r, i2) YIELD input, output
-                  RETURN 1
+MATCH (i2:Interval)-[:NEXT_TIME]->(:Interval)<-[r:AUTHORING_INTERVAL]-(:Author)
+CALL apoc.refactor.to(r, i2) YIELD input, output
+RETURN 1
+
 
 CALL apoc.export.cypher.all(null)
 YIELD cypherStatements
