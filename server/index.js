@@ -133,8 +133,7 @@ type Query {
                   //HERE DO A MATCH TO FIND THOSE THAT TEACH THE WORD WITH THE MOST UPSTREAM DEPENDENCIES
                   CALL {
                   WITH u,s
-                  MATCH path = shortestPath((u)-[*]-(s))
-                  WHERE ALL (r IN relationships(path) WHERE type(r)= 'LEARNING' OR type(r) = 'DEPENDS_ON')
+                  MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*]-(s))
                   WITH last(nodes(path)) AS destSentence, nodes(path)[1] AS sourceSentence, length(path) AS hops
                   OPTIONAL MATCH (u)-[rSource:LEARNING]->(sourceSentence)
                   OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
