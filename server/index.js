@@ -114,8 +114,6 @@ type Query {
     statement:""" 
                   MATCH (u:User{user_name: userName})
                   WITH u
-                  OPTIONAL MATCH (u)-[:LEARNING]->(:Sentence)-[:AT_INTERVAL]->(maxIntervals:Interval)
-                  WITH COALESCE(max(maxIntervals.interval_order),0) AS max_interval_order, u
                   MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
                   //get word dependencies
@@ -123,7 +121,7 @@ type Query {
                   //check if learned
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)
                   //find the interval the the sentence dependencies that the user is learning
-                  WITH u,w,i,s,max_interval_order,
+                  WITH u,w,i,s,
                   collect({word_text: wd.text, current_interval:COALESCE(di.interval_order, CASE WHEN EXISTS((u)-[:LEARNED]->(wd)) THEN 6 ELSE 0 END)}) AS word_dependencies
                   //aggregate progress for every dependent word's farthest interval
                   WHERE 
@@ -134,21 +132,13 @@ type Query {
                   //Check that every dependent word is at the same interval
                   //HERE DO A MATCH TO FIND THOSE THAT TEACH THE WORD WITH THE MOST UPSTREAM DEPENDENCIES
                   CALL {
-                  WITH u,s,max_interval_order
-                  CALL apoc.path.expandConfig(u, {
-                      relationshipFilter: 'LEARNING,CONTAINS>,TEACHES<',
-                      labelFilter: '>Sentence',
-                      terminatorNodes: [s],
-                      beginSequenceAtStart: false,
-                      uniqueness: 'NODE_PATH',
-                      minLevel: 1,
-                      maxLevel: max_interval_order + 1
-                  })
-                  YIELD path
-                  WITH last(nodes(path)) AS selection, nodes(path)[1] AS sourceSentence, length(path) AS hops
+                  WITH u,s
+                  MATCH path = shortestPath((u)-[*]-(s))
+                  WHERE ALL (r IN relationships(path) WHERE type(r)= 'LEARNING' OR type(r) = 'DEPENDS_ON')
+                  WITH last(nodes(path)) AS destSentence, nodes(path)[1] AS sourceSentence, length(path) AS hops
                   OPTIONAL MATCH (u)-[rSource:LEARNING]->(sourceSentence)
-                  OPTIONAL MATCH (u)-[rDest:LEARNING]->(selection)
-                  RETURN selection, COALESCE(rDest.last_seen, rSource.last_seen) AS last_seen, MIN(hops) AS ordering
+                  OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
+                  RETURN destSentence AS selection, COALESCE(rDest.last_seen, rSource.last_seen) AS last_seen, MIN(hops) AS ordering
                   UNION
                   WITH u,s
                   MATCH(s)
