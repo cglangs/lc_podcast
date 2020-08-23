@@ -62,7 +62,7 @@ const ADD_SENTENCE = gql`
       from {raw_text}
       to {text}
     }
-    AddSentenceTime_interval(from: {raw_text: $rawSentenceTextSimplified} to: {interval_order: $currentInterval}){
+    AddSentenceInterval(from: {raw_text: $rawSentenceTextSimplified} to: {interval_order: $currentInterval}){
       from {raw_text}
       to {interval_order}
     }

@@ -116,21 +116,14 @@ type Query {
                   WITH u
                   MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
-                  //get word dependencies
                   OPTIONAL MATCH (u)-[is_learned:LEARNED]->(wd)
-                  //check if learned
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)
-                  //find the interval the the sentence dependencies that the user is learning
                   WITH u,w,i,s,
                   collect({word_text: wd.text, current_interval:COALESCE(di.interval_order, CASE WHEN EXISTS((u)-[:LEARNED]->(wd)) THEN 6 ELSE 0 END)}) AS word_dependencies
-                  //aggregate progress for every dependent word's farthest interval
                   WHERE 
                   NOT EXISTS((u)-[:LEARNED]->(w)) AND 
                   ((EXISTS((u)-[:LEARNING]->(s)) OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1)))
-                  //Check that user is either learning at that interval or it's the first interval
                   AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order)
-                  //Check that every dependent word is at the same interval
-                  //HERE DO A MATCH TO FIND THOSE THAT TEACH THE WORD WITH THE MOST UPSTREAM DEPENDENCIES
                   CALL {
                   WITH u,s
                   MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*]-(s))
@@ -234,8 +227,9 @@ type Sentence {
   alt_display_text: String!
   pinyin: String!
   english: String!
+  current_users: [User] @relation(name: "LEARNING", direction: IN)
   level: Level @relation(name: "SHOWN_IN" direction: OUT)
-  time_interval: Interval @relation(name: "AT_INTERVAL" direction: OUT)
+  interval: Interval @relation(name: "AT_INTERVAL" direction: OUT)
 	words_contained: [Word!]! @relation(name: "CONTAINS", direction: OUT)
 	word_taught: Word! @relation(name: "TEACHES", direction: OUT)
   next_interval_sentence_id: Int @cypher(
