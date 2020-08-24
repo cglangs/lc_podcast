@@ -34,6 +34,14 @@ async function login(object, params, ctx, resolveInfo) {
   return user
 }
 
+async function get_next_sentence(object, params, ctx, resolveInfo) {
+  const sentence = await neo4jgraphql(object, params, ctx, resolveInfo)
+  console.log(sentence)
+  sentence.already_seen = sentence.current_users.map(user => user.user_name).includes(params.userName)
+  sentence.current_users = null
+  return sentence
+}
+
 
 const resolvers = {
   // entry point to GraphQL service
@@ -50,6 +58,11 @@ const resolvers = {
         return_val = neo4jgraphql(object, params, ctx, resolveInfo)
       }
       return return_val
+    }
+  },
+  Query: {
+     getNextSentence(object, params, ctx, resolveInfo){
+      return get_next_sentence(object, params, ctx, resolveInfo)
     }
   }
 }
@@ -155,7 +168,7 @@ type Query {
               MATCH(l:Level),(i:Interval)
               WITH l, i
               ORDER BY l.level_number,i.interval_order
-              RETURN {levels: COLLECT(DISTINCT l.level_number),intervals: COLLECT( DISTINCT i.interval_order)[0..-1]}
+              RETURN {levels: COLLECT(DISTINCT l.level_number),intervals: COLLECT( DISTINCT i.interval_order)}
               """
               )
 }
@@ -164,6 +177,10 @@ type Query {
 enum Role {
   ADMIN
   STUDENT
+}
+
+type clozeQuestion { 
+  next_sentence: Sentence
 }
 
 type levelIntervalLists{
@@ -227,6 +244,7 @@ type Sentence {
   alt_display_text: String!
   pinyin: String!
   english: String!
+  already_seen: Boolean
   current_users: [User] @relation(name: "LEARNING", direction: IN)
   level: Level @relation(name: "SHOWN_IN" direction: OUT)
   interval: Interval @relation(name: "AT_INTERVAL" direction: OUT)

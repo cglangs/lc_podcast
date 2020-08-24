@@ -29,6 +29,7 @@ const GET_SENTENCE = gql`
     current_users{
       user_name
     }
+    already_seen
 		word_taught{
 			text
 			english
@@ -67,9 +68,16 @@ class Play extends Component {
 	      	{({ loading, error, data, refetch }) => {
 	      	  if (loading) return <div>Fetching</div>
               if (error) return <div>Error</div>
-              const nextIntervalSentenceId = data.getNextSentence.next_interval_sentence_id ? parseInt(data.getNextSentence.next_interval_sentence_id) : null
-         		  const sentenceId = parseInt(data.getNextSentence._id)
-              const alreadySeenWord = data.getNextSentence.current_users.map(user => user.user_name).includes(userName)
+              console.log(data.getNextSentence)
+              const sentenceId = parseInt(data.getNextSentence._id)
+              const alreadySeenWord = data.getNextSentence.already_seen
+              var nextIntervalSentenceId = null
+              if(data.getNextSentence.next_interval_sentence_id && alreadySeenWord){
+                nextIntervalSentenceId = data.getNextSentence.next_interval_sentence_id
+              } else if(data.getNextSentence.next_interval_sentence_id && !alreadySeenWord){
+                nextIntervalSentenceId = parseInt(sentenceId)
+              }
+
                   return(
                   	<div>
              			  <div>
