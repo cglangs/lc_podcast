@@ -102,7 +102,7 @@ type Mutation {
                   WHERE u.email = $email
                   RETURN u"""
     )
-    makeClozeAttempt(userName: String!, sentenceId: Int!, isCorrect: Boolean!, nextIntervalSentenceId: Int): Int
+    makeClozeAttempt(userName: String!, sentenceId: Int!, isCorrect: Boolean!, alreadySeen: Boolean!, nextIntervalSentenceId: Int): Int
     @cypher(
     statement:""" MATCH(u:User {user_name: userName}),(s:Sentence)-[:TEACHES]->(w:Word)
                   WHERE ID(s) = sentenceId
@@ -110,9 +110,10 @@ type Mutation {
                   WHERE ID(s2) = nextIntervalSentenceId
                   MERGE (u)-[r:LEARNING]->(s)
                   SET r.last_seen = time()
-                  WITH u,s,s2,w,r,isCorrect,nextIntervalSentenceId
+                  WITH u,s,s2,w,r,isCorrect,alreadySeen, nextIntervalSentenceId
                   CALL apoc.do.case(
                   [
+                  NOT alreadySeen AND NOT isCorrect, 'DELETE r',
                   isCorrect AND nextIntervalSentenceId IS NOT NULL,'CALL apoc.refactor.to(r, s2) YIELD input RETURN 1 ',
                   isCorrect AND nextIntervalSentenceId IS NULL,'CREATE (u)-[:LEARNED]->(w) DELETE r'
                   ],'',{r:r,s2:s2, u:u, w:w}) YIELD value

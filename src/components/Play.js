@@ -7,8 +7,8 @@ import '../styles/App.css';
 
 
 const MAKE_ATTEMPT = gql`
-  mutation makeAttempt($userName: String!, $sentenceId: Int!, $isCorrect: Boolean!, $nextIntervalSentenceId: Int) {
-	makeClozeAttempt(userName: $userName, sentenceId: $sentenceId, isCorrect: $isCorrect, nextIntervalSentenceId: $nextIntervalSentenceId)
+  mutation makeAttempt($userName: String!, $sentenceId: Int!, $isCorrect: Boolean!, $alreadySeen: Boolean!, $nextIntervalSentenceId: Int) {
+	makeClozeAttempt(userName: $userName, sentenceId: $sentenceId, isCorrect: $isCorrect,alreadySeen: $alreadySeen, nextIntervalSentenceId: $nextIntervalSentenceId)
   }
 
 `
@@ -106,6 +106,7 @@ class Play extends Component {
     	                                	userName: userName,
     	                                	sentenceId: sentenceId,
     	                                	isCorrect: this.checkAnswer(data.getNextSentence.word_taught.text),
+                                        alreadySeen: alreadySeenWord,
     	                                	nextIntervalSentenceId: nextIntervalSentenceId
                                     	}})
                                   	} else{
