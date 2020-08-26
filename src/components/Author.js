@@ -16,7 +16,9 @@ export const GET_LEVEL_WORDS = gql`
       sentences {
         raw_text
         words_contained{
-          text
+          Word{
+            text
+          }
         }
         word_taught{
           text
@@ -87,19 +89,35 @@ const customStyles = {
 }
 
 class Author extends Component {
-  constructor(){
-    super()
-    this.state = {
-      SentenceElements: [],
-      selectedWordId: null,
-      wordToTeach: {text: ''},
-      containsWordToTeach: 0,
-      points: 0,
-      punctuationMode: false,
-      selectedPunctuationId: null,
-      pinyin: '',
-      english: ''
-    }
+  constructor(props){
+    super(props)
+    if(typeof props.location.state === 'undefined'){
+      this.state = {
+        SentenceElements: [],
+        selectedWordId: null,
+        wordToTeach: {text: '', word_id: null},
+        containsWordToTeach: 0,
+        points: 0,
+        punctuationMode: false,
+        selectedPunctuationId: null,
+        pinyin: '',
+        english: '',
+        replaceMode: false
+      }
+    } else {
+        this.state = {
+          SentenceElements: props.location.state.sentenceElements,
+          selectedWordId: null,
+          wordToTeach: props.location.state.wordToTeach,
+          containsWordToTeach: props.location.state.containsWordToTeach,
+          points: props.location.state.points,
+          punctuationMode: false,
+          selectedPunctuationId: null,
+          pinyin: props.location.state.pinyin,
+          english: props.location.state.english,
+          replaceMode: true
+        }
+      }
     this.baseState = this.state 
   }
 
@@ -208,7 +226,7 @@ class Author extends Component {
                 </div>
                 <p>Word being learned: {wordToTeach.text}</p>
                 {data.Author[0].level.sentences.map(sentence => { 
-                  if (sentence.words_contained.map(word => word.text).includes(wordToTeach.text)){
+                  if (sentence.words_contained.map(word => word.Word.text).includes(wordToTeach.text)){
                     return (<p> Contained In:{sentence.raw_text}</p>)
                   }
                   else if (sentence.word_taught.text === wordToTeach.text){

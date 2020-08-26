@@ -18,12 +18,20 @@ const GET_SENTENCE_LIST = gql`
 		words_contained{
 			contains_order
 			Word{
+				word_id
 				text
+				level{
+					points
+				}
 			}
 		}
 		display_text
 		word_taught{
+			word_id
 			text
+			level{
+				points
+			}
 		}
 		pinyin
 		english
@@ -61,30 +69,46 @@ class Editor extends Component {
   parseSentence(sentence){
   	let current_index = 0
   	let sentenceElements = []
+  	let wordToTeach = null
+  	let containsWordToTeach = 0
+  	let points = 0
   	let display_text_copy = sentence.display_text
 
   	sentence.words_contained.sort((previous, next)=> {return previous.contains_order - next.contains_order})
   	
   	while(display_text_copy.length){
   		if(display_text_copy[0] === '#'){
-  			sentenceElements.push(sentence.word_taught.text)
+  			sentenceElements.push({text: sentence.word_taught.text, word_id: sentence.word_taught.word_id})
+  			if(wordToTeach === null){
+  				wordToTeach = {text: sentence.word_taught.text, word_id: sentence.word_taught.word_id}
+  			}
   			display_text_copy = display_text_copy.substring(1)
+  			containsWordToTeach++
+  			points += sentence.word_taught.level.points
   		} else if(sentence.words_contained[current_index].Word.text[0] === display_text_copy[0]){
-  			sentenceElements.push(sentence.words_contained[current_index].Word.text)
+  			sentenceElements.push({ text: sentence.words_contained[current_index].Word.text, word_id: sentence.words_contained[current_index].Word.word_id})
   			display_text_copy = display_text_copy.substring(sentence.words_contained[current_index].Word.text.length)
+  			points += sentence.words_contained[current_index].Word.level.points
   			current_index++
   		} else {
-  			 sentenceElements.push(display_text_copy[0])
+  			 sentenceElements.push({text: display_text_copy[0]})
   			 display_text_copy = display_text_copy.substring(1)
   		}
   	}
 
-  	console.log(sentence.display_text,sentence.words_contained, sentenceElements)
+  	/*console.log(sentence.display_text,sentence.words_contained, sentenceElements)*/
 
-	/*this.props.history.push({
+	this.props.history.push({
 		pathname: '/author',
-		state: {sentenceElements: []}  
-	})	*/								
+		state: {
+			sentenceElements: sentenceElements, 
+			wordToTeach: wordToTeach,
+			containsWordToTeach: containsWordToTeach,
+			pinyin: sentence.pinyin,
+			english: sentence.english,
+			points: points
+		}  
+	})						
   }
 
 	render(){
