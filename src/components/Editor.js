@@ -43,7 +43,6 @@ class Editor extends Component {
   	return (
 		<Query query={GET_DROPDOWNS} variables={{userName: "test"}}>
       	{({ loading, error, data, refetch }) => {
-      		console.log(data)
       	  if (loading) return <div>Fetching</div>
           if (error) return <div>Error</div>
           return(
@@ -59,8 +58,34 @@ class Editor extends Component {
 
   }
 
+  parseSentence(sentence){
+  	let current_index = 0
+  	let sentenceElements = []
+  	let display_text_copy = sentence.display_text
 
+  	sentence.words_contained.sort((previous, next)=> {return previous.contains_order - next.contains_order})
+  	
+  	while(display_text_copy.length){
+  		if(display_text_copy[0] === '#'){
+  			sentenceElements.push(sentence.word_taught.text)
+  			display_text_copy = display_text_copy.substring(1)
+  		} else if(sentence.words_contained[current_index].Word.text[0] === display_text_copy[0]){
+  			sentenceElements.push(sentence.words_contained[current_index].Word.text)
+  			display_text_copy = display_text_copy.substring(sentence.words_contained[current_index].Word.text.length)
+  			current_index++
+  		} else {
+  			 sentenceElements.push(display_text_copy[0])
+  			 display_text_copy = display_text_copy.substring(1)
+  		}
+  	}
 
+  	console.log(sentence.display_text,sentence.words_contained, sentenceElements)
+
+	/*this.props.history.push({
+		pathname: '/author',
+		state: {sentenceElements: []}  
+	})	*/								
+  }
 
 	render(){
 		return(
@@ -90,11 +115,7 @@ class Editor extends Component {
 		              			 <td>{sentence.word_taught.text}</td>
 		              			 <td>{sentence.pinyin}</td>
 		              			 <td>{sentence.english}</td>
-		              			 <td><button onClick={() =>  
-		              			 	this.props.history.push({
-     									pathname: '/author',
-     									state: {sentenceElements: []}  
- })									}>Edit</button></td>
+		              			 <td><button onClick={() => this.parseSentence(sentence)}>Edit</button></td>
 		              			</tr>
 		              		)
 	              		})}
