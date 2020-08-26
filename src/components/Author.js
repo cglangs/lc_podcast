@@ -102,7 +102,8 @@ class Author extends Component {
         selectedPunctuationId: null,
         pinyin: '',
         english: '',
-        replaceMode: false
+        replaceMode: false,
+        interval: null
       }
     } else {
         this.state = {
@@ -115,6 +116,7 @@ class Author extends Component {
           selectedPunctuationId: null,
           pinyin: props.location.state.pinyin,
           english: props.location.state.english,
+          interval: props.location.state.interval,
           replaceMode: true
         }
       }
@@ -192,7 +194,7 @@ class Author extends Component {
   updateStoreAfterAddSentence(store, refetch){
     const data = store.readQuery({ query: GET_LEVEL_WORDS })
     if(data.Author[0].level.teachable_words.length > 1){
-      if(data.Author[0].interval.interval_order === 1){
+      if(this.state.interval.interval_order === 1 || data.Author[0].interval.interval_order === 1){
             data.Author[0].level.addable_words.push(this.state.wordToTeach)
       }
       data.Author[0].level.teachable_words = data.Author[0].level.teachable_words
@@ -215,13 +217,15 @@ class Author extends Component {
           {({ loading, error, data, refetch }) => {
               if (loading) return <div>Fetching</div>
               if (error) return <div>Error</div>
-              const wordArray = this.get_word_array(data.Author[0].level,data.Author[0].interval.interval_order)
+              const interval = this.state.interval || data.Author[0].interval
+              const wordArray = this.get_word_array(data.Author[0].level, interval.interval_order)
+
                return (
                 <div>
                 <div className="Author-dashboard">
-                  <p>{"Interval: " + data.Author[0].interval.interval_order}</p>
-                  <p>{"Minimum points: " + data.Author[0].interval.min_length}</p>
-                  <p>{"Maximum points:: " + data.Author[0].interval.max_length}</p>
+                  <p>{"Interval: " + interval.interval_order}</p>
+                  <p>{"Minimum points: " + interval.min_length}</p>
+                  <p>{"Maximum points:: " + interval.max_length}</p>
                   <p>{"Current Points: " + points}</p>
                 </div>
                 <p>Word being learned: {wordToTeach.text}</p>
@@ -303,10 +307,10 @@ class Author extends Component {
                           <button
                             onClick={() => 
                               {
-                                addSentence({ variables: this.getSentenceVariables(data.Author[0].interval.interval_order,data.Author[0].level.teachable_words.length) })
+                                addSentence({ variables: this.getSentenceVariables(interval.interval_order,data.Author[0].level.teachable_words.length) })
                               }
                           }
-                            disabled={!containsWordToTeach || points <  data.Author[0].interval.min_length || points >  data.Author[0].interval.max_length}
+                            disabled={!containsWordToTeach || points <  interval.min_length || points >  interval.max_length}
                           >
                           Submit
                           </button>

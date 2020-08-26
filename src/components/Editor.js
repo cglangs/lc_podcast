@@ -35,6 +35,12 @@ const GET_SENTENCE_LIST = gql`
 		}
 		pinyin
 		english
+		interval{
+			interval_order
+      		seconds
+      		min_length
+      		max_length
+		}
 	}
   }
 `
@@ -106,7 +112,8 @@ class Editor extends Component {
 			containsWordToTeach: containsWordToTeach,
 			pinyin: sentence.pinyin,
 			english: sentence.english,
-			points: points
+			points: points,
+			interval: sentence.interval
 		}  
 	})						
   }
