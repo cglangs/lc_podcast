@@ -144,14 +144,15 @@ type Query {
                   MATCH (u)-[rSource:LEARNING]->(sourceSentence)
                   OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
                   RETURN destSentence AS selection, 
-                  CASE WHEN EXISTS((u)-[:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE rSource.last_seen END AS last_seen
+                  CASE WHEN EXISTS((u)-[:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE rSource.last_seen END AS last_seen,
+                  0 AS incoming_dependencies 
                   UNION
                   WITH u,s
-                  MATCH(s)
+                  MATCH(s)-[:AT_INTERVAL]->(:Interval {interval_order: 1}), (s)<-[:DEPENDS_ON]-(ids:Sentence)
                   WHERE NOT EXISTS((u)-[:LEARNING]->(s))
-                  RETURN s AS selection, NULL AS last_seen
+                  RETURN s AS selection, NULL AS last_seen, COUNT(ids) AS incoming_dependencies 
                   }
-                  RETURN selection ORDER BY last_seen ASC, LIMIT 1
+                  RETURN selection ORDER BY last_seen ASC, incoming_dependencies DESC LIMIT 1
                   """
     )
 
