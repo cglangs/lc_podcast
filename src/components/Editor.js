@@ -15,6 +15,13 @@ const GET_SENTENCE_LIST = gql`
   query getSentences($levelNumber: Int! $intervalOrder: Int!) {
 	getSentenceList(levelNumber: $levelNumber intervalOrder: $intervalOrder) {
 		raw_text
+		words_contained{
+			contains_order
+			Word{
+				text
+			}
+		}
+		display_text
 		word_taught{
 			text
 		}
@@ -59,7 +66,6 @@ class Editor extends Component {
 		return(
 	    <div className="App">
 	      <header className="App-header">
-	      	
 		      <Query query={GET_SENTENCE_LIST} variables={{levelNumber: this.state.selectedLevel, intervalOrder: this.state.selectedInterval}}>
 		      	{({ loading, error, data, refetch }) => {
 		      	  if (loading) return <div>Fetching</div>

@@ -110,7 +110,7 @@ type Mutation {
                   WHERE ID(s2) = nextIntervalSentenceId
                   MERGE (u)-[r:LEARNING]->(s)
                   SET r.last_seen = time()
-                  WITH u,s,s2,w,r,isCorrect,alreadySeen, nextIntervalSentenceId
+                  WITH u,s,s2,w,r,isCorrect,alreadySeen,nextIntervalSentenceId
                   CALL apoc.do.case(
                   [
                   NOT alreadySeen AND NOT isCorrect, 'DELETE r',
@@ -249,7 +249,7 @@ type Sentence {
   current_users: [User] @relation(name: "LEARNING", direction: IN)
   level: Level @relation(name: "SHOWN_IN" direction: OUT)
   interval: Interval @relation(name: "AT_INTERVAL" direction: OUT)
-	words_contained: [Word!]! @relation(name: "CONTAINS", direction: OUT)
+	words_contained: [ContainedWord!]!
 	word_taught: Word! @relation(name: "TEACHES", direction: OUT)
   next_interval_sentence_id: Int @cypher(
         statement: """MATCH(this)-[:TEACHES]->(w:Word)
@@ -257,6 +257,12 @@ type Sentence {
                       MATCH (w)<-[:TEACHES]-(s2:Sentence)-[:AT_INTERVAL]->(i2:Interval)<-[:NEXT_TIME]-(i:Interval)<-[:AT_INTERVAL]-(this)
                       RETURN ID(s2)
                       """)
+}
+
+type ContainedWord @relation(name:"CONTAINS") {
+  from: Sentence
+  to: Word
+  contains_order: Int!
 }
 `
 
