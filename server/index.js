@@ -139,20 +139,19 @@ type Query {
                   AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order)
                   CALL {
                   WITH u,s
-                  MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*]->(s))
-                  WITH last(nodes(path)) AS destSentence, nodes(path)[1] AS sourceSentence, length(path) AS hops
+                  MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*..6]->(s))
+                  WITH last(nodes(path)) AS destSentence, nodes(path)[1] AS sourceSentence
                   MATCH (u)-[rSource:LEARNING]->(sourceSentence)
                   OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
                   RETURN destSentence AS selection, 
-                  CASE WHEN EXISTS((u)-[:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE rSource.last_seen END AS last_seen,
-                  hops AS ordering
+                  CASE WHEN EXISTS((u)-[:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE rSource.last_seen END AS last_seen
                   UNION
                   WITH u,s
                   MATCH(s)
                   WHERE NOT EXISTS((u)-[:LEARNING]->(s))
-                  RETURN s AS selection, 100 AS ordering, NULL AS last_seen
+                  RETURN s AS selection, NULL AS last_seen
                   }
-                  RETURN selection ORDER BY last_seen ASC, ordering ASC LIMIT 1
+                  RETURN selection ORDER BY last_seen ASC, LIMIT 1
                   """
     )
 
