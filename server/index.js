@@ -36,7 +36,6 @@ async function login(object, params, ctx, resolveInfo) {
 
 async function get_next_sentence(object, params, ctx, resolveInfo) {
   const sentence = await neo4jgraphql(object, params, ctx, resolveInfo)
-  console.log(sentence)
   sentence.already_seen = sentence.current_users.map(user => user.user_name).includes(params.userName)
   sentence.current_users = null
   return sentence
@@ -140,11 +139,13 @@ type Query {
                   AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order)
                   CALL {
                   WITH u,s
-                  MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*]-(s))
+                  MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*]->(s))
                   WITH last(nodes(path)) AS destSentence, nodes(path)[1] AS sourceSentence, length(path) AS hops
-                  OPTIONAL MATCH (u)-[rSource:LEARNING]->(sourceSentence)
+                  MATCH (u)-[rSource:LEARNING]->(sourceSentence)
                   OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
-                  RETURN destSentence AS selection, COALESCE(rDest.last_seen, rSource.last_seen) AS last_seen, MIN(hops) AS ordering
+                  RETURN destSentence AS selection, 
+                  CASE WHEN EXISTS((u)-[:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE rSource.last_seen END AS last_seen,
+                  hops AS ordering
                   UNION
                   WITH u,s
                   MATCH(s)
