@@ -136,9 +136,9 @@ type Query {
                   WITH u,w,i,s,max_interval_order,
                   collect({word_text: wd.text, current_interval:COALESCE(di.interval_order, CASE WHEN EXISTS((u)-[:LEARNED]->(wd)) THEN 6 ELSE 0 END)}) AS word_dependencies
                   WHERE 
-                  NOT EXISTS((u)-[:LEARNED]->(w)) AND 
-                  ((EXISTS((u)-[:LEARNING]->(s)) OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1)))
-                  AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order)
+                  (NOT EXISTS((u)-[:LEARNED]->(w)) AND 
+                  EXISTS((u)-[:LEARNING]->(s)) AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order))
+                  OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1)
                   CALL {
                   WITH u,s,max_interval_order
                   MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*..6]->(s))
@@ -147,15 +147,16 @@ type Query {
                   MATCH (u)-[rSource:LEARNING]->(sourceSentence)
                   OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
                   RETURN destSentence AS selection, 
-                  CASE WHEN EXISTS((u)-[:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE rSource.last_seen END AS last_seen,
+                  CASE WHEN EXISTS((u)-[rDest:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE NULL END AS last_seen_dest,
+                  CASE WHEN EXISTS((u)-[rDest:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE rSource.last_seen END AS last_seen_source,
                   0 AS incoming_dependencies 
                   UNION
                   WITH u,s
                   MATCH(s)-[:AT_INTERVAL]->(:Interval {interval_order: 1}), (s)<-[:DEPENDS_ON]-(ids:Sentence)
                   WHERE NOT EXISTS((u)-[:LEARNING]->(s))
-                  RETURN s AS selection, NULL AS last_seen, COUNT(ids) AS incoming_dependencies 
+                  RETURN s AS selection, NULL AS last_seen_dest, NULL AS last_seen_source, COUNT(ids) AS incoming_dependencies 
                   }
-                  RETURN selection ORDER BY last_seen ASC, incoming_dependencies DESC LIMIT 1
+                  RETURN selection ORDER BY last_seen_dest ASC, last_seen_source ASC, incoming_dependencies DESC LIMIT 1
                   """
     )
 
