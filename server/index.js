@@ -147,8 +147,8 @@ type Query {
                   MATCH (u)-[rSource:LEARNING]->(sourceSentence)
                   OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
                   RETURN destSentence AS selection, 
-                  CASE WHEN EXISTS((u)-[rDest:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE NULL END AS last_seen_dest,
-                  CASE WHEN EXISTS((u)-[rDest:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE rSource.last_seen END AS last_seen_source,
+                  CASE WHEN EXISTS((u)-[:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE NULL END AS last_seen_dest,
+                  rSource.last_seen AS last_seen_source,
                   0 AS incoming_dependencies 
                   UNION
                   WITH u,s
