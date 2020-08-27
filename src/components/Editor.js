@@ -102,8 +102,6 @@ class Editor extends Component {
   		}
   	}
 
-  	/*console.log(sentence.display_text,sentence.words_contained, sentenceElements)*/
-
 	this.props.history.push({
 		pathname: '/author',
 		state: {

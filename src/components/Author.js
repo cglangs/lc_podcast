@@ -236,14 +236,6 @@ class Author extends Component {
                   <p>{"Current Points: " + points}</p>
                 </div>
                 <p>Word being learned: {wordToTeach.text}</p>
-                {/*data.Author[0].level.sentences.map(sentence => { 
-                  if (sentence.words_contained.map(word => word.Word.text).includes(wordToTeach.text)){
-                    return (<p> Contained In:{sentence.raw_text}</p>)
-                  }
-                  else if (sentence.word_taught.text === wordToTeach.text){
-                     return (<p> Taught in:{sentence.raw_text}</p>)
-                  } else return null
-                })*/}
                 <div>
                 <p style={{fontSize: "30px"}}>{SentenceElements.length ?  SentenceElements.map(word => word.text).join('') : null}</p>
                <button

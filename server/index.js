@@ -134,9 +134,9 @@ type Query {
                   WITH u,w,i,s,
                   collect({word_text: wd.text, current_interval:COALESCE(di.interval_order, CASE WHEN EXISTS((u)-[:LEARNED]->(wd)) THEN 6 ELSE 0 END)}) AS word_dependencies
                   WHERE 
-                  (NOT EXISTS((u)-[:LEARNED]->(w)) AND 
-                  EXISTS((u)-[:LEARNING]->(s)) AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order))
-                  OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1)
+                  NOT EXISTS((u)-[:LEARNED]->(w)) AND 
+                  ((EXISTS((u)-[:LEARNING]->(s)) AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order))
+                  OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1))
                   CALL {
                   WITH u,s
                   MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*..6]->(s))
