@@ -82,7 +82,6 @@ class Play extends Component {
                   	<div>
              			  <div>
                       <div>
-                      <p>Is new word: {alreadySeenWord ? "FALSE" : "TRUE"}</p>
                       </div>
     	         			  <div>
     	         			  {alreadySeenWord && <p style={{float: "left"}}>{data.getNextSentence.display_text.substr(0,data.getNextSentence.display_text.indexOf('#'))}</p>}

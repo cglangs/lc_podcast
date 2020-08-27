@@ -243,8 +243,10 @@ type Interval {
 type Sentence {
   _id: Int!
 	raw_text: String!
+  clean_text: String! 
   display_text: String!
   alt_raw_text: String!
+  alt_clean_text: String! 
   alt_display_text: String!
   pinyin: String!
   english: String!

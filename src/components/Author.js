@@ -13,17 +13,6 @@ export const GET_LEVEL_WORDS = gql`
     level{
       level_number
       points
-      sentences {
-        raw_text
-        words_contained{
-          Word{
-            text
-          }
-        }
-        word_taught{
-          text
-        }
-      }
       teachable_words{
         text
         alt_text
@@ -42,6 +31,9 @@ export const GET_LEVEL_WORDS = gql`
       }
     }
     interval{
+      sentences{
+        clean_text
+      }
       interval_order
       seconds
       min_length
@@ -52,8 +44,8 @@ export const GET_LEVEL_WORDS = gql`
 `
 
 const ADD_SENTENCE = gql`
-  mutation addsentence($rawSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $wordToTeachText: String!, $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $shouldCall: Boolean!) {
-    CreateSentence(raw_text: $rawSentenceTextSimplified, display_text: $displaySentenceTextSimplified, alt_raw_text: $rawSentenceTextTraditional, alt_display_text: $displaySentenceTextTraditional, pinyin: $pinyin, english: $english) {
+  mutation addsentence($rawSentenceTextSimplified: String!, $cleanSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $cleanSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $wordToTeachText: String!, $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $shouldCall: Boolean!) {
+    CreateSentence(raw_text: $rawSentenceTextSimplified, clean_text: $cleanSentenceTextSimplified, display_text: $displaySentenceTextSimplified, alt_raw_text: $rawSentenceTextTraditional, alt_clean_text: $cleanSentenceTextTraditional, alt_display_text: $displaySentenceTextTraditional, pinyin: $pinyin, english: $english) {
       raw_text
     }
     AddSentenceLevel(from: {raw_text:  $rawSentenceTextSimplified} to: {level_number: 1}){
@@ -137,17 +129,31 @@ class Author extends Component {
   }
 
 
-  getSentenceVariables(interval_order, words_left) {
-    const {SentenceElements, wordToTeach, pinyin, english} = this.state
+  submitSentenceData(clean_sentences, interval_order, words_left, addSentence){
+    const SentenceElements = this.state.SentenceElements
     const sentenceWords = SentenceElements.filter( element => element.hasOwnProperty('word_id') )
-
     const sentenceWordListSimplified = sentenceWords.map(word => word.text)
+    const cleanSentenceTextSimplified = sentenceWordListSimplified.join('')
+
+    if(clean_sentences.includes(cleanSentenceTextSimplified)){
+      alert("Already used this sentence. Please change it.")
+
+    }
+    else{
+        addSentence({ variables: this.getSentenceVariables(SentenceElements, sentenceWords,sentenceWordListSimplified,cleanSentenceTextSimplified, interval_order, words_left)})
+    }
+  }
+
+  getSentenceVariables(SentenceElements, sentenceWords, sentenceWordListSimplified,cleanSentenceTextSimplified, interval_order, words_left) {
+    const { wordToTeach, pinyin, english} = this.state
+
     const sentenceContainedWordListSimplified = sentenceWordListSimplified.filter(word => word !== wordToTeach.text)
     const SentenceElementListSimplified = SentenceElements.map(element => element.text)
     const rawSentenceTextSimplified = SentenceElementListSimplified.join('')
     const displaySentenceTextSimplified = rawSentenceTextSimplified.replace(new RegExp(wordToTeach.text, 'g'), '#')
 
-    //const sentenceWordListTraditional = sentenceWords.map(word => word.alt_text)
+    const sentenceWordListTraditional = sentenceWords.map(word => word.alt_text)
+    const cleanSentenceTextTraditional = sentenceWordListTraditional.join('')
     const SentenceElementListTraditional = SentenceElements.map(element => element.alt_text || element.text)
     const rawSentenceTextTraditional = SentenceElementListTraditional.join('')
     const displaySentenceTextTraditional = rawSentenceTextTraditional.replace(new RegExp(wordToTeach.alt_text, 'g'), '#')
@@ -156,7 +162,8 @@ class Author extends Component {
     const wordToTeachId = wordToTeach.word_id
     const currentInterval = interval_order
     const shouldCall =  words_left === 1 && currentInterval < 5
-    return{rawSentenceTextSimplified,displaySentenceTextSimplified,rawSentenceTextTraditional,displaySentenceTextTraditional, pinyin, english, wordToTeachText,wordToTeachId,sentenceContainedWordListSimplified,currentInterval,shouldCall}
+
+    return{rawSentenceTextSimplified,cleanSentenceTextSimplified, displaySentenceTextSimplified,rawSentenceTextTraditional,cleanSentenceTextTraditional, displaySentenceTextTraditional, pinyin, english, wordToTeachText,wordToTeachId,sentenceContainedWordListSimplified,currentInterval,shouldCall}
   }
 
   appendElement(newElement) {
@@ -197,9 +204,9 @@ class Author extends Component {
       if(/*this.state.interval.interval_order === 1 ||*/ data.Author[0].interval.interval_order === 1){
             data.Author[0].level.addable_words.push(this.state.wordToTeach)
       }
-      data.Author[0].level.teachable_words = data.Author[0].level.teachable_words
-        .filter((word=> word.word_id !== this.state.wordToTeach.word_id))
-
+      data.Author[0].level.teachable_words = data.Author[0].level.teachable_words.filter((word=> word.word_id !== this.state.wordToTeach.word_id))
+      data.Author[0].interval.sentences.push({__typename: "Sentence", clean_text: this.state.SentenceElements.filter(element => element.hasOwnProperty('word_id')).map(word => word.text).join('')})
+      console.log(data.Author[0].interval.sentences)
       store.writeQuery({ query: GET_LEVEL_WORDS, data })
     } else {
       refetch()
@@ -307,7 +314,7 @@ class Author extends Component {
                           <button
                             onClick={() => 
                               {
-                                addSentence({ variables: this.getSentenceVariables(interval.interval_order,data.Author[0].level.teachable_words.length) })
+                                this.submitSentenceData(interval.sentences.map((sentence) => sentence.clean_text), interval.interval_order,data.Author[0].level.teachable_words.length, addSentence)
                               }
                           }
                             disabled={!containsWordToTeach || points <  interval.min_length || points >  interval.max_length}
