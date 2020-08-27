@@ -127,19 +127,22 @@ type Query {
     statement:""" 
                   MATCH (u:User{user_name: userName})
                   WITH u
+                  OPTIONAL MATCH (u)-[:LEARNING]->(:Sentence)-[:AT_INTERVAL]->(maxIntervals:Interval)
+                  WITH max(COALESCE(maxIntervals.interval_order,1)) AS max_interval_order, u
                   MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
                   OPTIONAL MATCH (u)-[is_learned:LEARNED]->(wd)
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)
-                  WITH u,w,i,s,
+                  WITH u,w,i,s,max_interval_order,
                   collect({word_text: wd.text, current_interval:COALESCE(di.interval_order, CASE WHEN EXISTS((u)-[:LEARNED]->(wd)) THEN 6 ELSE 0 END)}) AS word_dependencies
                   WHERE 
                   NOT EXISTS((u)-[:LEARNED]->(w)) AND 
                   ((EXISTS((u)-[:LEARNING]->(s)) OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1)))
                   AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order)
                   CALL {
-                  WITH u,s
+                  WITH u,s,max_interval_order
                   MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*..6]->(s))
+                  WHERE length(path) <= max_interval_order + 1
                   WITH last(nodes(path)) AS destSentence, nodes(path)[1] AS sourceSentence
                   MATCH (u)-[rSource:LEARNING]->(sourceSentence)
                   OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
