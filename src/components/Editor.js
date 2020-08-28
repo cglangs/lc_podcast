@@ -20,6 +20,7 @@ const GET_SENTENCE_LIST = gql`
 			Word{
 				word_id
 				text
+				alt_text
 				level{
 					points
 				}
@@ -29,6 +30,7 @@ const GET_SENTENCE_LIST = gql`
 		word_taught{
 			word_id
 			text
+			alt_text
 			level{
 				points
 			}
@@ -87,15 +89,15 @@ class Editor extends Component {
   	
   	while(display_text_copy.length){
   		if(display_text_copy[0] === '#'){
-  			sentenceElements.push({text: sentence.word_taught.text, word_id: sentence.word_taught.word_id})
+  			sentenceElements.push({text: sentence.word_taught.text, alt_text: sentence.word_taught.alt_text, word_id: sentence.word_taught.word_id, level: {points: sentence.word_taught.level.points}})
   			if(wordToTeach === null){
-  				wordToTeach = {text: sentence.word_taught.text, word_id: sentence.word_taught.word_id}
+  				wordToTeach = {text: sentence.word_taught.text, alt_text: sentence.word_taught.alt_text, word_id: sentence.word_taught.word_id, level: {points: sentence.word_taught.level.points}}
   			}
   			display_text_copy = display_text_copy.substring(1)
   			containsWordToTeach++
   			points += sentence.word_taught.level.points
   		} else if(sentence.words_contained[current_index].Word.text[0] === display_text_copy[0]){
-  			sentenceElements.push({ text: sentence.words_contained[current_index].Word.text, word_id: sentence.words_contained[current_index].Word.word_id})
+  			sentenceElements.push({ text: sentence.words_contained[current_index].Word.text, alt_text: sentence.words_contained[current_index].Word.alt_text, word_id: sentence.words_contained[current_index].Word.word_id, level: {points: sentence.words_contained[current_index].Word.level.points}})
   			display_text_copy = display_text_copy.substring(sentence.words_contained[current_index].Word.text.length)
   			points += sentence.words_contained[current_index].Word.level.points
   			current_index++
@@ -110,6 +112,7 @@ class Editor extends Component {
 		state: {
 			sentenceElements: sentenceElements, 
 			formerSentenceRawText: sentence.raw_text,
+			formerSentenceCleanText: sentence.clean_text,
 			wordToTeach: wordToTeach,
 			containsWordToTeach: containsWordToTeach,
 			pinyin: sentence.pinyin,

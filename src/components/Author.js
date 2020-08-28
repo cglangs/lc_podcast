@@ -44,7 +44,7 @@ export const GET_LEVEL_WORDS = gql`
 `
 
 const ADD_SENTENCE = gql`
-  mutation addsentence($rawSentenceTextSimplified: String!, $cleanSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $cleanSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $wordToTeachText: String!, $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $shouldCall: Boolean!, $formerSentenceRawTextSimplified: String!) {
+  mutation addsentence($rawSentenceTextSimplified: String!, $cleanSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $cleanSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $shouldCall: Boolean!) {
     CreateSentence(raw_text: $rawSentenceTextSimplified, clean_text: $cleanSentenceTextSimplified, display_text: $displaySentenceTextSimplified, alt_raw_text: $rawSentenceTextTraditional, alt_clean_text: $cleanSentenceTextTraditional, alt_display_text: $displaySentenceTextTraditional, pinyin: $pinyin, english: $english) {
       raw_text
     }
@@ -70,8 +70,8 @@ const ADD_SENTENCE = gql`
 `
 
 const REPLACE_SENTENCE = gql`
-  mutation replacesentence($rawSentenceTextSimplified: String!, $cleanSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $cleanSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $wordToTeachText: String!, $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $shouldCall: Boolean!, $formerSentenceRawTextSimplified: String!) {
-    DeleteSentence(raw_text: $formerSentenceRawTextSimplified){
+  mutation replacesentence($rawSentenceTextSimplified: String!, $cleanSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $cleanSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $formerSentenceRawText: String!) {
+    DeleteSentence(raw_text: $formerSentenceRawText){
       raw_text
     }
     CreateSentence(raw_text: $rawSentenceTextSimplified, clean_text: $cleanSentenceTextSimplified, display_text: $displaySentenceTextSimplified, alt_raw_text: $rawSentenceTextTraditional, alt_clean_text: $cleanSentenceTextTraditional, alt_display_text: $displaySentenceTextTraditional, pinyin: $pinyin, english: $english) {
@@ -89,7 +89,7 @@ const REPLACE_SENTENCE = gql`
       from {raw_text}
       to {interval_order}
     }
-    AddSentenceDependencies(src_sentence: $rawSentenceTextSimplified, dest_words: $sentenceContainedWordListSimplified, word_to_teach: $wordToTeachText){
+    AddSentenceDependencies(src_sentence: $rawSentenceTextSimplified, dest_words: $sentenceContainedWordListSimplified){
       raw_text
       display_text
     }
@@ -114,6 +114,7 @@ class Author extends Component {
       this.state = {
         SentenceElements: [],
         formerSentenceRawText: null,
+        formerSentenceCleanText: null,
         selectedWordId: null,
         wordToTeach: {text: '', word_id: null},
         containsWordToTeach: 0,
@@ -129,6 +130,7 @@ class Author extends Component {
         this.state = {
           SentenceElements: props.location.state.sentenceElements,
           formerSentenceRawText: props.location.state.formerSentenceRawText,
+          formerSentenceCleanText: props.location.state.formerSentenceCleanText,
           selectedWordId: null,
           wordToTeach: props.location.state.wordToTeach,
           containsWordToTeach: props.location.state.containsWordToTeach,
@@ -164,7 +166,8 @@ class Author extends Component {
     const sentenceWordListSimplified = sentenceWords.map(word => word.text)
     const cleanSentenceTextSimplified = sentenceWordListSimplified.join('')
 
-    if(clean_sentences.includes(cleanSentenceTextSimplified)){
+    if(clean_sentences.includes(cleanSentenceTextSimplified) && cleanSentenceTextSimplified !== this.state.formerSentenceCleanText){
+
       alert("Already used this sentence. Please change it.")
 
     }
@@ -174,7 +177,7 @@ class Author extends Component {
   }
 
   getSentenceVariables(SentenceElements, sentenceWords, sentenceWordListSimplified,cleanSentenceTextSimplified, interval_order, words_left) {
-    const { wordToTeach, pinyin, english, formerSentenceRawText} = this.state
+    const { wordToTeach, pinyin, english, formerSentenceRawText, replaceMode} = this.state
 
     const sentenceContainedWordListSimplified = sentenceWordListSimplified.filter(word => word !== wordToTeach.text)
     const SentenceElementListSimplified = SentenceElements.map(element => element.text)
@@ -192,10 +195,19 @@ class Author extends Component {
     const currentInterval = interval_order
     const shouldCall =  words_left === 1 && currentInterval < 5
 
-    return{rawSentenceTextSimplified,cleanSentenceTextSimplified, displaySentenceTextSimplified,rawSentenceTextTraditional,cleanSentenceTextTraditional, displaySentenceTextTraditional, pinyin, english, wordToTeachText,wordToTeachId,sentenceContainedWordListSimplified,currentInterval,shouldCall,formerSentenceRawText}
+    var resultObj ={rawSentenceTextSimplified,cleanSentenceTextSimplified, displaySentenceTextSimplified,rawSentenceTextTraditional,cleanSentenceTextTraditional, displaySentenceTextTraditional, pinyin, english, wordToTeachText,wordToTeachId,sentenceContainedWordListSimplified,currentInterval}
+
+    if(replaceMode){
+      Object.assign(resultObj,{formerSentenceRawText})
+    } else{
+      Object.assign(resultObj,{shouldCall})
+    }
+
+    return resultObj
   }
 
   appendElement(newElement) {
+    console.log(newElement)
     if(!newElement.hasOwnProperty('word_id')){
       this.setState(prevState => 
       ({
