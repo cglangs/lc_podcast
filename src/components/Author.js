@@ -44,7 +44,36 @@ export const GET_LEVEL_WORDS = gql`
 `
 
 const ADD_SENTENCE = gql`
-  mutation addsentence($rawSentenceTextSimplified: String!, $cleanSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $cleanSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $wordToTeachText: String!, $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $shouldCall: Boolean!) {
+  mutation addsentence($rawSentenceTextSimplified: String!, $cleanSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $cleanSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $wordToTeachText: String!, $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $shouldCall: Boolean!, $formerSentenceRawTextSimplified: String!) {
+    CreateSentence(raw_text: $rawSentenceTextSimplified, clean_text: $cleanSentenceTextSimplified, display_text: $displaySentenceTextSimplified, alt_raw_text: $rawSentenceTextTraditional, alt_clean_text: $cleanSentenceTextTraditional, alt_display_text: $displaySentenceTextTraditional, pinyin: $pinyin, english: $english) {
+      raw_text
+    }
+    AddSentenceLevel(from: {raw_text:  $rawSentenceTextSimplified} to: {level_number: 1}){
+      from {raw_text}
+      to {level_number}
+    }
+    AddSentenceWord_taught(from: {raw_text: $rawSentenceTextSimplified} to: {word_id: $wordToTeachId}){
+      from {raw_text}
+      to {text}
+    }
+    AddSentenceInterval(from: {raw_text: $rawSentenceTextSimplified} to: {interval_order: $currentInterval}){
+      from {raw_text}
+      to {interval_order}
+    }
+    AddSentenceDependencies(src_sentence: $rawSentenceTextSimplified, dest_words: $sentenceContainedWordListSimplified){
+      raw_text
+      display_text
+    }
+    IncrementInterval(should_call: $shouldCall)
+  }
+
+`
+
+const REPLACE_SENTENCE = gql`
+  mutation replacesentence($rawSentenceTextSimplified: String!, $cleanSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $cleanSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $wordToTeachText: String!, $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $shouldCall: Boolean!, $formerSentenceRawTextSimplified: String!) {
+    DeleteSentence(raw_text: $formerSentenceRawTextSimplified){
+      raw_text
+    }
     CreateSentence(raw_text: $rawSentenceTextSimplified, clean_text: $cleanSentenceTextSimplified, display_text: $displaySentenceTextSimplified, alt_raw_text: $rawSentenceTextTraditional, alt_clean_text: $cleanSentenceTextTraditional, alt_display_text: $displaySentenceTextTraditional, pinyin: $pinyin, english: $english) {
       raw_text
     }
@@ -64,11 +93,9 @@ const ADD_SENTENCE = gql`
       raw_text
       display_text
     }
-    IncrementInterval(should_call: $shouldCall)
   }
 
 `
-
 const customStyles = {
 
   option: (styles, { data}) => {
@@ -86,6 +113,7 @@ class Author extends Component {
     if(typeof props.location.state === 'undefined'){
       this.state = {
         SentenceElements: [],
+        formerSentenceRawText: null,
         selectedWordId: null,
         wordToTeach: {text: '', word_id: null},
         containsWordToTeach: 0,
@@ -100,6 +128,7 @@ class Author extends Component {
     } else {
         this.state = {
           SentenceElements: props.location.state.sentenceElements,
+          formerSentenceRawText: props.location.state.formerSentenceRawText,
           selectedWordId: null,
           wordToTeach: props.location.state.wordToTeach,
           containsWordToTeach: props.location.state.containsWordToTeach,
@@ -145,7 +174,7 @@ class Author extends Component {
   }
 
   getSentenceVariables(SentenceElements, sentenceWords, sentenceWordListSimplified,cleanSentenceTextSimplified, interval_order, words_left) {
-    const { wordToTeach, pinyin, english} = this.state
+    const { wordToTeach, pinyin, english, formerSentenceRawText} = this.state
 
     const sentenceContainedWordListSimplified = sentenceWordListSimplified.filter(word => word !== wordToTeach.text)
     const SentenceElementListSimplified = SentenceElements.map(element => element.text)
@@ -163,7 +192,7 @@ class Author extends Component {
     const currentInterval = interval_order
     const shouldCall =  words_left === 1 && currentInterval < 5
 
-    return{rawSentenceTextSimplified,cleanSentenceTextSimplified, displaySentenceTextSimplified,rawSentenceTextTraditional,cleanSentenceTextTraditional, displaySentenceTextTraditional, pinyin, english, wordToTeachText,wordToTeachId,sentenceContainedWordListSimplified,currentInterval,shouldCall}
+    return{rawSentenceTextSimplified,cleanSentenceTextSimplified, displaySentenceTextSimplified,rawSentenceTextTraditional,cleanSentenceTextTraditional, displaySentenceTextTraditional, pinyin, english, wordToTeachText,wordToTeachId,sentenceContainedWordListSimplified,currentInterval,shouldCall,formerSentenceRawText}
   }
 
   appendElement(newElement) {
@@ -295,7 +324,7 @@ class Author extends Component {
                       style={{width: "250px"}}
                     />
                   </div>
-                   <Mutation mutation={ADD_SENTENCE}
+                   <Mutation mutation={this.state.replaceMode ? REPLACE_SENTENCE : ADD_SENTENCE}
                       update={(store) => {
                         this.updateStoreAfterAddSentence(store, refetch)
                         this.setState(this.baseState)                        

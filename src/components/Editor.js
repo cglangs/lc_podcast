@@ -36,6 +36,9 @@ const GET_SENTENCE_LIST = gql`
 		pinyin
 		english
 		interval{
+	        sentences{
+	          clean_text
+	        }
 			interval_order
       		seconds
       		min_length
@@ -106,6 +109,7 @@ class Editor extends Component {
 		pathname: '/author',
 		state: {
 			sentenceElements: sentenceElements, 
+			formerSentenceRawText: sentence.raw_text,
 			wordToTeach: wordToTeach,
 			containsWordToTeach: containsWordToTeach,
 			pinyin: sentence.pinyin,

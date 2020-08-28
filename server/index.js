@@ -36,8 +36,10 @@ async function login(object, params, ctx, resolveInfo) {
 
 async function get_next_sentence(object, params, ctx, resolveInfo) {
   const sentence = await neo4jgraphql(object, params, ctx, resolveInfo)
-  sentence.already_seen = sentence.current_users.map(user => user.user_name).includes(params.userName)
-  sentence.current_users = null
+  if(sentence){
+    sentence.already_seen = sentence.current_users.map(user => user.user_name).includes(params.userName)
+    sentence.current_users = null
+  }
   return sentence
 }
 
@@ -75,7 +77,7 @@ const driver = neo4j.driver(
 const typeDefs = `
 type Mutation {
 
-    AddSentenceDependencies(src_sentence: String! dest_words:[String] word_to_teach: String!): Sentence
+    AddSentenceDependencies(src_sentence: String! dest_words:[String]): Sentence
     @cypher(
     statement:"""      MATCH (s:Sentence {raw_text: $src_sentence})-[:AT_INTERVAL]->(i:Interval), (w:Word)
                        WHERE w.text IN $dest_words
