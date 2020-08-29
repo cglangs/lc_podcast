@@ -80,11 +80,12 @@ class Play extends Component {
                 return(
                   <div>
                   <div>
-                    <div>
-                    {alreadySeenWord && <p style={{float: "left"}}>{data.getNextSentence.display_text.substr(0,data.getNextSentence.display_text.indexOf('#'))}</p>}
-                    <input style={{float: "left", width: `${data.getNextSentence.word_taught.text.length * 20}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 5px 5px"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}/>
-                    {alreadySeenWord && <p style={{float: "left"}}>{data.getNextSentence.display_text.substr(data.getNextSentence.display_text.indexOf('#') + 1,data.getNextSentence.display_text.length)}</p>}
+                    <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
+                    {alreadySeenWord && <p>{data.getNextSentence.display_text.substr(0,data.getNextSentence.display_text.indexOf('#'))}</p>}
+                    <input style={{width: `${data.getNextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}/>
+                    {alreadySeenWord && <p>{data.getNextSentence.display_text.substr(data.getNextSentence.display_text.indexOf('#') + 1,data.getNextSentence.display_text.length)}</p>}
                     </div>
+                    <div  style={{clear: "both"}}>
                      <Mutation mutation={MAKE_ATTEMPT}
                           update={(store) => {
                             this.setState({
@@ -121,6 +122,7 @@ class Play extends Component {
                             </button>
                           )}
                     </Mutation>
+                    </div>
                   </div>
                   <div>
                     {alreadySeenWord && <p>{data.getNextSentence.english}</p>}
