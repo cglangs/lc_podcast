@@ -110,8 +110,7 @@ const customStyles = {
 class Author extends Component {
   constructor(props){
     super(props)
-    if(typeof props.location.state === 'undefined'){
-      this.state = {
+    this.baseState = {
         SentenceElements: [],
         formerSentenceRawText: null,
         formerSentenceCleanText: null,
@@ -126,6 +125,8 @@ class Author extends Component {
         replaceMode: false,
         interval: null
       }
+    if(typeof props.location.state === 'undefined'){
+      this.state = this.baseState
     } else {
         this.state = {
           SentenceElements: props.location.state.sentenceElements,
@@ -143,7 +144,6 @@ class Author extends Component {
           replaceMode: true
         }
       }
-    this.baseState = this.state 
   }
 
   get_word_array(level, interval_order) {
