@@ -410,3 +410,34 @@ Chinese.propTypes = {
 }
 
 export default Chinese;
+
+
+
+  /*updateStoreAfterAddSentence(store, refetch){
+    const data = store.readQuery({ query: GET_LEVEL_WORDS })
+    //for each word used increment times_used, then sort addable_words
+
+    if(!this.replaceMode){
+      //const sentence_words = this.state.SentenceElements.filter(element => element.hasOwnProperty('word_id')).map(word => word.text)
+      //const contained words = sentence_words.filter(word => word!==this.state.wordToTeach)
+
+
+      //if it is not the last word in the interval
+      if(data.Author[0].level.teachable_words.length > 1){
+        if(data.Author[0].interval.interval_order === 1){
+              data.Author[0].level.addable_words.push(this.state.wordToTeach)
+        }
+        data.Author[0].level.teachable_words = data.Author[0].level.teachable_words.filter((word=> word.word_id !== this.state.wordToTeach.word_id))
+        //used for checking if a sentence is unique
+        data.Author[0].interval.sentences.push({__typename: "Sentence", clean_text: sentence_words.join('')})
+        store.writeQuery({ query: GET_LEVEL_WORDS, data })
+      } 
+      else {
+        refetch()
+      }
+    }
+    else{
+      refetch()
+    }
+
+  }*/

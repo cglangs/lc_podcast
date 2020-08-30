@@ -239,25 +239,10 @@ class Author extends Component {
     }
   }
 
-  updateStoreAfterAddSentence(store, refetch){
-    const data = store.readQuery({ query: GET_LEVEL_WORDS })
-    if(data.Author[0].level.teachable_words.length > 1){
-      if(/*this.state.interval.interval_order === 1 ||*/ data.Author[0].interval.interval_order === 1){
-            data.Author[0].level.addable_words.push(this.state.wordToTeach)
-      }
-      data.Author[0].level.teachable_words = data.Author[0].level.teachable_words.filter((word=> word.word_id !== this.state.wordToTeach.word_id))
-      data.Author[0].interval.sentences.push({__typename: "Sentence", clean_text: this.state.SentenceElements.filter(element => element.hasOwnProperty('word_id')).map(word => word.text).join('')})
-      console.log(data.Author[0].interval.sentences)
-      store.writeQuery({ query: GET_LEVEL_WORDS, data })
-    } else {
-      refetch()
-    }
-  }
-
-
   render() {
     const { SentenceElements, wordToTeach, points, selectedWordId, containsWordToTeach, punctuationMode,selectedPunctuationId} = this.state
     console.log(this.state)
+
     return (
       <div className="App">
         <header className="App-header">
@@ -267,7 +252,9 @@ class Author extends Component {
               if (error) return <div>Error</div>
               const interval = this.state.interval || data.Author[0].interval
               const wordArray = this.get_word_array(data.Author[0].level, interval.interval_order)
-
+              console.log(selectedWordId)
+              console.log(wordArray)
+              console.log(wordArray.find(word=> word.word_id === selectedWordId)) 
                return (
                 <div>
                 <div className="Author-dashboard">
@@ -338,8 +325,8 @@ class Author extends Component {
                   </div>
                    <Mutation mutation={this.state.replaceMode ? REPLACE_SENTENCE : ADD_SENTENCE}
                       update={(store) => {
-                        this.updateStoreAfterAddSentence(store, refetch)
-                        this.setState(this.baseState)                        
+                        this.setState(this.baseState)
+                        refetch()                      
                         }
                       }
                    >

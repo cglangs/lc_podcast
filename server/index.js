@@ -212,9 +212,10 @@ type Level {
                       """)
   addable_words: [Word] @cypher(
         statement: """MATCH (this)<-[:SHOWN_IN]-(s:Sentence)-[:TEACHES | CONTAINS]->(w:Word)
-                      RETURN DISTINCT w AS word
+                      OPTIONAL MATCH (s)-[r:CONTAINS]->(w)
+                      WITH w, count(r) AS times_used
+                      RETURN w AS word ORDER BY times_used ASC
                       """)
-
 }
 type Word {
   word_id: Int

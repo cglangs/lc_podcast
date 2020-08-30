@@ -80,6 +80,7 @@ class Play extends Component {
                 return(
                   <div>
                   <div>
+                    {alreadySeenWord && <p>{data.getNextSentence.english}</p>}
                     <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
                     {alreadySeenWord && <p>{data.getNextSentence.display_text.substr(0,data.getNextSentence.display_text.indexOf('#'))}</p>}
                     <input style={{width: `${data.getNextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}/>
@@ -125,7 +126,6 @@ class Play extends Component {
                     </div>
                   </div>
                   <div>
-                    {alreadySeenWord && <p>{data.getNextSentence.english}</p>}
                     <p>{data.getNextSentence.word_taught.english}</p>
                   </div>
                   {this.state.showAnswer && (
