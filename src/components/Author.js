@@ -167,6 +167,7 @@ class Author extends Component {
     const cleanSentenceTextSimplified = sentenceWordListSimplified.join('')
 
     if(clean_sentences.includes(cleanSentenceTextSimplified) && cleanSentenceTextSimplified !== this.state.formerSentenceCleanText){
+      console.log(cleanSentenceTextSimplified, this.state.formerSentenceCleanText)
 
       alert("Already used this sentence. Please change it.")
 

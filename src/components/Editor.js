@@ -15,6 +15,7 @@ const GET_SENTENCE_LIST = gql`
   query getSentences($levelNumber: Int! $intervalOrder: Int!) {
 	getSentenceList(levelNumber: $levelNumber intervalOrder: $intervalOrder) {
 		raw_text
+		clean_text
 		words_contained{
 			contains_order
 			Word{
@@ -86,7 +87,7 @@ class Editor extends Component {
   	let display_text_copy = sentence.display_text
 
   	sentence.words_contained.sort((previous, next)=> {return previous.contains_order - next.contains_order})
-  	
+  	console.log(sentence)
   	while(display_text_copy.length){
   		if(display_text_copy[0] === '#'){
   			sentenceElements.push({text: sentence.word_taught.text, alt_text: sentence.word_taught.alt_text, word_id: sentence.word_taught.word_id, level: {points: sentence.word_taught.level.points}})
@@ -96,7 +97,8 @@ class Editor extends Component {
   			display_text_copy = display_text_copy.substring(1)
   			containsWordToTeach++
   			points += sentence.word_taught.level.points
-  		} else if(sentence.words_contained[current_index].Word.text[0] === display_text_copy[0]){
+  		} else if(sentence.words_contained[current_index] && sentence.words_contained[current_index].Word.text[0] === display_text_copy[0]){
+  			console.log(sentence)
   			sentenceElements.push({ text: sentence.words_contained[current_index].Word.text, alt_text: sentence.words_contained[current_index].Word.alt_text, word_id: sentence.words_contained[current_index].Word.word_id, level: {points: sentence.words_contained[current_index].Word.level.points}})
   			display_text_copy = display_text_copy.substring(sentence.words_contained[current_index].Word.text.length)
   			points += sentence.words_contained[current_index].Word.level.points

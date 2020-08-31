@@ -74,7 +74,8 @@ class Play extends Component {
               var nextIntervalSentenceId = null
               if(data.getNextSentence.next_interval_sentence_id && alreadySeenWord){
                 nextIntervalSentenceId = data.getNextSentence.next_interval_sentence_id
-              } else if(data.getNextSentence.next_interval_sentence_id && !alreadySeenWord){
+              } else if((data.getNextSentence.next_interval_sentence_id || /*Only necessary because of missing data*/ data.getNextSentence.interval.interval_order < 5) && !alreadySeenWord){
+                //else if(data.getNextSentence.next_interval_sentence_id && !alreadySeenWord){
                 nextIntervalSentenceId = parseInt(sentenceId)
               }
                 return(
@@ -99,6 +100,7 @@ class Play extends Component {
                             <button
                               onClick={() => 
                                 {
+                                  console.log(userName,sentenceId,this.checkAnswer(data.getNextSentence.word_taught.text),alreadySeenWord,nextIntervalSentenceId)
                                   if(!this.state.showAnswer){
                                     makeAttempt({variables:{
                                       userName: userName,
