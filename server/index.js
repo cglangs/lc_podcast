@@ -149,14 +149,16 @@ type Query {
                   CASE WHEN EXISTS((u)-[:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE NULL END AS last_seen_dest,
                   rSource.last_seen AS last_seen_source,
                   hops,
-                  0 AS outgoing_dependencies 
+                  0 AS outgoing_dependencies,
+                  0 AS incoming_dependencies 
                   UNION
                   WITH u,s
-                  OPTIONAL MATCH(s)-[:AT_INTERVAL]->(:Interval {interval_order: 1}), (s)-[:DEPENDS_ON]->(ids:Sentence)
+                  OPTIONAL MATCH(s)-[:AT_INTERVAL]->(:Interval {interval_order: 1}), (s)-[:DEPENDS_ON]->(ods:Sentence)
+                  OPTIONAL MATCH(s)-[:AT_INTERVAL]->(:Interval {interval_order: 1}), (s)<-[:DEPENDS_ON]-(ids:Sentence)
                   WHERE NOT EXISTS((u)-[:LEARNING]->(s))
-                  RETURN s AS selection, NULL AS last_seen_dest, NULL AS last_seen_source, 0 AS hops, COUNT(ids) AS outgoing_dependencies 
+                  RETURN s AS selection, NULL AS last_seen_dest, NULL AS last_seen_source, 0 AS hops, COUNT(ods) AS outgoing_dependencies, COUNT(ids) AS incoming_dependencies
                   }
-                  RETURN selection ORDER BY last_seen_dest ASC, last_seen_source ASC, hops ASC, outgoing_dependencies  ASC LIMIT 1
+                  RETURN selection ORDER BY last_seen_dest ASC, last_seen_source ASC, hops ASC, outgoing_dependencies ASC, incoming_dependencies DESC, RAND() LIMIT 1
                   """
     )
 
