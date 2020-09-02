@@ -33,5 +33,6 @@ export const punctuations = [
 	{id: 14, text: '7', type: 'SEVEN'},
 	{id: 15, text: '8', type: 'EIGHT'},
 	{id: 16, text: '9', type: 'NINE'},
-	{id: 17, text: ' ', type: 'SPACE'}
+	{id: 17, text: ' ', type: 'SPACE'},
+	{id: 18, text: 'Smith', type: 'NAME'}
 ]
