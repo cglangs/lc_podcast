@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import {Query, Mutation} from 'react-apollo';
 import gql from 'graphql-tag';
 import {getUserName} from '../constants.js'
+import { Howl } from 'howler';
+
 
 import '../styles/App.css';
 
@@ -59,6 +61,14 @@ class Play extends Component {
 		return correct_response === this.state.userResponse
 	}
 
+  SoundPlay() {
+    const Sounds = new Howl({
+      src: ["/1.mp3"]
+    })
+    Sounds.play()
+    console.log("sound")
+  }
+
 	render() {
 	  const userName = getUserName()
 	  return (
@@ -81,6 +91,7 @@ class Play extends Component {
                 return(
                   <div>
                   <div>
+                    <button onClick={this.SoundPlay}>play</button>
                     {alreadySeenWord && <p>{data.getNextSentence.english}</p>}
                     <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
                     {alreadySeenWord && <p>{data.getNextSentence.display_text.substr(0,data.getNextSentence.display_text.indexOf('#'))}</p>}
