@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import gql from 'graphql-tag';
 import { Mutation, Query} from 'react-apollo';
 import '../styles/App.css';
-import {punctuations} from '../constants.js'
+import {punctuations, colors} from '../constants.js'
 import Switch from "./Switch";
 import Select from "react-select";
 
@@ -25,6 +25,7 @@ export const GET_LEVEL_WORDS = gql`
         text
         alt_text
         word_id
+        times_used
         level{
           points
         }
@@ -101,7 +102,8 @@ const customStyles = {
   option: (styles, { data}) => {
     return {
       ...styles,
-      color: "black"
+      color: "black",
+      backgroundColor: data.color
     }
   }
 
@@ -167,10 +169,7 @@ class Author extends Component {
     const cleanSentenceTextSimplified = sentenceWordListSimplified.join('')
 
     if(clean_sentences.includes(cleanSentenceTextSimplified) && cleanSentenceTextSimplified !== this.state.formerSentenceCleanText){
-      console.log(cleanSentenceTextSimplified, this.state.formerSentenceCleanText)
-
       alert("Already used this sentence. Please change it.")
-
     }
     else{
         addSentence({ variables: this.getSentenceVariables(SentenceElements, sentenceWords,sentenceWordListSimplified,cleanSentenceTextSimplified, interval_order, words_left)})
@@ -208,7 +207,6 @@ class Author extends Component {
   }
 
   appendElement(newElement) {
-    console.log(newElement)
     if(!newElement.hasOwnProperty('word_id')){
       this.setState(prevState => 
       ({
@@ -240,9 +238,18 @@ class Author extends Component {
     }
   }
 
+  getColor(word){
+    var color = 'white'
+    if(word.hasOwnProperty('times_used')){
+      console.log(word)
+      color = colors.find((colorType) => colorType.times_used === parseInt(word.times_used) || (colorType.times_used === 5 && parseInt(word.times_used) >= 5)).color
+    }
+    console.log(color)
+    return color
+  }
+
   render() {
     const { SentenceElements, wordToTeach, points, selectedWordId, containsWordToTeach, punctuationMode,selectedPunctuationId} = this.state
-    console.log(this.state)
 
     return (
       <div className="App">
@@ -253,9 +260,6 @@ class Author extends Component {
               if (error) return <div>Error</div>
               const interval = this.state.interval || data.Author[0].interval
               const wordArray = this.get_word_array(data.Author[0].level, interval.interval_order)
-              console.log(selectedWordId)
-              console.log(wordArray)
-              console.log(wordArray.find(word=> word.word_id === selectedWordId)) 
                return (
                 <div>
                 <div className="Author-dashboard">
@@ -282,7 +286,7 @@ class Author extends Component {
                     <Select
                     styles={customStyles}
                     value={{value: selectedPunctuationId, label: selectedPunctuationId && punctuations.find(mark=> mark.id === selectedPunctuationId).text}}
-                    options={punctuations.map(mark =>  { return { label: mark.text, value: mark.id }})}
+                    options={punctuations.map(mark =>  { return { label: mark.text, value: mark.id}})}
                     onChange={option => this.setState({selectedPunctuationId: parseInt(option.value)})}>
                     </Select>    
                    <button onClick={() => this.appendElement(punctuations.find(mark=> mark.id === selectedPunctuationId))}>
@@ -294,7 +298,7 @@ class Author extends Component {
                   <Select
                     styles={customStyles}
                     value={{value: selectedWordId, label: selectedWordId && wordArray.find(word=> word.word_id === selectedWordId).text}}
-                    options={wordArray.map(word =>  { return { label: word.text, value: word.word_id }})}
+                    options={wordArray.map(word =>  { return { label: word.text, value: word.word_id, color: this.getColor(word)}})}
                     onChange={option => this.setState({selectedWordId: parseInt(option.value)})}>
                     </Select>                    
                      <button

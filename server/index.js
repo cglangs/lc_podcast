@@ -221,6 +221,11 @@ type Level {
 }
 type Word {
   word_id: Int
+  times_used: Int @cypher(
+        statement: """OPTIONAL MATCH (:Sentence)-[r:CONTAINS]->(this)
+                      WITH count(r) AS times_used
+                      RETURN times_used
+                      """)
   text: String
   alt_text: String
   english: String

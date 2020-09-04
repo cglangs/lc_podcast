@@ -87,7 +87,6 @@ class Editor extends Component {
   	let display_text_copy = sentence.display_text
 
   	sentence.words_contained.sort((previous, next)=> {return previous.contains_order - next.contains_order})
-  	console.log(sentence)
   	while(display_text_copy.length){
   		if(display_text_copy[0] === '#'){
   			sentenceElements.push({text: sentence.word_taught.text, alt_text: sentence.word_taught.alt_text, word_id: sentence.word_taught.word_id, level: {points: sentence.word_taught.level.points}})
