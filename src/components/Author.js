@@ -245,7 +245,6 @@ class Author extends Component {
     if(word.hasOwnProperty('times_used')){
       color = colors.find((colorType) => colorType.times_used + minimum_usage === parseInt(word.times_used) || (colorType.times_used === 5 && parseInt(word.times_used) >= max_usage)).color
     }
-    console.log(color)
     return color
   }
 
