@@ -242,7 +242,7 @@ class Author extends Component {
     var color = 'white'
     if(word.hasOwnProperty('times_used')){
       console.log(word)
-      color = colors.find((colorType) => colorType.times_used === parseInt(word.times_used) || (colorType.times_used === 5 && parseInt(word.times_used) >= 5)).color
+      color = colors.find((colorType) => colorType.times_used === parseInt(word.times_used) || (colorType.times_used ===8 && parseInt(word.times_used) >= 8)).color
     }
     console.log(color)
     return color

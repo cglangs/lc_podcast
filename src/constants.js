@@ -38,10 +38,10 @@ export const punctuations = [
 ]
 
 export const colors = [
-	{times_used: 0, color: 'lightblue'},
-	{times_used: 1, color: 'pink'},
-	{times_used: 2, color: 'yellow'},
-	{times_used: 3, color: 'lightgreen'},
-	{times_used: 4, color: 'coral'},
-	{times_used: 5, color: 'blueviolet'}
+	{times_used: 3, color: 'lightblue'},
+	{times_used: 4, color: 'pink'},
+	{times_used: 5, color: 'yellow'},
+	{times_used: 6, color: 'lightgreen'},
+	{times_used: 7, color: 'coral'},
+	{times_used: 8, color: 'blueviolet'}
 ]
