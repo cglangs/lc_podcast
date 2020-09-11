@@ -13,6 +13,7 @@ export const GET_LEVEL_WORDS = gql`
     level{
       level_number
       points
+      minimum_usage
       teachable_words{
         text
         alt_text
@@ -238,11 +239,11 @@ class Author extends Component {
     }
   }
 
-  getColor(word){
+  getColor(word, minimum_usage){
     var color = 'white'
+    const max_usage = minimum_usage + 5
     if(word.hasOwnProperty('times_used')){
-      console.log(word)
-      color = colors.find((colorType) => colorType.times_used === parseInt(word.times_used) || (colorType.times_used ===8 && parseInt(word.times_used) >= 8)).color
+      color = colors.find((colorType) => colorType.times_used + minimum_usage === parseInt(word.times_used) || (colorType.times_used === 5 && parseInt(word.times_used) >= max_usage)).color
     }
     console.log(color)
     return color
@@ -260,6 +261,7 @@ class Author extends Component {
               if (error) return <div>Error</div>
               const interval = this.state.interval || data.Author[0].interval
               const wordArray = this.get_word_array(data.Author[0].level, interval.interval_order)
+              const minimum_usage = parseInt(data.Author[0].level.minimum_usage)
                return (
                 <div>
                 <div className="Author-dashboard">
@@ -298,7 +300,7 @@ class Author extends Component {
                   <Select
                     styles={customStyles}
                     value={{value: selectedWordId, label: selectedWordId && wordArray.find(word=> word.word_id === selectedWordId).text}}
-                    options={wordArray.map(word =>  { return { label: word.text, value: word.word_id, color: this.getColor(word)}})}
+                    options={wordArray.map(word =>  { return { label: word.text, value: word.word_id, color: this.getColor(word,minimum_usage)}})}
                     onChange={option => this.setState({selectedWordId: parseInt(option.value)})}>
                     </Select>                    
                      <button

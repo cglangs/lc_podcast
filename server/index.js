@@ -205,6 +205,12 @@ type Level {
   level_number: Int
   points: Int
   sentences: [Sentence] @relation(name: "SHOWN_IN", direction: IN)
+  minimum_usage: Int  @cypher(
+        statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word)
+                      OPTIONAL MATCH (:Sentence)-[r:CONTAINS]->(w)
+                      WITH w, count(r) AS times_used
+                      RETURN MIN(times_used) AS minimum_usage
+                      """)
   teachable_words: [Word] @cypher(
         statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word),(a:Author)-[:AUTHORING_INTERVAL]->(i:Interval)
                       OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)-[:AT_INTERVAL]->(i)
