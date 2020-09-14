@@ -235,6 +235,7 @@ type Word {
   text: String
   alt_text: String
   english: String
+  pinyin: String
   level: Level @relation(name: "INTRODUCED_IN", direction: OUT)
   characters: [Word] @cypher(
         statement: """MATCH (this)-[r:COMPOSED_OF]->(w:Word)

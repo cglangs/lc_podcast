@@ -35,6 +35,7 @@ const GET_SENTENCE = gql`
 		word_taught{
 			text
 			english
+      pinyin
 			characters{
 				text
 				english
@@ -69,6 +70,14 @@ class Play extends Component {
     console.log("sound")
   }
 
+  getFontColor(correct_response){
+    var color = 'black'
+    if(this.state.showAnswer){
+      color = this.checkAnswer(correct_response) ? 'green' : 'red'
+    }
+    return color
+  }
+
 	render() {
 	  const userName = getUserName()
 	  return (
@@ -95,7 +104,7 @@ class Play extends Component {
                     {alreadySeenWord && <p>{data.getNextSentence.english}</p>}
                     <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
                     {alreadySeenWord && <p>{data.getNextSentence.display_text.substr(0,data.getNextSentence.display_text.indexOf('#'))}</p>}
-                    <input style={{width: `${data.getNextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}/>
+                    <input style={{width: `${data.getNextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px", color: this.getFontColor(data.getNextSentence.word_taught.text)}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}/>
                     {alreadySeenWord && <p>{data.getNextSentence.display_text.substr(data.getNextSentence.display_text.indexOf('#') + 1,data.getNextSentence.display_text.length)}</p>}
                     </div>
                     <div  style={{clear: "both"}}>
@@ -143,13 +152,20 @@ class Play extends Component {
                   </div>
                   {this.state.showAnswer && (
                       <div>
-                        <p>{data.getNextSentence.pinyin}</p>
-                        {data.getNextSentence.word_taught.characters.map(char => 
-                          <div>
-                          <p>{char.text}</p>
-                          <p>{char.english}</p>
-                          </div>
-                        )}
+                        <p>{alreadySeenWord && data.getNextSentence.pinyin}</p>
+                        {/* if(data.getNextSentence.word_taught.characters.length){
+                            data.getNextSentence.word_taught.characters.map(char => 
+                            <div>
+                            <p>{char.text}</p>
+                            <p>{char.english}</p>
+                            </div>
+                            )
+                          } else{*/
+                            <div>
+                            <p>{data.getNextSentence.word_taught.text}</p>
+                            <p>{data.getNextSentence.word_taught.pinyin}</p>
+                            </div>
+                        }
                       </div>
                   )} 
               </div>
