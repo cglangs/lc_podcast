@@ -141,7 +141,7 @@ type Query {
                   OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1))
                   CALL {
                   WITH u,s
-                  MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*..6]->(s))
+                  MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*..3]->(s))
                   WITH last(nodes(path)) AS destSentence, nodes(path)[1] AS sourceSentence, length(path) AS hops
                   MATCH (u)-[rSource:LEARNING]->(sourceSentence)
                   OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
