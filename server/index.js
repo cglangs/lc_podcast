@@ -103,7 +103,7 @@ type Mutation {
                   WHERE u.email = $email
                   RETURN u"""
     )
-    makeClozeAttempt(userName: String!, sentenceId: Int!, isCorrect: Boolean!, alreadySeen: Boolean!, nextIntervalSentenceId: Int): Int
+    makeClozeAttempt(userName: String!, sentenceId: Int!, isCorrect: Boolean!, alreadySeen: Boolean!, nextIntervalSentenceId: Int, nextIntervalSentenceId: Int, wordId: Int): Int
     @cypher(
     statement:""" MATCH(u:User {user_name: userName}),(s:Sentence)-[:TEACHES]->(w:Word)
                   WHERE ID(s) = sentenceId
@@ -115,7 +115,8 @@ type Mutation {
                   CALL apoc.do.case(
                   [
                   NOT alreadySeen AND NOT isCorrect, 'DELETE r',
-                  isCorrect AND nextIntervalSentenceId IS NOT NULL,'CALL apoc.refactor.to(r, s2) YIELD input RETURN 1 ',
+                  isCorrect AND nextIntervalSentenceId IS NOT NULL AND (NOT EXISTS(r.IN_PROGRESS) OR r.IN_PROGRESS = FALSE),'SET r.IN_PROGRESS = TRUE',
+                  isCorrect AND nextIntervalSentenceId IS NOT NULL AND r.IN_PROGRESS = TRUE,'CALL apoc.refactor.to(r, s2) YIELD input SET r.IN_PROGRESS = FALSE ',
                   isCorrect AND nextIntervalSentenceId IS NULL,'CREATE (u)-[:LEARNED]->(w) DELETE r'
                   ],'',{r:r,s2:s2, u:u, w:w}) YIELD value
                   RETURN 1
@@ -124,12 +125,13 @@ type Mutation {
 }
 
 type Query {
-    getNextSentence(userName: String): Sentence
+    getNextSentence(userName: String, wordId: Int): Sentence
     @cypher(
     statement:""" 
                   MATCH (u:User{user_name: userName})
-                  WITH u
+                  WITH u, wordId
                   MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
+                  WHERE w.word_id <> wordId
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
                   OPTIONAL MATCH (u)-[is_learned:LEARNED]->(wd)
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)

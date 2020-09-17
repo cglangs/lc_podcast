@@ -17,8 +17,8 @@ const MAKE_ATTEMPT = gql`
 
 
 const GET_SENTENCE = gql`
-  query getSentence($userName: String!) {
-	getNextSentence(userName: $userName) {
+  query getSentence($userName: String!, $wordId: Int) {
+	getNextSentence(userName: $userName, wordId: $wordId) {
 		_id
 		next_interval_sentence_id
 		raw_text
@@ -33,6 +33,7 @@ const GET_SENTENCE = gql`
     }
     already_seen
 		word_taught{
+      word_id
 			text
 			english
       pinyin
@@ -53,7 +54,8 @@ class Play extends Component {
     super()
     this.state = {
     	showAnswer: false,
-    	userResponse: ''
+    	userResponse: '',
+      wordId: 0
     }
   }
 
@@ -83,13 +85,14 @@ class Play extends Component {
 	  return (
 	    <div className="App">
 	      <header className="App-header">
-	      <Query query={GET_SENTENCE} variables={{userName: userName}}>
+	      <Query query={GET_SENTENCE} variables={{userName: userName, wordId: this.state.wordId}}>
 	      	{({ loading, error, data, refetch }) => {
 	      	  if (loading) return <div>Fetching</div>
             if (error) return <div>error</div>
             if(data.getNextSentence){
               const sentenceId = parseInt(data.getNextSentence._id)
               const alreadySeenWord = data.getNextSentence.already_seen
+              const wordId = parseInt(data.getNextSentence.word_taught.word_id)
               var nextIntervalSentenceId = null
               if(data.getNextSentence.next_interval_sentence_id && alreadySeenWord){
                 nextIntervalSentenceId = data.getNextSentence.next_interval_sentence_id
@@ -133,6 +136,7 @@ class Play extends Component {
                                     this.setState({
                                         showAnswer: false,
                                         userResponse: '',
+                                        wordId: this.checkAnswer(data.getNextSentence.word_taught.text) ? wordId : 0
                                     }, () => {
                                       refetch()
                                     })
