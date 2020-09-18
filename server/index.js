@@ -125,11 +125,12 @@ type Mutation {
 }
 
 type Query {
-    getNextSentence(userName: String, wordId: Int): Sentence
+    getNextSentence(userName: String): Sentence
     @cypher(
     statement:""" 
                   MATCH (u:User{user_name: userName})
-                  WITH u, wordId
+                  OPTIONAL MATCH (u)-[r:LEARNING]->(:Sentence)-[:TEACHES]->(last_seen_word:Word)
+                  WITH u, COALESCE(last_seen_word.word_id,0) AS wordId ORDER BY r.last_seen DESC LIMIT 1
                   MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
                   WHERE w.word_id <> wordId
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)

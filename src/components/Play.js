@@ -17,8 +17,8 @@ const MAKE_ATTEMPT = gql`
 
 
 const GET_SENTENCE = gql`
-  query getSentence($userName: String!, $wordId: Int) {
-	getNextSentence(userName: $userName, wordId: $wordId) {
+  query getSentence($userName: String!) {
+	getNextSentence(userName: $userName) {
 		_id
 		next_interval_sentence_id
 		raw_text
@@ -54,8 +54,7 @@ class Play extends Component {
     super()
     this.state = {
     	showAnswer: false,
-    	userResponse: '',
-      wordId: 0
+    	userResponse: ''
     }
   }
 
@@ -85,14 +84,13 @@ class Play extends Component {
 	  return (
 	    <div className="App">
 	      <header className="App-header">
-	      <Query query={GET_SENTENCE} variables={{userName: userName, wordId: this.state.wordId}}>
+	      <Query query={GET_SENTENCE} variables={{userName: userName}}>
 	      	{({ loading, error, data, refetch }) => {
 	      	  if (loading) return <div>Fetching</div>
             if (error) return <div>error</div>
             if(data.getNextSentence){
               const sentenceId = parseInt(data.getNextSentence._id)
               const alreadySeenWord = data.getNextSentence.already_seen
-              const wordId = parseInt(data.getNextSentence.word_taught.word_id)
               var nextIntervalSentenceId = null
               if(data.getNextSentence.next_interval_sentence_id && alreadySeenWord){
                 nextIntervalSentenceId = data.getNextSentence.next_interval_sentence_id
@@ -135,8 +133,7 @@ class Play extends Component {
                                   } else{
                                     this.setState({
                                         showAnswer: false,
-                                        userResponse: '',
-                                        wordId: this.checkAnswer(data.getNextSentence.word_taught.text) ? wordId : 0
+                                        userResponse: ''
                                     }, () => {
                                       refetch()
                                     })
