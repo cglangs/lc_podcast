@@ -131,12 +131,12 @@ type Query {
     statement:""" 
                   MATCH (u:User{user_name: userName})
                   OPTIONAL MATCH (u)-[r:LEARNING]->(:Sentence)-[:TEACHES]->(last_seen_word:Word)
-                  WITH u, COALESCE(last_seen_word.word_id,0) AS wordId ORDER BY r.last_seen DESC LIMIT 1
+                  WITH u, last_seen_word.word_id AS wordId ORDER BY r.last_seen DESC LIMIT 3
                   MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
                   OPTIONAL MATCH (u)-[is_learned:LEARNED]->(wd)
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)
-                  WITH u,w,i,s, w.word_id = wordId AS is_previous_word,
+                  WITH u,w,i,s, w.word_id IN collect(wordId) AS is_previous_word,
                   collect({word_text: wd.text, current_interval:COALESCE(di.interval_order, CASE WHEN EXISTS((u)-[:LEARNED]->(wd)) THEN 6 ELSE 0 END)}) AS word_dependencies
                   WHERE 
                   NOT EXISTS((u)-[:LEARNED]->(w)) AND 
@@ -144,7 +144,7 @@ type Query {
                   OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1))
                   CALL {
                   WITH u,s, is_previous_word
-                  MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*..3]->(s))
+                  MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*]->(s))
                   WITH last(nodes(path)) AS destSentence, nodes(path)[1] AS sourceSentence, length(path) AS hops, is_previous_word
                   MATCH (u)-[rSource:LEARNING]->(sourceSentence)
                   OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
@@ -153,16 +153,19 @@ type Query {
                   CASE WHEN EXISTS((u)-[:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE NULL END AS last_seen_dest,
                   rSource.last_seen AS last_seen_source,
                   hops,
+                  0 AS relevant_dependencies,
                   0 AS outgoing_dependencies,
                   0 AS incoming_dependencies 
                   UNION
                   WITH u,s
                   OPTIONAL MATCH(s)-[:AT_INTERVAL]->(:Interval {interval_order: 1}), (s)-[:DEPENDS_ON]->(ods:Sentence)
                   OPTIONAL MATCH(s)-[:AT_INTERVAL]->(:Interval {interval_order: 1}), (s)<-[:DEPENDS_ON]-(ids:Sentence)
+                  OPTIONAL MATCH(s)-[:AT_INTERVAL]->(:Interval {interval_order: 1}), (s)-[:DEPENDS_ON]->(rds:Sentence)-[:TEACHES]->(rw:Word), (rw:Word)<-[:TEACHES]-(:Sentence)<-[:LEARNING]-(u)
+                  WITH u,s,rds,ods,ids
                   WHERE NOT EXISTS((u)-[:LEARNING]->(s))
-                  RETURN s AS selection,FALSE AS is_repeat, NULL AS last_seen_dest, NULL AS last_seen_source, 0 AS hops, COUNT(ods) AS outgoing_dependencies, COUNT(ids) AS incoming_dependencies
+                  RETURN s AS selection, FALSE AS is_repeat, NULL AS last_seen_dest, NULL AS last_seen_source, 0 AS hops, COUNT(DISTINCT rds) AS relevant_dependencies, COUNT(ods) AS outgoing_dependencies, COUNT(ids) AS incoming_dependencies
                   }
-                  RETURN selection ORDER BY is_repeat ASC, last_seen_dest ASC, last_seen_source ASC, hops ASC, outgoing_dependencies ASC, incoming_dependencies DESC, RAND() LIMIT 1
+                  RETURN selection ORDER BY is_repeat ASC, last_seen_dest ASC, last_seen_source ASC, hops ASC, relevant_dependencies DESC, outgoing_dependencies ASC, incoming_dependencies DESC, RAND() LIMIT 1
                   """
     )
 
