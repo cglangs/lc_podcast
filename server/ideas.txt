@@ -441,3 +441,15 @@ export default Chinese;
     }
 
   }*/
+
+
+
+ VALIDATION
+
+MATCH (s:Sentence)-[:CONTAINS]->(w:Word)
+WHERE NOT EXISTS((s)-[:DEPENDS_ON]->(:Sentence)-[:TEACHES]->(w))
+RETURN s,w
+
+MATCH(s)-[:AT_INTERVAL]->(i)
+WHERE i.interval_order<3 AND NOT EXISTS((s)<-[:DEPENDS_ON]-())
+RETURN s
