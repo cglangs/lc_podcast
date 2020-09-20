@@ -82,9 +82,18 @@ type Mutation {
     statement:"""      MATCH (s:Sentence {raw_text: $src_sentence})-[:AT_INTERVAL]->(i:Interval), (w:Word)
                        WHERE w.text IN $dest_words
                        OPTIONAL MATCH (i)<-[:NEXT_TIME]-(iPrev)
-                       WITH s,w,iPrev
+                       OPTIONAL MATCH (iNext:Interval)
+                       WITH s,w,i,iPrev,iNext 
+                       WHERE i.interval_order = 1 AND iNext.interval_order = 1 OR iNext.interval_order = i.interval_order + 1
                        OPTIONAL MATCH(:Interval{interval_order: COALESCE(iPrev.interval_order, 1)})<-[:AT_INTERVAL]-(ds:Sentence)-[:TEACHES]->(w)
-                       MERGE (ds)<-[:DEPENDS_ON]-(s)-[:CONTAINS {contains_order: apoc.coll.indexOf($dest_words, w.text) + 1}]->(w)
+                       OPTIONAL MATCH (iNext)<-[:AT_INTERVAL]-(ids)-[:CONTAINS]->(:Word)<-[:TEACHES]-(s)
+                       WITH s, w, collect(ds) AS ds_list, collect(ids) AS ids_list
+                       FOREACH(ds in ds_list |
+                          MERGE (ds)<-[:DEPENDS_ON]-(s)-[:CONTAINS {contains_order: apoc.coll.indexOf($dest_words, w.text) + 1}]->(w)
+                       )
+                       FOREACH(ids in ids_list |
+                          MERGE (ids)-[:DEPENDS_ON]->(s)  
+                       )
                        RETURN s """
     )
 
