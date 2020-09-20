@@ -85,7 +85,7 @@ class Editor extends Component {
   	let containsWordToTeach = 0
   	let points = 0
   	let display_text_copy = sentence.display_text
-
+  	console.log(sentence)
   	sentence.words_contained.sort((previous, next)=> {return previous.contains_order - next.contains_order})
   	while(display_text_copy.length){
   		if(display_text_copy[0] === '#'){

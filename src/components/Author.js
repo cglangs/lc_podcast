@@ -343,7 +343,7 @@ class Author extends Component {
                                 this.submitSentenceData(interval.sentences.map((sentence) => sentence.clean_text), interval.interval_order,data.Author[0].level.teachable_words.length, addSentence)
                               }
                           }
-                            disabled={!containsWordToTeach || points <  interval.min_length || points >  interval.max_length}
+                            disabled={!containsWordToTeach/* || points <  interval.min_length || points >  interval.max_length*/}
                           >
                           Submit
                           </button>

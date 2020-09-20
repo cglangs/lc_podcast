@@ -170,9 +170,10 @@ type Query {
                   0 AS incoming_dependencies 
                   UNION
                   WITH u,s
-                  OPTIONAL MATCH(s)-[:AT_INTERVAL]->(:Interval {interval_order: 1}), (s)-[:DEPENDS_ON]->(ods:Sentence)
-                  OPTIONAL MATCH(s)-[:AT_INTERVAL]->(:Interval {interval_order: 1}), (s)<-[:DEPENDS_ON]-(ids:Sentence)
-                  OPTIONAL MATCH(s)-[:AT_INTERVAL]->(:Interval {interval_order: 1}), (s)-[:DEPENDS_ON]->(rds:Sentence)-[:TEACHES]->(rw:Word), (rw:Word)<-[:TEACHES]-(:Sentence)<-[:LEARNING]-(u)
+                  MATCH (s)-[:AT_INTERVAL]->(:Interval {interval_order: 1})
+                  OPTIONAL MATCH (s)-[:DEPENDS_ON]->(ods:Sentence)
+                  OPTIONAL MATCH (s)<-[:DEPENDS_ON]-(ids:Sentence)
+                  OPTIONAL MATCH (s)-[:DEPENDS_ON]->(rds:Sentence)<-[:LEARNING]-(u)
                   WITH u,s,rds,ods,ids
                   WHERE NOT EXISTS((u)-[:LEARNING]->(s))
                   RETURN s AS selection, FALSE AS is_repeat, NULL AS last_seen_dest, NULL AS last_seen_source, 0 AS hops, COUNT(DISTINCT rds) AS relevant_dependencies, COUNT(ods) AS outgoing_dependencies, COUNT(ids) AS incoming_dependencies
