@@ -127,9 +127,9 @@ type Mutation {
                   CALL apoc.do.case(
                   [
                   NOT alreadySeen AND NOT isCorrect, 'DELETE r',
-                  NOT alreadySeen AND isCorrect, 'SET r.IN_PROGRESS = FALSE',
-                  alreadySeen AND isCorrect AND nextIntervalSentenceId IS NOT NULL AND r.IN_PROGRESS = FALSE,'SET r.IN_PROGRESS = TRUE',
-                  alreadySeen AND isCorrect AND nextIntervalSentenceId IS NOT NULL AND r.IN_PROGRESS = TRUE,'CALL apoc.refactor.to(r, s2) YIELD input SET r.IN_PROGRESS = FALSE ',
+                  NOT alreadySeen AND isCorrect, 'SET r.IN_PROGRESS = FALSE, r.CURRENT_TIME_INTERVAL = 1',
+                  alreadySeen AND isCorrect AND nextIntervalSentenceId IS NOT NULL AND r.IN_PROGRESS = FALSE,'SET r.IN_PROGRESS = TRUE, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1',
+                  alreadySeen AND isCorrect AND nextIntervalSentenceId IS NOT NULL AND r.IN_PROGRESS = TRUE,'SET r.IN_PROGRESS = FALSE, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1 WITH r,s2 CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
                   alreadySeen AND isCorrect AND nextIntervalSentenceId IS NULL,'CREATE (u)-[:LEARNED]->(w) DELETE r'
                   ],'',{r:r,s2:s2, u:u, w:w}) YIELD value
                   RETURN 1
@@ -142,26 +142,29 @@ type Query {
     @cypher(
     statement:""" 
                   MATCH (u:User{user_name: userName})
-                  OPTIONAL MATCH (u)-[r:LEARNING]->(:Sentence)-[:TEACHES]->(last_seen_word:Word)
-                  WITH u, last_seen_word.word_id AS wordId ORDER BY r.last_seen DESC LIMIT 3
+                  WITH u
                   MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
+                  OPTIONAL MATCH (u)-[r:LEARNING]->(s)
+                  WITH w,s,i,u,r,
+                  CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN r.CURRENT_TIME_INTERVAL ELSE 0 END AS cti
+                  OPTIONAL MATCH (t:TimeInterval {time_interval_id: cti})
+                  WITH w,s,i,u,
+                  CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN duration.inSeconds(r.last_seen,time()).seconds >= COALESCE(t.seconds, 0) ELSE TRUE END AS is_ready
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
-                  OPTIONAL MATCH (u)-[is_learned:LEARNED]->(wd)
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)
-                  WITH u,w,i,s, w.word_id IN collect(wordId) AS is_previous_word,
+                  WITH u,w,i,s,is_ready,
                   collect({word_text: wd.text, current_interval:COALESCE(di.interval_order, CASE WHEN EXISTS((u)-[:LEARNED]->(wd)) THEN 6 ELSE 0 END)}) AS word_dependencies
                   WHERE 
                   NOT EXISTS((u)-[:LEARNED]->(w)) AND 
                   ((EXISTS((u)-[:LEARNING]->(s)) AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order))
                   OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1))
                   CALL {
-                  WITH u,s, is_previous_word
+                  WITH u,s
                   MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*]->(s))
-                  WITH last(nodes(path)) AS destSentence, nodes(path)[1] AS sourceSentence, length(path) AS hops, is_previous_word
+                  WITH last(nodes(path)) AS destSentence, nodes(path)[1] AS sourceSentence, length(path) AS hops
                   MATCH (u)-[rSource:LEARNING]->(sourceSentence)
                   OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
                   RETURN destSentence AS selection, 
-                  is_previous_word AS is_repeat,
                   CASE WHEN EXISTS((u)-[:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE NULL END AS last_seen_dest,
                   rSource.last_seen AS last_seen_source,
                   hops,
@@ -176,9 +179,9 @@ type Query {
                   OPTIONAL MATCH (s)-[:DEPENDS_ON]->(rds:Sentence)<-[:LEARNING]-(u)
                   WITH u,s,rds,ods,ids
                   WHERE NOT EXISTS((u)-[:LEARNING]->(s))
-                  RETURN s AS selection, FALSE AS is_repeat, NULL AS last_seen_dest, NULL AS last_seen_source, 0 AS hops, COUNT(DISTINCT rds) AS relevant_dependencies, COUNT(ods) AS outgoing_dependencies, COUNT(ids) AS incoming_dependencies
+                  RETURN s AS selection, NULL AS last_seen_dest, NULL AS last_seen_source, 0 AS hops, COUNT(DISTINCT rds) AS relevant_dependencies, COUNT(ods) AS outgoing_dependencies, COUNT(ids) AS incoming_dependencies
                   }
-                  RETURN selection ORDER BY is_repeat ASC, last_seen_dest ASC, last_seen_source ASC, hops ASC, relevant_dependencies DESC, outgoing_dependencies ASC, incoming_dependencies DESC, RAND() LIMIT 1
+                  RETURN selection ORDER BY is_ready DESC, last_seen_dest ASC, last_seen_source ASC, hops ASC, relevant_dependencies DESC, outgoing_dependencies ASC, incoming_dependencies DESC, RAND() LIMIT 1
                   """
     )
 
