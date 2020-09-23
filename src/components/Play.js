@@ -56,7 +56,8 @@ class Play extends Component {
     this.state = {
     	showAnswer: false,
     	userResponse: '',
-      isCorrect: true
+      isCorrect: true,
+      lastSentenceId: null 
     }
   }
 
@@ -77,7 +78,6 @@ class Play extends Component {
     var color = 'black'
     if(this.state.showAnswer){
       color = this.state.isCorrect ? 'green' : 'grey'
-      //color = this.checkAnswer(correct_response) ? 'green' : 'grey'
     }
     return color
   }
@@ -94,7 +94,8 @@ class Play extends Component {
     } else{
       this.setState({
           showAnswer: false,
-          userResponse: ''
+          userResponse: '',
+          lastSentenceId: sentenceId.toString()
       }, () => {
         refetch()
       })
@@ -110,6 +111,7 @@ class Play extends Component {
 	      	{({ loading, error, data, refetch }) => {
 	      	  if (loading) return <div>Fetching</div>
             if (error) return <div>error</div>
+            if (this.state.lastSentenceId === data.getNextSentence._id) return <div/>
             if(data.getNextSentence){
               const sentenceId = parseInt(data.getNextSentence._id)
               const alreadySeenWord = data.getNextSentence.already_seen
