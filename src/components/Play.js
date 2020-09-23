@@ -55,7 +55,8 @@ class Play extends Component {
     super()
     this.state = {
     	showAnswer: false,
-    	userResponse: ''
+    	userResponse: '',
+      isCorrect: true
     }
   }
 
@@ -72,10 +73,11 @@ class Play extends Component {
     console.log("sound")
   }
 
-  getFontColor(correct_response){
+  getFontColor(){
     var color = 'black'
     if(this.state.showAnswer){
-      color = this.checkAnswer(correct_response) ? 'green' : 'red'
+      color = this.state.isCorrect ? 'green' : 'grey'
+      //color = this.checkAnswer(correct_response) ? 'green' : 'grey'
     }
     return color
   }
@@ -122,19 +124,27 @@ class Play extends Component {
                   <div>
                   <div>
                     {/*<button onClick={this.SoundPlay}>play</button>*/}
+                    <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
                      <p>{alreadySeenWord ? data.getNextSentence.english : data.getNextSentence.word_taught.english}</p>
+                      {this.state.showAnswer && <p style={{marginLeft: "5px"}}>{alreadySeenWord ? data.getNextSentence.pinyin : data.getNextSentence.word_taught.pinyin}</p>}
+                      </div>
                      <Mutation mutation={MAKE_ATTEMPT}
                           update={(store) => {
-                            this.setState({
-                              showAnswer: true
-                            })
+                            if(!this.state.showAnswer){
+                              this.setState({
+                              showAnswer: true,
+                              userResponse: data.getNextSentence.word_taught.text,
+                              isCorrect: this.checkAnswer(data.getNextSentence.word_taught.text)
+                              })
+                            }
+
                             }
                           }
                          >
                           {makeAttempt => (
                             <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
                             {alreadySeenWord && <p>{data.getNextSentence.display_text.substr(0,data.getNextSentence.display_text.indexOf('#'))}</p>}
-                            <input style={{width: `${data.getNextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px", color: this.getFontColor(data.getNextSentence.word_taught.text)}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
+                            <input style={{width: `${data.getNextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px", color: this.getFontColor()}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 this.submitAnswer(makeAttempt, refetch,userName, sentenceId, this.checkAnswer(data.getNextSentence.word_taught.text), alreadySeenWord, nextIntervalSentenceId)
@@ -161,7 +171,6 @@ class Play extends Component {
                   </div>
                   {this.state.showAnswer && (
                       <div>
-                        <p>{alreadySeenWord && data.getNextSentence.pinyin}</p>
                         {/* if(data.getNextSentence.word_taught.characters.length){
                             data.getNextSentence.word_taught.characters.map(char => 
                             <div>
@@ -170,9 +179,9 @@ class Play extends Component {
                             </div>
                             )
                           } else{*/
-                            <div>
+                            <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
                             <p>{data.getNextSentence.word_taught.text}</p>
-                            <p>{data.getNextSentence.word_taught.pinyin}</p>
+                            <p style={{marginLeft: "5px"}}>{data.getNextSentence.word_taught.pinyin}</p>
                             </div>
                         }
                       </div>
