@@ -181,7 +181,7 @@ type Query {
                   WHERE NOT EXISTS((u)-[:LEARNING]->(s))
                   RETURN s AS selection, NULL AS last_seen_dest, NULL AS last_seen_source, 0 AS hops, COUNT(DISTINCT rds) AS relevant_dependencies, COUNT(DISTINCT ods) AS outgoing_dependencies, COUNT(DISTINCT ids) AS incoming_dependencies
                   }
-                  RETURN selection ORDER BY is_ready DESC, last_seen_dest ASC, last_seen_source ASC, hops ASC, relevant_dependencies DESC, outgoing_dependencies ASC, incoming_dependencies DESC, RAND() LIMIT 1
+                  RETURN selection ORDER BY is_ready DESC, last_seen_dest ASC, last_seen_source ASC, hops DESC, relevant_dependencies DESC, outgoing_dependencies ASC, incoming_dependencies DESC, RAND() LIMIT 1
                   """
     )
 
