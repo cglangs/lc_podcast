@@ -23,6 +23,7 @@ const GET_SENTENCE = gql`
 		next_interval_sentence_id
 		raw_text
 		display_text
+    clean_text
 		pinyin
 		english
     interval{
@@ -79,6 +80,25 @@ class Play extends Component {
     return color
   }
 
+  submitAnswer(makeAttempt, refetch, userName, sentenceId, isCorrect, alreadySeenWord, nextIntervalSentenceId ){
+    if(!this.state.showAnswer){
+      makeAttempt({variables:{
+        userName: userName,
+        sentenceId: sentenceId,
+        isCorrect: isCorrect,
+        alreadySeen: alreadySeenWord,
+        nextIntervalSentenceId: nextIntervalSentenceId
+      }})
+    } else{
+      this.setState({
+          showAnswer: false,
+          userResponse: ''
+      }, () => {
+        refetch()
+      })
+    }
+  }
+
 	render() {
 	  const userName = getUserName()
 	  return (
@@ -101,14 +121,8 @@ class Play extends Component {
                 return(
                   <div>
                   <div>
-                    <button onClick={this.SoundPlay}>play</button>
-                    {alreadySeenWord && <p>{data.getNextSentence.english}</p>}
-                    <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-                    {alreadySeenWord && <p>{data.getNextSentence.display_text.substr(0,data.getNextSentence.display_text.indexOf('#'))}</p>}
-                    <input style={{width: `${data.getNextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px", color: this.getFontColor(data.getNextSentence.word_taught.text)}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}/>
-                    {alreadySeenWord && <p>{data.getNextSentence.display_text.substr(data.getNextSentence.display_text.indexOf('#') + 1,data.getNextSentence.display_text.length)}</p>}
-                    </div>
-                    <div  style={{clear: "both"}}>
+                    {/*<button onClick={this.SoundPlay}>play</button>*/}
+                     <p>{alreadySeenWord ? data.getNextSentence.english : data.getNextSentence.word_taught.english}</p>
                      <Mutation mutation={MAKE_ATTEMPT}
                           update={(store) => {
                             this.setState({
@@ -118,38 +132,32 @@ class Play extends Component {
                           }
                          >
                           {makeAttempt => (
+                            <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
+                            {alreadySeenWord && <p>{data.getNextSentence.display_text.substr(0,data.getNextSentence.display_text.indexOf('#'))}</p>}
+                            <input style={{width: `${data.getNextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px", color: this.getFontColor(data.getNextSentence.word_taught.text)}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                this.submitAnswer(makeAttempt, refetch,userName, sentenceId, this.checkAnswer(data.getNextSentence.word_taught.text), alreadySeenWord, nextIntervalSentenceId)
+                              }
+                            }}
+                            />
+                            {alreadySeenWord && <p>{data.getNextSentence.display_text.substr(data.getNextSentence.display_text.indexOf('#') + 1,data.getNextSentence.display_text.length)}</p>}
                             <button
+                              style={{margin: "15px 5px 15px 5px"}}
                               onClick={() => 
                                 {
-                                  console.log(userName,sentenceId,this.checkAnswer(data.getNextSentence.word_taught.text),alreadySeenWord,nextIntervalSentenceId)
-                                  if(!this.state.showAnswer){
-                                    makeAttempt({variables:{
-                                      userName: userName,
-                                      sentenceId: sentenceId,
-                                      isCorrect: this.checkAnswer(data.getNextSentence.word_taught.text),
-                                      alreadySeen: alreadySeenWord,
-                                      nextIntervalSentenceId: nextIntervalSentenceId
-                                    }})
-                                  } else{
-                                    this.setState({
-                                        showAnswer: false,
-                                        userResponse: ''
-                                    }, () => {
-                                      refetch()
-                                    })
-                                  }
-
+                                  this.submitAnswer(makeAttempt, refetch,userName, sentenceId, this.checkAnswer(data.getNextSentence.word_taught.text), alreadySeenWord, nextIntervalSentenceId)
                                 }
                               }
                             >
-                            {this.state.showAnswer ? "Next Sentence" : "Submit Answer"}
+                            {this.state.showAnswer ? ">" : ">"}
                             </button>
+                            </div>
                           )}
                     </Mutation>
-                    </div>
                   </div>
                   <div>
-                    <p>{data.getNextSentence.word_taught.english}</p>
+                    <p style={{fontSize: "12px"}}>{alreadySeenWord && (data.getNextSentence.clean_text !== data.getNextSentence.word_taught.text) && data.getNextSentence.word_taught.english}</p>
                   </div>
                   {this.state.showAnswer && (
                       <div>
