@@ -290,6 +290,7 @@ type Sentence {
   alt_display_text: String!
   pinyin: String!
   english: String!
+  italics: String
   already_seen: Boolean
   current_users: [User] @relation(name: "LEARNING", direction: IN)
   level: Level @relation(name: "SHOWN_IN" direction: OUT)

@@ -26,6 +26,7 @@ const GET_SENTENCE = gql`
     clean_text
 		pinyin
 		english
+    italics
     interval{
       interval_order
     }
@@ -55,6 +56,7 @@ class Play extends Component {
     super()
     this.state = {
     	showAnswer: false,
+      showCharacterDefinitions: false,
     	userResponse: '',
       isCorrect: true,
       lastSentenceId: null 
@@ -102,6 +104,14 @@ class Play extends Component {
     }
   }
 
+  getText(text){
+    return(
+      <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
+      <p>{text.english}</p> <i style={{"margin-block-start": "1em"}}>{text.italics}</i>:
+      </div>
+      )
+  }
+
 	render() {
 	  const userName = getUserName()
 	  return (
@@ -126,8 +136,16 @@ class Play extends Component {
                   <div>
                   <div>
                     {/*<button onClick={this.SoundPlay}>play</button>*/}
-                    <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-                     <p>{alreadySeenWord ? data.getNextSentence.english : data.getNextSentence.word_taught.english}</p>
+                    {this.state.showAnswer && data.getNextSentence.word_taught.characters.length > 0 && <button onClick={() => this.setState(prevState => ({showCharacterDefinitions: !prevState.showCharacterDefinitions}))}>Character Definitions</button>}
+                    {this.state.showCharacterDefinitions && 
+                       data.getNextSentence.word_taught.characters.map(char => 
+                            <div>
+                            <p>{char.text}</p>
+                            <p>{char.english}</p>
+                            </div>
+                    )}
+                     <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
+                     {alreadySeenWord ? this.getText(data.getNextSentence) : this.getText(data.getNextSentence.word_taught)}
                       {this.state.showAnswer && <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}><p>{"|-----------|"}</p> <p>{alreadySeenWord ? data.getNextSentence.pinyin : data.getNextSentence.word_taught.pinyin}</p></div>}
                       </div>
                      <Mutation mutation={MAKE_ATTEMPT}
@@ -135,6 +153,7 @@ class Play extends Component {
                             if(!this.state.showAnswer){
                               this.setState({
                               showAnswer: true,
+                              showCharacterDefinitions: false,
                               userResponse: data.getNextSentence.word_taught.text,
                               isCorrect: this.checkAnswer(data.getNextSentence.word_taught.text)
                               })
