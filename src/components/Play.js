@@ -128,7 +128,7 @@ class Play extends Component {
                     {/*<button onClick={this.SoundPlay}>play</button>*/}
                     <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
                      <p>{alreadySeenWord ? data.getNextSentence.english : data.getNextSentence.word_taught.english}</p>
-                      {this.state.showAnswer && <p style={{marginLeft: "5px"}}>{alreadySeenWord ? data.getNextSentence.pinyin : data.getNextSentence.word_taught.pinyin}</p>}
+                      {this.state.showAnswer && <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}><p>{"|-----------|"}</p> <p>{alreadySeenWord ? data.getNextSentence.pinyin : data.getNextSentence.word_taught.pinyin}</p></div>}
                       </div>
                      <Mutation mutation={MAKE_ATTEMPT}
                           update={(store) => {
