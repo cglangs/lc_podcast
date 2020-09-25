@@ -46,8 +46,8 @@ export const GET_LEVEL_WORDS = gql`
 `
 
 const ADD_SENTENCE = gql`
-  mutation addsentence($rawSentenceTextSimplified: String!, $cleanSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $cleanSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $shouldCall: Boolean!) {
-    CreateSentence(raw_text: $rawSentenceTextSimplified, clean_text: $cleanSentenceTextSimplified, display_text: $displaySentenceTextSimplified, alt_raw_text: $rawSentenceTextTraditional, alt_clean_text: $cleanSentenceTextTraditional, alt_display_text: $displaySentenceTextTraditional, pinyin: $pinyin, english: $english) {
+  mutation addsentence($rawSentenceTextSimplified: String!, $cleanSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $cleanSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $italics: String!, $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $shouldCall: Boolean!) {
+    CreateSentence(raw_text: $rawSentenceTextSimplified, clean_text: $cleanSentenceTextSimplified, display_text: $displaySentenceTextSimplified, alt_raw_text: $rawSentenceTextTraditional, alt_clean_text: $cleanSentenceTextTraditional, alt_display_text: $displaySentenceTextTraditional, pinyin: $pinyin, english: $english, italics: $italics) {
       raw_text
     }
     AddSentenceLevel(from: {raw_text:  $rawSentenceTextSimplified} to: {level_number: 1}){
@@ -72,11 +72,11 @@ const ADD_SENTENCE = gql`
 `
 
 const REPLACE_SENTENCE = gql`
-  mutation replacesentence($rawSentenceTextSimplified: String!, $cleanSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $cleanSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $formerSentenceRawText: String!) {
+  mutation replacesentence($rawSentenceTextSimplified: String!, $cleanSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $cleanSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $italics: String! $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $formerSentenceRawText: String!) {
     DeleteSentence(raw_text: $formerSentenceRawText){
       raw_text
     }
-    CreateSentence(raw_text: $rawSentenceTextSimplified, clean_text: $cleanSentenceTextSimplified, display_text: $displaySentenceTextSimplified, alt_raw_text: $rawSentenceTextTraditional, alt_clean_text: $cleanSentenceTextTraditional, alt_display_text: $displaySentenceTextTraditional, pinyin: $pinyin, english: $english) {
+    CreateSentence(raw_text: $rawSentenceTextSimplified, clean_text: $cleanSentenceTextSimplified, display_text: $displaySentenceTextSimplified, alt_raw_text: $rawSentenceTextTraditional, alt_clean_text: $cleanSentenceTextTraditional, alt_display_text: $displaySentenceTextTraditional, pinyin: $pinyin, english: $english,, italics: $italics) {
       raw_text
     }
     AddSentenceLevel(from: {raw_text:  $rawSentenceTextSimplified} to: {level_number: 1}){
@@ -125,6 +125,7 @@ class Author extends Component {
         selectedPunctuationId: null,
         pinyin: '',
         english: '',
+        italics: '',
         replaceMode: false,
         interval: null
       }
@@ -143,6 +144,7 @@ class Author extends Component {
           selectedPunctuationId: null,
           pinyin: props.location.state.pinyin,
           english: props.location.state.english,
+          italics: props.location.state.italics,
           interval: props.location.state.interval,
           replaceMode: true
         }
@@ -178,7 +180,7 @@ class Author extends Component {
   }
 
   getSentenceVariables(SentenceElements, sentenceWords, sentenceWordListSimplified,cleanSentenceTextSimplified, interval_order, words_left) {
-    const { wordToTeach, pinyin, english, formerSentenceRawText, replaceMode} = this.state
+    const { wordToTeach, pinyin, english, italics, formerSentenceRawText, replaceMode} = this.state
 
     const sentenceContainedWordListSimplified = sentenceWordListSimplified.filter(word => word !== wordToTeach.text)
     const SentenceElementListSimplified = SentenceElements.map(element => element.text)
@@ -196,7 +198,7 @@ class Author extends Component {
     const currentInterval = interval_order
     const shouldCall =  words_left === 1 && currentInterval < 5
 
-    var resultObj ={rawSentenceTextSimplified,cleanSentenceTextSimplified, displaySentenceTextSimplified,rawSentenceTextTraditional,cleanSentenceTextTraditional, displaySentenceTextTraditional, pinyin, english, wordToTeachText,wordToTeachId,sentenceContainedWordListSimplified,currentInterval}
+    var resultObj ={rawSentenceTextSimplified,cleanSentenceTextSimplified, displaySentenceTextSimplified,rawSentenceTextTraditional,cleanSentenceTextTraditional, displaySentenceTextTraditional, pinyin, english, italics, wordToTeachText,wordToTeachId,sentenceContainedWordListSimplified,currentInterval}
 
     if(replaceMode){
       Object.assign(resultObj,{formerSentenceRawText})
@@ -326,6 +328,15 @@ class Author extends Component {
                       onChange={e => this.setState({ english: e.target.value })}
                       type="english"
                       placeholder="Enter sentence's english translation"
+                      style={{width: "250px"}}
+                    />
+                  </div>
+                  <div>
+                    <input
+                      value={this.state.italics}
+                      onChange={e => this.setState({ italics: e.target.value })}
+                      type="italics"
+                      placeholder="Enter sentence's extra notes"
                       style={{width: "250px"}}
                     />
                   </div>

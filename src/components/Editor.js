@@ -38,6 +38,7 @@ const GET_SENTENCE_LIST = gql`
 		}
 		pinyin
 		english
+		italics
 		interval{
 	        sentences{
 	          clean_text
@@ -118,6 +119,7 @@ class Editor extends Component {
 			containsWordToTeach: containsWordToTeach,
 			pinyin: sentence.pinyin,
 			english: sentence.english,
+			italics: sentence.italics,
 			points: points,
 			interval: sentence.interval
 		}  
@@ -142,6 +144,7 @@ class Editor extends Component {
 						      <th>Word Taught</th>
 						      <th>Pinyin</th>
 						      <th>Translation</th>
+						      <th>Notes</th>
 						    </tr>
 						  </thead>
 	              		<tbody>
@@ -152,6 +155,7 @@ class Editor extends Component {
 		              			 <td>{sentence.word_taught.text}</td>
 		              			 <td>{sentence.pinyin}</td>
 		              			 <td>{sentence.english}</td>
+		              			 <td>{sentence.italics}</td>
 		              			 <td><button onClick={() => this.parseSentence(sentence)}>Edit</button></td>
 		              			</tr>
 		              		)
