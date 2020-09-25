@@ -463,26 +463,49 @@ app.includeStandardAdditions = true
 
 
 var file = app.chooseFile({
-    ofType: "txt",
+    ofType: "tsv",
     withPrompt: "Please select a text file to read:"
 })
 
 
-function readAndSplitFile(file, delimiter) {
-    // Convert the file to a string
-    var fileString = file.toString()
+    // lines :: String -> [String]
+    function lines(s) {
+        return s.split(/[\r\n]/);
+    };
 
-    // Read the file using a specific delimiter and return the results
-    return app.read(Path(fileString), { usingDelimiter: delimiter })
-}
+    // readFile :: FilePath -> maybe String
+    function readFile(strPath) {
+        var error = $(),
+            str = ObjC.unwrap(
+                $.NSString.stringWithContentsOfFileEncodingError($(strPath)
+                    .stringByStandardizingPath, $.NSUTF8StringEncoding, error)
+            ),
+            blnValid = typeof error.code !== 'string';
+        return {
+            nothing: !blnValid,
+            just: blnValid ? str : undefined,
+            error: blnValid ? '' : error.code
+        };
+    };
 
-x = readAndSplitFile(file, '\n')
 
+ 
+
+
+
+var z = []
+x= lines(readFile(file.toString()).just);
+
+
+x.shift()
 x.forEach(function(line){
+	y =line.split('\t')[0]
+	outputFile = ((app.pathTo("desktop").toString()) + "/" + line + ".aiff")
 	app.say(line, {
     	using: "Alex",
 		speakingRate: 140,
     	pitch: 42,
     	modulation: 60
+		//savingTo: outputFile
 	})
 })
