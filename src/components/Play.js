@@ -107,7 +107,7 @@ class Play extends Component {
   getText(text){
     return(
       <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-      <p>{text.english}</p> <i style={{"margin-block-start": "1em"}}>{text.italics}</i>:
+      <p>{text.english}</p> <i style={{"marginBlockStart": "1em"}}>{text.italics}</i>
       </div>
       )
   }
@@ -190,21 +190,12 @@ class Play extends Component {
                   <div>
                     <p style={{fontSize: "12px"}}>{alreadySeenWord && (data.getNextSentence.clean_text !== data.getNextSentence.word_taught.text) && data.getNextSentence.word_taught.english}</p>
                   </div>
-                  {this.state.showAnswer && (
+                  {this.state.showAnswer && alreadySeenWord && (
                       <div>
-                        {/* if(data.getNextSentence.word_taught.characters.length){
-                            data.getNextSentence.word_taught.characters.map(char => 
-                            <div>
-                            <p>{char.text}</p>
-                            <p>{char.english}</p>
-                            </div>
-                            )
-                          } else{*/
-                            <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-                            <p>{data.getNextSentence.word_taught.text}</p>
-                            <p style={{marginLeft: "5px"}}>{data.getNextSentence.word_taught.pinyin}</p>
-                            </div>
-                        }
+                        <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
+                        <p>{data.getNextSentence.word_taught.text}</p>
+                        <p style={{marginLeft: "5px"}}>{data.getNextSentence.word_taught.pinyin}</p>
+                        </div>
                       </div>
                   )} 
               </div>

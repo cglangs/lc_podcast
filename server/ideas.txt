@@ -453,3 +453,36 @@ RETURN s,w
 MATCH(s)-[:AT_INTERVAL]->(i)
 WHERE i.interval_order<3 AND NOT EXISTS((s)<-[:DEPENDS_ON]-())
 RETURN s
+
+
+
+
+
+var app = Application.currentApplication()
+app.includeStandardAdditions = true
+
+
+var file = app.chooseFile({
+    ofType: "txt",
+    withPrompt: "Please select a text file to read:"
+})
+
+
+function readAndSplitFile(file, delimiter) {
+    // Convert the file to a string
+    var fileString = file.toString()
+
+    // Read the file using a specific delimiter and return the results
+    return app.read(Path(fileString), { usingDelimiter: delimiter })
+}
+
+x = readAndSplitFile(file, '\n')
+
+x.forEach(function(line){
+	app.say(line, {
+    	using: "Alex",
+		speakingRate: 140,
+    	pitch: 42,
+    	modulation: 60
+	})
+})
