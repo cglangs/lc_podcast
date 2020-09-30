@@ -59,7 +59,8 @@ class Play extends Component {
       showCharacterDefinitions: false,
     	userResponse: '',
       isCorrect: true,
-      lastSentenceId: null 
+      lastSentenceId: null,
+      audio: null
     }
   }
 
@@ -68,12 +69,27 @@ class Play extends Component {
 		return correct_response === this.state.userResponse
 	}
 
-  SoundPlay() {
-    const Sounds = new Howl({
-      src: ["/1.mp3"]
-    })
-    Sounds.play()
-    console.log("sound")
+
+
+
+  setAudio(alreadySeen, sentenceId, wordId) {
+    var Sounds
+    if(alreadySeen){
+        Sounds = new Howl({
+          src: ["/audio/sentences/" + sentenceId + ".m4a"]
+        })
+    } else {
+        Sounds = new Howl({
+          src: ["/audio/words/" + wordId + ".m4a"]
+        })
+    }
+    return Sounds
+  }
+
+  playSound(){
+    if(this.state.audio){
+        this.state.audio.play()
+    }
   }
 
   getFontColor(){
@@ -97,7 +113,8 @@ class Play extends Component {
       this.setState({
           showAnswer: false,
           userResponse: '',
-          lastSentenceId: sentenceId.toString()
+          lastSentenceId: sentenceId.toString(),
+          audio: null
       }, () => {
         refetch()
       })
@@ -128,14 +145,15 @@ class Play extends Component {
               var nextIntervalSentenceId = null
               if(data.getNextSentence.next_interval_sentence_id && alreadySeenWord){
                 nextIntervalSentenceId = data.getNextSentence.next_interval_sentence_id
-              } else if((data.getNextSentence.next_interval_sentence_id || /*Only necessary because of missing data*/ data.getNextSentence.interval.interval_order < 5) && !alreadySeenWord){
-                //else if(data.getNextSentence.next_interval_sentence_id && !alreadySeenWord){
+              } 
+              /* TESTING purposes only
+              else if((data.getNextSentence.next_interval_sentence_id || data.getNextSentence.interval.interval_order < 3) && !alreadySeenWord){
                 nextIntervalSentenceId = parseInt(sentenceId)
-              }
+              }*/
                 return(
                   <div>
                   <div>
-                    {/*<button onClick={this.SoundPlay}>play</button>*/}
+                    {this.state.showAnswer && <button onClick={() => this.playSound(alreadySeenWord, data.getNextSentence._id, data.getNextSentence.word_taught.word_id)}>play</button>}
                     {this.state.showAnswer && data.getNextSentence.word_taught.characters.length > 0 && <button onClick={() => this.setState(prevState => ({showCharacterDefinitions: !prevState.showCharacterDefinitions}))}>Character Definitions</button>}
                     {this.state.showCharacterDefinitions && 
                        data.getNextSentence.word_taught.characters.map(char => 
@@ -155,8 +173,9 @@ class Play extends Component {
                               showAnswer: true,
                               showCharacterDefinitions: false,
                               userResponse: data.getNextSentence.word_taught.text,
-                              isCorrect: this.checkAnswer(data.getNextSentence.word_taught.text)
-                              })
+                              isCorrect: this.checkAnswer(data.getNextSentence.word_taught.text),
+                              audio: this.setAudio(alreadySeenWord, data.getNextSentence._id, data.getNextSentence.word_taught.word_id)
+                              }, () => {this.playSound()})
                             }
 
                             }

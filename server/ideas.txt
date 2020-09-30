@@ -457,13 +457,12 @@ RETURN s
 
 
 
-
 var app = Application.currentApplication()
 app.includeStandardAdditions = true
 
 
 var file = app.chooseFile({
-    ofType: "tsv",
+    ofType: "csv",
     withPrompt: "Please select a text file to read:"
 })
 
@@ -493,19 +492,21 @@ var file = app.chooseFile({
 
 
 
-var z = []
-x= lines(readFile(file.toString()).just);
+var x = lines(readFile(file.toString()).just);
+var id,word
 
+var outputFolder = app.chooseFolder({
+    withPrompt: "Please select an output folder:"
+})
 
 x.shift()
 x.forEach(function(line){
-	y =line.split('\t')[0]
-	outputFile = ((app.pathTo("desktop").toString()) + "/" + line + ".aiff")
-	app.say(line, {
-    	using: "Alex",
-		speakingRate: 140,
-    	pitch: 42,
-    	modulation: 60
-		//savingTo: outputFile
+	id = line.split(',')[0]
+	word = line.split(',')[1]
+	outputFile = outputFolder + "/" + id.toString() + ".aiff"
+	app.say(word, {
+    	using: "Ting-Ting",
+		speakingRate: 100,
+		savingTo: outputFile
 	})
 })
