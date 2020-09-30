@@ -292,6 +292,7 @@ type Sentence {
   english: String!
   italics: String
   already_seen: Boolean
+  time_fetched: String @cypher(statement: """RETURN toString(time())""")
   current_users: [User] @relation(name: "LEARNING", direction: IN)
   level: Level @relation(name: "SHOWN_IN" direction: OUT)
   interval: Interval @relation(name: "AT_INTERVAL" direction: OUT)

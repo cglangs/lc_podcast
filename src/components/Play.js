@@ -20,6 +20,7 @@ const GET_SENTENCE = gql`
   query getSentence($userName: String!) {
 	getNextSentence(userName: $userName) {
 		_id
+    time_fetched
 		next_interval_sentence_id
 		raw_text
 		display_text
@@ -60,17 +61,23 @@ class Play extends Component {
     	userResponse: '',
       isCorrect: true,
       lastSentenceId: null,
-      audio: null
+      audio: null,
+      timeFetched: null
     }
   }
+
+  /*shouldComponentUpdate(nextProps, nextState){
+    if(!nextState.showAnswer && this.state.showAnswer){
+      return false
+    } else{
+      return true
+    }
+  }*/
 
 
 	checkAnswer(correct_response) {
 		return correct_response === this.state.userResponse
 	}
-
-
-
 
   setAudio(alreadySeen, sentenceId, wordId) {
     var Sounds
@@ -100,7 +107,7 @@ class Play extends Component {
     return color
   }
 
-  submitAnswer(makeAttempt, refetch, userName, sentenceId, isCorrect, alreadySeenWord, nextIntervalSentenceId ){
+  submitAnswer(makeAttempt, refetch, userName, sentenceId,time_fetched, isCorrect, alreadySeenWord, nextIntervalSentenceId){
     if(!this.state.showAnswer){
       makeAttempt({variables:{
         userName: userName,
@@ -113,7 +120,7 @@ class Play extends Component {
       this.setState({
           showAnswer: false,
           userResponse: '',
-          lastSentenceId: sentenceId.toString(),
+          timeFetched: time_fetched,
           audio: null
       }, () => {
         refetch()
@@ -138,7 +145,8 @@ class Play extends Component {
 	      	{({ loading, error, data, refetch }) => {
 	      	  if (loading) return <div>Fetching</div>
             if (error) return <div>error</div>
-            if (this.state.lastSentenceId === data.getNextSentence._id) return <div/>
+            //Don't rerender when waiting for refetch
+            if (this.state.timeFetched === data.getNextSentence.time_fetched)  return <div/>
             if(data.getNextSentence){
               const sentenceId = parseInt(data.getNextSentence._id)
               const alreadySeenWord = data.getNextSentence.already_seen
@@ -187,7 +195,7 @@ class Play extends Component {
                             <input style={{width: `${data.getNextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px", color: this.getFontColor()}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
-                                this.submitAnswer(makeAttempt, refetch,userName, sentenceId, this.checkAnswer(data.getNextSentence.word_taught.text), alreadySeenWord, nextIntervalSentenceId)
+                                this.submitAnswer(makeAttempt, refetch,userName, sentenceId, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), alreadySeenWord, nextIntervalSentenceId)
                               }
                             }}
                             />
@@ -196,7 +204,7 @@ class Play extends Component {
                               style={{margin: "15px 5px 15px 5px"}}
                               onClick={() => 
                                 {
-                                  this.submitAnswer(makeAttempt, refetch,userName, sentenceId, this.checkAnswer(data.getNextSentence.word_taught.text), alreadySeenWord, nextIntervalSentenceId)
+                                  this.submitAnswer(makeAttempt, refetch,userName, sentenceId, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), alreadySeenWord, nextIntervalSentenceId)
                                 }
                               }
                             >
