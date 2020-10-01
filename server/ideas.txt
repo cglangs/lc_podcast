@@ -510,3 +510,13 @@ x.forEach(function(line){
 		savingTo: outputFile
 	})
 })
+
+
+MATCH(w:Word)
+WHERE w.word_id = 0
+WITH collect(w) AS words
+FOREACH ( i IN range(0, 91) |
+	MERGE(tw:Word {text: words[i].text})
+    ON MATCH SET tw.word_id = 151 + i
+)
+RETURN words
