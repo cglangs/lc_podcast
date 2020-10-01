@@ -27,6 +27,11 @@ class Header extends Component {
                 editor
               </Link>
             </div>
+            <div className="flex">
+              <Link to="/words">
+                words
+              </Link>
+            </div>
           </div>
           )}
           {isLoggedIn && (

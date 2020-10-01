@@ -234,6 +234,10 @@ type Level {
                       WITH w, count(r) AS times_used
                       RETURN MIN(times_used) AS minimum_usage
                       """)
+  all_words: [Word] @cypher(
+        statement: """MATCH(l:Level {level_number: 1})-[:INTRODUCED_IN| COMPOSED_OF*1..2]-(w:Word)
+                      RETURN DISTINCT w
+                      """)
   teachable_words: [Word] @cypher(
         statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word),(a:Author)-[:AUTHORING_INTERVAL]->(i:Interval)
                       OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)-[:AT_INTERVAL]->(i)
@@ -258,6 +262,7 @@ type Word {
   text: String
   alt_text: String
   english: String
+  italics: String
   pinyin: String
   level: Level @relation(name: "INTRODUCED_IN", direction: OUT)
   characters: [Word] @cypher(

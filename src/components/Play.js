@@ -66,15 +66,6 @@ class Play extends Component {
     }
   }
 
-  /*shouldComponentUpdate(nextProps, nextState){
-    if(!nextState.showAnswer && this.state.showAnswer){
-      return false
-    } else{
-      return true
-    }
-  }*/
-
-
 	checkAnswer(correct_response) {
 		return correct_response === this.state.userResponse
 	}
@@ -121,6 +112,7 @@ class Play extends Component {
           showAnswer: false,
           userResponse: '',
           timeFetched: time_fetched,
+          showCharacterDefinitions: false,
           audio: null
       }, () => {
         refetch()
