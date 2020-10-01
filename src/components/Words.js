@@ -6,8 +6,10 @@ const GET_WORDS = gql`
   query getWords {
 	Level {
 		all_words{
+			word_id
 			text
-			english 
+			pinyin
+			english
 			italics
 			times_used
 			level{
@@ -25,7 +27,9 @@ class Words extends Component {
 		this.props.history.push({
 			pathname: '/wordedit',
 			state: {
+				word_id: word.word_id,
 				text: word.text,
+				pinyin: word.pinyin,
 				english: word.english,
 				italics: word.italics
 			}  
@@ -45,6 +49,7 @@ class Words extends Component {
 	              		  <thead>
 						    <tr>
 						      <th>Word</th>
+						      <th>Pinyin</th>
 						      <th>Translation</th>
 						      <th>Notes</th>
 						      <th>Times Used</th>
@@ -56,6 +61,7 @@ class Words extends Component {
 	              			return(
 		              			<tr>
 		              			 <td>{word.text}</td>
+		              			 <td>{word.pinyin}</td>
 		              			 <td>{word.english}</td>
 		              			 <td>{word.italics}</td>
 		              			 <td>{word.times_used}</td>
