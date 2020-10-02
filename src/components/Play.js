@@ -3,6 +3,7 @@ import {Query, Mutation} from 'react-apollo';
 import gql from 'graphql-tag';
 import {getUserName} from '../constants.js'
 import { Howl } from 'howler';
+import ProgressBar from './ProgressBar'
 
 
 import '../styles/App.css';
@@ -47,6 +48,11 @@ const GET_SENTENCE = gql`
 		}
 
 	}
+  getCurrentProgress(userName: $userName){
+    words_learned
+    intervals_completed
+    total_word_count
+  }
 
   }
 
@@ -137,6 +143,7 @@ class Play extends Component {
 	      	{({ loading, error, data, refetch }) => {
 	      	  if (loading) return <div>Fetching</div>
             if (error) return <div>error</div>
+            console.log(data.getCurrentProgress)
             //Don't rerender when waiting for refetch
             if (this.state.timeFetched === data.getNextSentence.time_fetched)  return <div/>
             if(data.getNextSentence){
@@ -151,7 +158,10 @@ class Play extends Component {
                 nextIntervalSentenceId = parseInt(sentenceId)
               }*/
                 return(
-                  <div>
+                  <div style={{width: "50%"}}>
+                    <p>{"Words Learned: " + data.getCurrentProgress.words_learned + "/" + data.getCurrentProgress.total_word_count}</p>
+                    <p>{"Cards Completed: " + data.getCurrentProgress.intervals_completed}</p>
+                   <ProgressBar bgcolor={"rgb(245 109 109)"} completed={(data.getCurrentProgress.intervals_completed / (data.getCurrentProgress.total_word_count * 7)) * 100}  />
                   <div>
                     {this.state.showAnswer && <button onClick={() => this.playSound(alreadySeenWord, data.getNextSentence._id, data.getNextSentence.word_taught.word_id)}>play</button>}
                     {this.state.showAnswer && data.getNextSentence.word_taught.characters.length > 0 && <button onClick={() => this.setState(prevState => ({showCharacterDefinitions: !prevState.showCharacterDefinitions}))}>Character Definitions</button>}

@@ -202,6 +202,18 @@ type Query {
               RETURN {levels: COLLECT(DISTINCT l.level_number),intervals: COLLECT( DISTINCT i.interval_order)}
               """
               )
+
+    getCurrentProgress(userName: String,): Progress
+    @cypher(
+    statement:""" 
+              MATCH(u:User {user_name: userName}), (w:Word)-[:INTRODUCED_IN]->()
+              WITH u, COUNT(w) AS total_words
+              OPTIONAL MATCH(u)-[r:LEARNING]->(s:Sentence)
+              OPTIONAL MATCH(u)-[:LEARNED]->(wl:Word)
+              WITH u, COUNT(wl) AS words_learned, SUM(r.CURRENT_TIME_INTERVAL) AS current_intervals, total_words
+              RETURN {words_learned: words_learned,  intervals_completed: (words_learned * 7) + current_intervals , total_word_count: total_words}
+              """
+              )
 }
 
 
@@ -222,6 +234,12 @@ type levelIntervalLists{
 type Author {
   level: Level @relation(name: "AUTHORING_LEVEL", direction: OUT)
   interval: Interval @relation(name: "AUTHORING_INTERVAL", direction: OUT)
+}
+
+type Progress {
+  words_learned: Int!
+  intervals_completed: Int!
+  total_word_count: Int!
 }
 
 type Level {
