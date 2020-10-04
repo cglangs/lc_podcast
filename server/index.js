@@ -4,13 +4,16 @@ const jwt = require('jsonwebtoken')
 const { APP_SECRET, getUserId } = require('./utils')
 const { ApolloServer }  = require("apollo-server");
 const neo4j = require('neo4j-driver')
+//const { IsAuthenticatedDirective, HasRoleDirective} = require("graphql-auth-directives")
+
+
                   // CASE STATEMENT HERE TO ORDER BY IF IT IS LINKED TO LATEST INTERVALS AND (c OR EXISTS((s)->[:TEACHES]-)
                   //ORDER BY i.interval_order, then exists(Sentence - teaches - word - contains - sentence - at interval{interval_order: })
 
 async function signup(object, params, ctx, resolveInfo) {
   params.password = await bcrypt.hash(params.password, 10)
   const user = await neo4jgraphql(object, params, ctx, resolveInfo)
-  const tokenString = jwt.sign({ userId: user._id }, APP_SECRET)
+  const tokenString = jwt.sign({ userId: user._id, role: user.role}, APP_SECRET)
   user.token = tokenString
   return user
 }
@@ -29,12 +32,13 @@ async function login(object, params, ctx, resolveInfo) {
   }
   user.password = null
 
-  user.token = jwt.sign({ userId: user._id }, APP_SECRET)
+  user.token = jwt.sign({ userId: user._id, role: user.role }, APP_SECRET)
 
   return user
 }
 
 async function get_next_sentence(object, params, ctx, resolveInfo) {
+  //console.log(ctx.req.user)
   const sentence = await neo4jgraphql(object, params, ctx, resolveInfo)
   if(sentence){
     sentence.already_seen = sentence.current_users.map(user => user.user_name).includes(params.userName)
@@ -75,6 +79,7 @@ const driver = neo4j.driver(
 );
 
 const typeDefs = `
+
 type Mutation {
 
     AddSentenceDependencies(src_sentence: String! dest_words:[String]): Sentence
@@ -203,7 +208,7 @@ type Query {
               """
               )
 
-    getCurrentProgress(userName: String,): Progress
+    getCurrentProgress(userName: String!): Progress
     @cypher(
     statement:""" 
               MATCH(u:User {user_name: userName}), (w:Word)-[:INTRODUCED_IN]->()
@@ -220,6 +225,7 @@ type Query {
 enum Role {
   ADMIN
   STUDENT
+  TESTER
 }
 
 type clozeQuestion { 
@@ -343,7 +349,15 @@ const schema = makeAugmentedSchema({
 
 const server = new ApolloServer({
   schema: schema,
-  context: { driver },
+  context: ({ req }) => {
+    const tokenWithBearer = req.headers.authorization || ''
+    const token = tokenWithBearer.split(' ')[1]
+    const user = jwt.verify(token, APP_SECRET)
+    return {
+      driver,
+      user
+    };
+  },
   resolvers
 });
 

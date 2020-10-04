@@ -72,6 +72,11 @@ class Play extends Component {
     }
   }
 
+  componentDidMount() {
+    //if user is not logged in create temporary user
+
+  }
+
 	checkAnswer(correct_response) {
 		return correct_response === this.state.userResponse
 	}
@@ -143,7 +148,6 @@ class Play extends Component {
 	      	{({ loading, error, data, refetch }) => {
 	      	  if (loading) return <div>Fetching</div>
             if (error) return <div>error</div>
-            console.log(data.getCurrentProgress)
             //Don't rerender when waiting for refetch
             if (this.state.timeFetched === data.getNextSentence.time_fetched)  return <div/>
             if(data.getNextSentence){
