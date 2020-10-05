@@ -11,8 +11,10 @@ import { BrowserRouter } from 'react-router-dom'
 import { setContext } from 'apollo-link-context'
 import { getToken } from './constants'
 
+const port = process.env.PORT || 3003;
+
 const httpLink = createHttpLink({
-  uri: 'http://0.0.0.0:3003'
+  uri: 'http://0.0.0.0:' + port
 })
 
 
