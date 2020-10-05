@@ -377,8 +377,6 @@ server.applyMiddleware({ app });
 
 const port = process.env.PORT || 3003;
 
-console.log(process.env.PORT)
-
 app.listen({ port: port }, () =>
   console.log(`GraphQL API ready at http://localhost:${port}`)
 );
