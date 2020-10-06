@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { withRouter } from 'react-router'
 import { Link } from 'react-router-dom'
-import { getToken, deleteToken, getRole } from '../constants'
+import { getToken, deleteToken, deleteRole, deleteUserName, getRole, deleteUserId } from '../constants'
 
 class Header extends Component {
 
@@ -34,19 +34,20 @@ class Header extends Component {
             </div>
           </div>
           )}
-          {isLoggedIn && (
             <div className="flex">
               <Link to="/play">
                 play
               </Link>
             </div>
-          )}
           </div>   
         <div className="flex flex-fixed">
           {isLoggedIn ? (
             <div
               onClick={() => {
                 deleteToken()
+                deleteUserName()
+                deleteRole()
+                deleteUserId()
                 this.props.history.push('/')
               }}
             >

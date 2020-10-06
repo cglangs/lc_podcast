@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { setToken, setRole, setUserName } from '../constants'
+import { setToken, setRole, setUserName, setUserId } from '../constants'
 import gql from 'graphql-tag'
 import { Mutation} from 'react-apollo'
 
@@ -33,11 +33,11 @@ class Login extends Component {
     isLogin: true, // switch between Login and SignUp
     email: '',
     password: '',
-    user_name: '',
+    user_name: ''
   }
 
  render() {
-    const { isLogin, email, password, user_name } = this.state
+    const { isLogin, email, password, user_name} = this.state
     return (
     <div>
       <h4>{isLogin ? 'Login' : 'Sign Up'}</h4>
@@ -93,15 +93,16 @@ class Login extends Component {
 
  _confirm = async data => {
   console.log(data)
-  const { token, user_name, role } = data.Login
-  this._saveUserData(token, user_name, role)
+  const { token, user_name, role, _id } = data.Login
+  this._saveUserData(token, user_name, role, parseInt(_id) )
   this.props.history.push(`/`)
 }
 
-  _saveUserData = (token, user_name, role) => {
+  _saveUserData = (token, user_name, role, userId) => {
     setToken(token)
     setUserName(user_name)
     setRole(role)
+    setUserId(userId)
   }
 
 }

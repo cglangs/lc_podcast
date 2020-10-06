@@ -1,25 +1,38 @@
 import React, { Component } from 'react'
 import {Query, Mutation} from 'react-apollo';
 import gql from 'graphql-tag';
-import {getUserName} from '../constants.js'
+import {getUserName, getUserId} from '../constants.js'
 import { Howl } from 'howler';
 import ProgressBar from './ProgressBar'
+import { setToken, setRole, setUserName, setUserId } from '../constants'
+
 
 
 import '../styles/App.css';
 
 
 const MAKE_ATTEMPT = gql`
-  mutation makeAttempt($userName: String!, $sentenceId: Int!, $isCorrect: Boolean!, $alreadySeen: Boolean!, $nextIntervalSentenceId: Int) {
-	makeClozeAttempt(userName: $userName, sentenceId: $sentenceId, isCorrect: $isCorrect,alreadySeen: $alreadySeen, nextIntervalSentenceId: $nextIntervalSentenceId)
+  mutation makeAttempt($userId: Int!, $sentenceId: Int!, $isCorrect: Boolean!, $alreadySeen: Boolean!, $nextIntervalSentenceId: Int) {
+	makeClozeAttempt(userId: $userId, sentenceId: $sentenceId, isCorrect: $isCorrect,alreadySeen: $alreadySeen, nextIntervalSentenceId: $nextIntervalSentenceId)
   }
 
 `
 
+const CREATE_USER = gql`
+mutation addTemporaryUser($user_name: String!, $email: String!, $password: String!, $role: String!) {
+  CreateUser(user_name: $user_name, email: $email, password: $password, role: $role) {
+    _id
+    user_name
+    role
+    token
+  }
+}
+
+`
 
 const GET_SENTENCE = gql`
-  query getSentence($userName: String!) {
-	getNextSentence(userName: $userName) {
+  query getSentence($userId: Int!) {
+	getNextSentence(userId: $userId) {
 		_id
     time_fetched
 		next_interval_sentence_id
@@ -48,7 +61,7 @@ const GET_SENTENCE = gql`
 		}
 
 	}
-  getCurrentProgress(userName: $userName){
+  getCurrentProgress(userId: $userId){
     words_learned
     intervals_completed
     total_word_count
@@ -68,7 +81,12 @@ class Play extends Component {
       isCorrect: true,
       lastSentenceId: null,
       audio: null,
-      timeFetched: null
+      timeFetched: null,
+      user:{
+        user_name: null,
+        userId: null,
+        role: null
+      }
     }
   }
 
@@ -109,10 +127,10 @@ class Play extends Component {
     return color
   }
 
-  submitAnswer(makeAttempt, refetch, userName, sentenceId,time_fetched, isCorrect, alreadySeenWord, nextIntervalSentenceId){
+  submitAnswer(makeAttempt, refetch, userId, sentenceId,time_fetched, isCorrect, alreadySeenWord, nextIntervalSentenceId){
     if(!this.state.showAnswer){
       makeAttempt({variables:{
-        userName: userName,
+        userName: userId,
         sentenceId: sentenceId,
         isCorrect: isCorrect,
         alreadySeen: alreadySeenWord,
@@ -139,14 +157,12 @@ class Play extends Component {
       )
   }
 
-	render() {
-	  const userName = getUserName()
-	  return (
-	    <div className="App">
-	      <header className="App-header">
-	      <Query query={GET_SENTENCE} variables={{userName: userName}}>
-	      	{({ loading, error, data, refetch }) => {
-	      	  if (loading) return <div>Fetching</div>
+
+  playDashboard(userId,userName){
+    return(
+      <Query query={GET_SENTENCE} variables={{userId: userId}}>
+          {({ loading, error, data, refetch }) => {
+            if (loading) return <div>Fetching</div>
             if (error) return <div>error</div>
             //Don't rerender when waiting for refetch
             if (this.state.timeFetched === data.getNextSentence.time_fetched)  return <div/>
@@ -154,7 +170,7 @@ class Play extends Component {
               const sentenceId = parseInt(data.getNextSentence._id)
               const alreadySeenWord = data.getNextSentence.already_seen
               var nextIntervalSentenceId = null
-              if(data.getNextSentence.next_interval_sentence_id && alreadySeenWord){
+              if(userId && data.getNextSentence.next_interval_sentence_id && alreadySeenWord){
                 nextIntervalSentenceId = data.getNextSentence.next_interval_sentence_id
               } 
               /* TESTING purposes only
@@ -163,6 +179,7 @@ class Play extends Component {
               }*/
                 return(
                   <div style={{width: "50%"}}>
+                    {userName === "tester" && (<p>You are currently not logged in. Log in to save your progress.</p>)}
                     <p>{"Words Learned: " + data.getCurrentProgress.words_learned + "/" + data.getCurrentProgress.total_word_count}</p>
                     <p>{"Cards Completed: " + data.getCurrentProgress.intervals_completed}</p>
                    <ProgressBar bgcolor={"rgb(245 109 109)"} completed={(data.getCurrentProgress.intervals_completed / (data.getCurrentProgress.total_word_count * 7)) * 100}  />
@@ -201,7 +218,7 @@ class Play extends Component {
                             <input style={{width: `${data.getNextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px", color: this.getFontColor()}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
-                                this.submitAnswer(makeAttempt, refetch,userName, sentenceId, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), alreadySeenWord, nextIntervalSentenceId)
+                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), alreadySeenWord, nextIntervalSentenceId)
                               }
                             }}
                             />
@@ -210,7 +227,7 @@ class Play extends Component {
                               style={{margin: "15px 5px 15px 5px"}}
                               onClick={() => 
                                 {
-                                  this.submitAnswer(makeAttempt, refetch,userName, sentenceId, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), alreadySeenWord, nextIntervalSentenceId)
+                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), alreadySeenWord, nextIntervalSentenceId)
                                 }
                               }
                             >
@@ -233,15 +250,49 @@ class Play extends Component {
                   )} 
               </div>
             ) 
-	       }
+         }
           else return <div>Complete</div>
          }}
-	      </Query>
+        </Query>
+    )
+
+  }
+
+  async _confirm(data)  {
+  const { token, user_name, role, _id } = data.CreateUser
+  this._saveUserData(token, user_name, role, _id )
+}
+
+  _saveUserData(token, user_name, role, userId){
+    setToken(token)
+    setUserName(user_name)
+    setRole(role)
+    setUserId(userId)
+    this.setState({user:{user_name: user_name, userId: userId, role: role}})
+  }
+
+	render() {
+	  const userId = parseInt(getUserId())
+    const userName = getUserName() 
+	  return (
+	    <div className="App">
+	      <header className="App-header">
+          {userId ? this.playDashboard(userId, userName): 
+              <Mutation mutation={CREATE_USER}
+                onCompleted={data => this._confirm(data)}
+                >
+              {createUser => (
+              <button onClick={()=> createUser({variables:{user_name: "tester", email: "", password: "", role: "TESTER"}})}>BEGIN</button>
+              )}
+            </Mutation>}
 	      </header>
 	    </div>
 	  );		
-
 	}
 }
+
+
+
+
 
 export default Play;

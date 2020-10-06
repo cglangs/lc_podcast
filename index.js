@@ -2,14 +2,12 @@ const { neo4jgraphql, makeAugmentedSchema } = require("neo4j-graphql-js");
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { APP_SECRET, getUserId } = require('./utils')
-//const { ApolloServer }  = require("apollo-server");
-const { ApolloServer, gql } = require('apollo-server-express');
+const { ApolloServer, gql, SchemaDirectiveVisitor } = require('apollo-server-express');
 const neo4j = require('neo4j-driver')
 const path = require('path');
 const express = require('express');
 const app = express();
 const cors = require('cors');
-
 
 
 async function signup(object, params, ctx, resolveInfo) {
@@ -43,12 +41,11 @@ async function get_next_sentence(object, params, ctx, resolveInfo) {
   //console.log(ctx.req.user)
   const sentence = await neo4jgraphql(object, params, ctx, resolveInfo)
   if(sentence){
-    sentence.already_seen = sentence.current_users.map(user => user.user_name).includes(params.userName)
+    sentence.already_seen = sentence.current_users.map(user => user._id).includes(params.userId)
     sentence.current_users = null
   }
   return sentence
 }
-
 
 const resolvers = {
   // entry point to GraphQL service
@@ -80,10 +77,28 @@ const driver = neo4j.driver(
   neo4j.auth.basic('neo4j','password')
 );
 
+const directiveResolvers = {
+  /*
+    const tokenWithBearer = req.headers.authorization || ''
+    const token = tokenWithBearer.split(' ')[1]
+    const user = jwt.verify(token, APP_SECRET)
+    */
+  isAdmin(next,src,args,context) {
+    return next().then((sentence) => {
+      if (context.req) {
+        return sentence
+      } else{
+        throw Error("oh shit")
+      }
+    });
+    }
+}
+
 const typeDefs = `
 
-type Mutation {
+directive @isAdmin on FIELD_DEFINITION
 
+type Mutation {
     AddSentenceDependencies(src_sentence: String! dest_words:[String]): Sentence
     @cypher(
     statement:"""      MATCH (s:Sentence {raw_text: $src_sentence})-[:AT_INTERVAL]->(i:Interval), (w:Word)
@@ -107,7 +122,7 @@ type Mutation {
                        RETURN s """
     )
 
-    CreateUser(user_name: String! email: String! password: String! role: Role! = STUDENT): User
+    CreateUser(user_name: String! email: String! password: String! role: String! = "STUDENT"): User
 
     IncrementInterval(should_call: Boolean!): Int
     @cypher(
@@ -122,10 +137,10 @@ type Mutation {
                   WHERE u.email = $email
                   RETURN u"""
     )
-    makeClozeAttempt(userName: String!, sentenceId: Int!, isCorrect: Boolean!, alreadySeen: Boolean!, nextIntervalSentenceId: Int, nextIntervalSentenceId: Int, wordId: Int): Int
+    makeClozeAttempt(userId: Int!, sentenceId: Int!, isCorrect: Boolean!, alreadySeen: Boolean!, nextIntervalSentenceId: Int, nextIntervalSentenceId: Int, wordId: Int): Int
     @cypher(
-    statement:""" MATCH(u:User {user_name: userName}),(s:Sentence)-[:TEACHES]->(w:Word)
-                  WHERE ID(s) = sentenceId
+    statement:""" MATCH(u:User),(s:Sentence)-[:TEACHES]->(w:Word)
+                  WHERE ID(u) = userId AND ID(s) = sentenceId
                   OPTIONAL MATCH (s2:Sentence)
                   WHERE ID(s2) = nextIntervalSentenceId
                   MERGE (u)-[r:LEARNING]->(s)
@@ -145,10 +160,11 @@ type Mutation {
 }
 
 type Query {
-    getNextSentence(userName: String): Sentence
+    getNextSentence(userId: Int!): Sentence
     @cypher(
     statement:""" 
-                  MATCH (u:User{user_name: userName})
+                  MATCH (u:User)
+                  WHERE ID(u) = userId
                   WITH u
                   MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
                   OPTIONAL MATCH (u)-[r:LEARNING]->(s)
@@ -210,10 +226,11 @@ type Query {
               """
               )
 
-    getCurrentProgress(userName: String!): Progress
+    getCurrentProgress(userId: Int!): Progress
     @cypher(
     statement:""" 
-              MATCH(u:User {user_name: userName}), (w:Word)-[:INTRODUCED_IN]->()
+              MATCH(u:User), (w:Word)-[:INTRODUCED_IN]->()
+              WHERE ID(u) = userId
               WITH u, COUNT(w) AS total_words
               OPTIONAL MATCH(u)-[r:LEARNING]->(s:Sentence)
               OPTIONAL MATCH(u)-[:LEARNED]->(wl:Word)
@@ -221,13 +238,6 @@ type Query {
               RETURN {words_learned: words_learned,  intervals_completed: (words_learned * 7) + current_intervals , total_word_count: total_words}
               """
               )
-}
-
-
-enum Role {
-  ADMIN
-  STUDENT
-  TESTER
 }
 
 type clozeQuestion { 
@@ -302,7 +312,7 @@ type User {
   email: String!
   password: String
   token: String
-  role: Role!
+  role: String!
 }
 type Interval {
   interval_order: Int
@@ -346,7 +356,8 @@ type ContainedWord @relation(name:"CONTAINS") {
 
 const schema = makeAugmentedSchema({
   typeDefs,
-  resolvers
+  resolvers,
+  directiveResolvers
 });
 
 // Allow cross-origin
@@ -361,15 +372,11 @@ app.get('*', (req, res) => {
 const server = new ApolloServer({
   schema: schema,
   context: ({ req }) => {
-    const tokenWithBearer = req.headers.authorization || ''
-    const token = tokenWithBearer.split(' ')[1]
-    const user = jwt.verify(token, APP_SECRET)
     return {
       driver,
-      user
+      req
     };
-  },
-  resolvers
+  }
 });
 
 

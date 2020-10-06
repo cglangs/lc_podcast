@@ -11,6 +11,25 @@ import Home from './Home'
 import {getRole} from '../constants.js'
 
 class App extends Component {
+  constructor(){
+    super()
+    this.baseState = {
+        user_name: null,
+        userId: null,
+        role: null
+    }
+    this.state = this.baseState
+  }
+
+  setUserInfo(user_name, userId, role){
+    this.setState({user_name: user_name, userId: userId, role: role})
+  }
+
+  removeUserInfo(){
+    this.setState(this.baseState)
+  }
+
+
   render() {
       return(
     <div>
