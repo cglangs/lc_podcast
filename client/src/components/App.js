@@ -9,6 +9,9 @@ import WordEdit from './WordEdit'
 import Play from './Play'
 import Home from './Home'
 import {getRole} from '../constants.js'
+import {deleteToken, setToken} from '../constants'
+
+
 
 class App extends Component {
   constructor(){
@@ -21,19 +24,22 @@ class App extends Component {
     this.state = this.baseState
   }
 
-  setUserInfo(user_name, userId, role){
+  setUserInfo(user_name, userId, role, token){
+    setToken(token)
     this.setState({user_name: user_name, userId: userId, role: role})
   }
 
   removeUserInfo(){
+    deleteToken()
     this.setState(this.baseState)
   }
 
 
   render() {
+      const user = this.state
       return(
     <div>
-      <Header />
+      <Header removeUserInfo={this.removeUserInfo.bind(this)}/>
       <div>
         <Switch>
           <Route exact path="/" component={Home} />
@@ -41,8 +47,8 @@ class App extends Component {
           {getRole() === 'ADMIN' && (<Route exact path="/editor" component={Editor} />)}
           {getRole() === 'ADMIN' && (<Route exact path="/words" component={Words} />)}
           {getRole() === 'ADMIN' && (<Route exact path="/wordedit" component={WordEdit} />)}
-          <Route exact path="/play" component={Play} />
-          <Route exact path="/login" component={Login} />
+          <Route exact path="/play" render={() => (<Play  user={user} setUserInfo={this.setUserInfo.bind(this)} /> )} />
+          <Route exact path="/login" render={() => (<Login  setUserInfo={this.setUserInfo.bind(this)} />)} />
         </Switch>
       </div>
     </div>

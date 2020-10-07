@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { withRouter } from 'react-router'
 import { Link } from 'react-router-dom'
-import { getToken, deleteToken, deleteRole, deleteUserName, getRole, deleteUserId } from '../constants'
+import { getToken, getRole} from '../constants'
 
 class Header extends Component {
 
@@ -44,10 +44,7 @@ class Header extends Component {
           {isLoggedIn ? (
             <div
               onClick={() => {
-                deleteToken()
-                deleteUserName()
-                deleteRole()
-                deleteUserId()
+                this.props.removeUserInfo()
                 this.props.history.push('/')
               }}
             >

@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
-import { setToken, setRole, setUserName, setUserId } from '../constants'
 import gql from 'graphql-tag'
 import { Mutation} from 'react-apollo'
+import { withRouter } from 'react-router-dom';
 
 
 const SIGNUP_MUTATION = gql`
@@ -92,20 +92,13 @@ class Login extends Component {
  }
 
  _confirm = async data => {
-  console.log(data)
-  const { token, user_name, role, _id } = data.Login
-  this._saveUserData(token, user_name, role, parseInt(_id) )
-  this.props.history.push(`/`)
+  const { user_name, _id, role, token } = data.Login
+  this.props.setUserInfo(user_name, _id, role, token)
+  this.props.history.push('/')
 }
 
-  _saveUserData = (token, user_name, role, userId) => {
-    setToken(token)
-    setUserName(user_name)
-    setRole(role)
-    setUserId(userId)
-  }
 
 }
 
 
-export default Login
+export default withRouter(Login)
