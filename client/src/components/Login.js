@@ -15,6 +15,17 @@ const SIGNUP_MUTATION = gql`
     }
   }
 `
+const UPGRADE_MUTATION = gql`
+  mutation UpgradeMutation($email: String!, $password: String!, $user_name: String!, $userId: Int!) {
+    UpgradeUser(email: $email, password: $password, user_name: $user_name, userId: $userId) {
+      _id
+      user_name
+      password
+      token
+      role
+    }
+  }
+`
 
 const LOGIN_MUTATION = gql`
   mutation LoginMutation($email: String!, $password: String!) {
@@ -33,11 +44,21 @@ class Login extends Component {
     isLogin: true, // switch between Login and SignUp
     email: '',
     password: '',
-    user_name: ''
+    user_name: '',
+    userId: null,
+    role: "STUDENT"
+  }
+
+  componentDidMount(){
+    if(this.props.user){
+      const {user_name, userId,role} = this.props.user
+      this.setState({user_name: user_name, userId: userId, role: role})
+    }
   }
 
  render() {
-    const { isLogin, email, password, user_name} = this.state
+    const { isLogin, email, password, user_name, userId, role} = this.state
+    console.log(this.state)
     return (
     <div>
       <h4>{isLogin ? 'Login' : 'Sign Up'}</h4>
@@ -66,8 +87,8 @@ class Login extends Component {
       </div>
       <div>
       <Mutation
-        mutation={isLogin ? LOGIN_MUTATION : SIGNUP_MUTATION}
-        variables={{ email, password, user_name}}
+        mutation={isLogin ? LOGIN_MUTATION : role === 'TESTER' ? UPGRADE_MUTATION :SIGNUP_MUTATION}
+        variables={{ email, password, user_name, userId}}
         onCompleted={data => this._confirm(data)}
       >
         {mutation => (
@@ -92,8 +113,8 @@ class Login extends Component {
  }
 
  _confirm = async data => {
-  const { user_name, _id, role, token } = data.Login
-  this.props.setUserInfo(user_name, _id, role, token)
+  const { user_name, _id, role, token } = data.Login || data.CreateUser || data.UpgradeUser
+  this.props.setUserInfo(user_name, parseInt(_id), role, token)
   this.props.history.push('/')
 }
 

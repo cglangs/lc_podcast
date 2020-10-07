@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { withRouter } from 'react-router'
 import { Link } from 'react-router-dom'
-import { getToken, getRole} from '../constants'
+import { getToken} from '../constants'
 
 class Header extends Component {
 
@@ -15,7 +15,7 @@ class Header extends Component {
             home
           </Link>
           <div>
-        {isLoggedIn && getRole() === 'ADMIN' && (
+        {isLoggedIn && this.props.user.role === 'ADMIN' && (
           <div>
             <div className="flex">
               <Link to="/author">
@@ -41,7 +41,7 @@ class Header extends Component {
             </div>
           </div>   
         <div className="flex flex-fixed">
-          {isLoggedIn ? (
+          {isLoggedIn && this.props.user.role !== 'TESTER' ? (
             <div
               onClick={() => {
                 this.props.removeUserInfo()

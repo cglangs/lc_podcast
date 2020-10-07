@@ -39,7 +39,7 @@ class App extends Component {
       const user = this.state
       return(
     <div>
-      <Header removeUserInfo={this.removeUserInfo.bind(this)}/>
+      <Header removeUserInfo={this.removeUserInfo.bind(this)} user={user}/>
       <div>
         <Switch>
           <Route exact path="/" component={Home} />
@@ -48,7 +48,7 @@ class App extends Component {
           {getRole() === 'ADMIN' && (<Route exact path="/words" component={Words} />)}
           {getRole() === 'ADMIN' && (<Route exact path="/wordedit" component={WordEdit} />)}
           <Route exact path="/play" render={() => (<Play  user={user} setUserInfo={this.setUserInfo.bind(this)} /> )} />
-          <Route exact path="/login" render={() => (<Login  setUserInfo={this.setUserInfo.bind(this)} />)} />
+          <Route exact path="/login" render={() => (<Login user={user} setUserInfo={this.setUserInfo.bind(this)} />)} />
         </Switch>
       </div>
     </div>

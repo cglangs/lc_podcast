@@ -1,10 +1,8 @@
 import React, { Component } from 'react'
 import {Query, Mutation} from 'react-apollo';
 import gql from 'graphql-tag';
-import {getUserName, getUserId} from '../constants.js'
 import { Howl } from 'howler';
 import ProgressBar from './ProgressBar'
-import { setToken, setRole, setUserName, setUserId } from '../constants'
 
 
 
@@ -90,9 +88,17 @@ class Play extends Component {
     }
   }
 
-  componentDidMount() {
-    //if user is not logged in create temporary user
+  componentDidMount(){
+    if(this.props.user){
+      this.setState({user: this.props.user})
+    }
+  }
 
+  componentDidUpdate(nextProps) {
+    const { user } = this.props
+    if (nextProps.user.userId !== user.userId || nextProps.user.role !== user.role) {
+      this.setState({user: user})
+    } 
   }
 
 	checkAnswer(correct_response) {
@@ -130,7 +136,7 @@ class Play extends Component {
   submitAnswer(makeAttempt, refetch, userId, sentenceId,time_fetched, isCorrect, alreadySeenWord, nextIntervalSentenceId){
     if(!this.state.showAnswer){
       makeAttempt({variables:{
-        userName: userId,
+        userId: userId,
         sentenceId: sentenceId,
         isCorrect: isCorrect,
         alreadySeen: alreadySeenWord,
@@ -158,7 +164,7 @@ class Play extends Component {
   }
 
 
-  playDashboard(userId,userName){
+  playDashboard(userId,userName, role){
     return(
       <Query query={GET_SENTENCE} variables={{userId: userId}}>
           {({ loading, error, data, refetch }) => {
@@ -179,7 +185,7 @@ class Play extends Component {
               }*/
                 return(
                   <div style={{width: "50%"}}>
-                    {userName === "tester" && (<p>You are currently not logged in. Log in to save your progress.</p>)}
+                    {role === "TESTER" && (<p>You are currently not logged in. Log in to save your progress.</p>)}
                     <p>{"Words Learned: " + data.getCurrentProgress.words_learned + "/" + data.getCurrentProgress.total_word_count}</p>
                     <p>{"Cards Completed: " + data.getCurrentProgress.intervals_completed}</p>
                    <ProgressBar bgcolor={"rgb(245 109 109)"} completed={(data.getCurrentProgress.intervals_completed / (data.getCurrentProgress.total_word_count * 7)) * 100}  />
@@ -258,31 +264,25 @@ class Play extends Component {
 
   }
 
-  async _confirm(data)  {
-  const { token, user_name, role, _id } = data.CreateUser
-  this._saveUserData(token, user_name, role, _id )
-}
-
-  _saveUserData(token, user_name, role, userId){
-    setToken(token)
-    setUserName(user_name)
-    setRole(role)
-    setUserId(userId)
-    this.setState({user:{user_name: user_name, userId: userId, role: role}})
+   _confirm = async data => {
+    const { user_name, _id, role, token } = data.CreateUser
+    this.props.setUserInfo(user_name, parseInt(_id), role, token)
   }
 
 	render() {
-	  const userId = parseInt(getUserId())
-    const userName = getUserName() 
+	  const userId = this.state.user.userId
+    const userName = this.state.user.user_name
+    const role = this.state.user.role
+    console.log(this.state.user)
 	  return (
 	    <div className="App">
 	      <header className="App-header">
-          {userId ? this.playDashboard(userId, userName): 
+          {userId ? this.playDashboard(userId, userName, role): 
               <Mutation mutation={CREATE_USER}
                 onCompleted={data => this._confirm(data)}
                 >
               {createUser => (
-              <button onClick={()=> createUser({variables:{user_name: "tester", email: "", password: "", role: "TESTER"}})}>BEGIN</button>
+              <button onClick={()=> createUser({variables:{user_name: "", email: "", password: "", role: "TESTER"}})}>BEGIN</button>
               )}
             </Mutation>}
 	      </header>
