@@ -1,12 +1,12 @@
 import React, { Component } from 'react'
 import { withRouter } from 'react-router'
 import { Link } from 'react-router-dom'
-import { getToken} from '../constants'
+import { getCookie} from '../utils'
 
 class Header extends Component {
 
   render() {
-    const isLoggedIn = !!getToken();
+    const isLoggedIn = !!getCookie('token');
 
     return (
       <div>

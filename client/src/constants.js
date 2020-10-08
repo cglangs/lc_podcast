@@ -22,6 +22,7 @@ export const getUserId = () => localStorage.getItem(USER_ID);
 export const setUserId = userId => localStorage.setItem(USER_ID, userId);
 export const deleteUserId = () => localStorage.removeItem(USER_ID);
 
+
 export const punctuations = [
 	{id: 1, text: '，', type: 'COMMA'},
 	{id: 2, text: '。', type: 'PERIOD'},

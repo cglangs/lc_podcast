@@ -57,13 +57,6 @@ const GET_SENTENCE = gql`
     intervals_completed
     total_word_count
   }
-  me(userId: $userId) {
-      _id
-      user_name
-      password
-      token
-      role
-  }
 
   }
 
