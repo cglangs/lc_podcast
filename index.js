@@ -8,12 +8,14 @@ const path = require('path');
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const cookieParser = require('cookie-parser')
 
 
 async function signup(object, params, ctx, resolveInfo) {
   params.password = await bcrypt.hash(params.password, 10)
   const user = await neo4jgraphql(object, params, ctx, resolveInfo)
   const tokenString = jwt.sign({ userId: user._id, role: user.role}, APP_SECRET)
+  ctx.req.res.cookie('token', tokenString, { maxAge: 60 * 60 * 1000 })
   user.token = tokenString
   return user
 }
@@ -32,7 +34,11 @@ async function login(object, params, ctx, resolveInfo) {
   }
   user.password = null
 
-  user.token = jwt.sign({ userId: user._id, role: user.role }, APP_SECRET)
+  const token = jwt.sign({ userId: user._id, role: user.role }, APP_SECRET)
+
+  user.token = token
+
+  ctx.req.res.cookie('token', token, { maxAge: 60 * 60 * 1000 })
 
   return user
 }
@@ -41,7 +47,6 @@ async function get_next_sentence(object, params, ctx, resolveInfo) {
   //console.log(ctx.req.user)
   const sentence = await neo4jgraphql(object, params, ctx, resolveInfo)
   if(sentence){
-    sentence.already_seen = sentence.current_users.map(user => user._id).includes(params.userId)
     sentence.current_users = null
   }
   return sentence
@@ -51,6 +56,9 @@ const resolvers = {
   // entry point to GraphQL service
   Mutation: {
     CreateUser(object, params, ctx, resolveInfo) {
+      return signup(object, params, ctx, resolveInfo)   
+    },
+    UpgradeUser(object, params, ctx, resolveInfo) {
       return signup(object, params, ctx, resolveInfo)   
     },
     Login(object, params, ctx, resolveInfo) {
@@ -67,6 +75,16 @@ const resolvers = {
   Query: {
      getNextSentence(object, params, ctx, resolveInfo){
       return get_next_sentence(object, params, ctx, resolveInfo)
+    },
+    me(object, params, ctx, resolveInfo){
+      if(!ctx.req.userId){
+        return null
+      } else{
+          params.userId = ctx.req.userId
+          console.log(params)
+          const user = neo4jgraphql(object, params, ctx, resolveInfo)
+          return user
+      }
     }
   }
 }
@@ -124,6 +142,14 @@ type Mutation {
 
     CreateUser(user_name: String! email: String! password: String! role: String! = "STUDENT"): User
 
+    UpgradeUser(userId: Int!, user_name: String! email: String! password: String!): User
+    @cypher(
+    statement:""" MATCH (u:User)
+                  WHERE ID(u) = userId
+                  SET u.user_name = user_name, u.email = email, u.password = password, u.role = 'STUDENT'
+                  RETURN u"""
+    )
+
     IncrementInterval(should_call: Boolean!): Int
     @cypher(
     statement:""" MATCH (i2:Interval)<-[:NEXT_TIME]-(:Interval)<-[r:AUTHORING_INTERVAL]-(:Author)
@@ -137,7 +163,8 @@ type Mutation {
                   WHERE u.email = $email
                   RETURN u"""
     )
-    makeClozeAttempt(userId: Int!, sentenceId: Int!, isCorrect: Boolean!, alreadySeen: Boolean!, nextIntervalSentenceId: Int, nextIntervalSentenceId: Int, wordId: Int): Int
+
+    makeClozeAttempt(userId: Int!, sentenceId: Int!, isCorrect: Boolean!, nextIntervalSentenceId: Int, nextIntervalSentenceId: Int, wordId: Int): Int
     @cypher(
     statement:""" MATCH(u:User),(s:Sentence)-[:TEACHES]->(w:Word)
                   WHERE ID(u) = userId AND ID(s) = sentenceId
@@ -145,14 +172,14 @@ type Mutation {
                   WHERE ID(s2) = nextIntervalSentenceId
                   MERGE (u)-[r:LEARNING]->(s)
                   SET r.last_seen = time()
-                  WITH u,s,s2,w,r,isCorrect,alreadySeen,nextIntervalSentenceId
+                  WITH u,s,s2,w,r,isCorrect,nextIntervalSentenceId
                   CALL apoc.do.case(
                   [
-                  NOT alreadySeen AND NOT isCorrect, 'DELETE r',
-                  NOT alreadySeen AND isCorrect, 'SET r.IN_PROGRESS = FALSE, r.CURRENT_TIME_INTERVAL = 1',
-                  alreadySeen AND isCorrect AND nextIntervalSentenceId IS NOT NULL AND r.IN_PROGRESS = FALSE,'SET r.IN_PROGRESS = TRUE, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1',
-                  alreadySeen AND isCorrect AND nextIntervalSentenceId IS NOT NULL AND r.IN_PROGRESS = TRUE,'SET r.IN_PROGRESS = FALSE, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1 WITH r,s2 CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
-                  alreadySeen AND isCorrect AND nextIntervalSentenceId IS NULL,'CREATE (u)-[:LEARNED]->(w) DELETE r'
+                  NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND NOT isCorrect, 'DELETE r',
+                  NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect, 'SET r.IN_PROGRESS = FALSE, r.CURRENT_TIME_INTERVAL = 1',
+                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND nextIntervalSentenceId IS NOT NULL AND r.IN_PROGRESS = FALSE,'SET r.IN_PROGRESS = TRUE, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1',
+                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND nextIntervalSentenceId IS NOT NULL AND r.IN_PROGRESS = TRUE,'SET r.IN_PROGRESS = FALSE, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1 WITH r,s2 CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
+                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND nextIntervalSentenceId IS NULL,'CREATE (u)-[:LEARNED]->(w) DELETE r'
                   ],'',{r:r,s2:s2, u:u, w:w}) YIELD value
                   RETURN 1
                     """
@@ -238,6 +265,13 @@ type Query {
               RETURN {words_learned: words_learned,  intervals_completed: (words_learned * 7) + current_intervals , total_word_count: total_words}
               """
               )
+
+    me(userId: Int!): User
+    @cypher(
+    statement:""" MATCH(u:User)
+                  WHERE ID(u) = userId
+                  RETURN u"""
+    )
 }
 
 type clozeQuestion { 
@@ -332,7 +366,6 @@ type Sentence {
   pinyin: String!
   english: String!
   italics: String
-  already_seen: Boolean
   time_fetched: String @cypher(statement: """RETURN toString(time())""")
   current_users: [User] @relation(name: "LEARNING", direction: IN)
   level: Level @relation(name: "SHOWN_IN" direction: OUT)
@@ -361,13 +394,31 @@ const schema = makeAugmentedSchema({
 });
 
 // Allow cross-origin
-app.use(cors());
 
-app.use(express.static('public'))
+var corsOptions = {
+  origin: 'http://localhost:3000',
+  credentials: true // <-- REQUIRED backend setting
+};
+
+app.use(cors(corsOptions));
+
+app.use(cookieParser())
+
+app.use((req, _, next) =>{
+  if(req.cookies['token']){
+    const user = jwt.verify(req.cookies['token'], APP_SECRET)
+    req.userId = user.userId
+  }
+  next()
+})
+
+/*app.use(express.static('public'))
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
-});
+});*/
+
+
 
 const server = new ApolloServer({
   schema: schema,

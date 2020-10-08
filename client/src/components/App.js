@@ -7,7 +7,6 @@ import Editor from './Editor'
 import Words from './Words'
 import WordEdit from './WordEdit'
 import Play from './Play'
-import Home from './Home'
 import {getRole} from '../constants.js'
 import {deleteToken, setToken} from '../constants'
 
@@ -43,12 +42,11 @@ class App extends Component {
       <Header removeUserInfo={this.removeUserInfo.bind(this)} user={user}/>
       <div>
         <Switch>
-          <Route exact path="/" component={Home} />
+          <Route exact path="/" render={() => (<Play  user={user} setUserInfo={this.setUserInfo.bind(this)} /> )} />
           {getRole() === 'ADMIN' && (<Route exact path="/author" component={Author} />)}
           {getRole() === 'ADMIN' && (<Route exact path="/editor" component={Editor} />)}
           {getRole() === 'ADMIN' && (<Route exact path="/words" component={Words} />)}
           {getRole() === 'ADMIN' && (<Route exact path="/wordedit" component={WordEdit} />)}
-          <Route exact path="/play" render={() => (<Play  user={user} setUserInfo={this.setUserInfo.bind(this)} /> )} />
           <Route exact path="/login" render={() => (<Login user={user} setUserInfo={this.setUserInfo.bind(this)} />)} />
         </Switch>
       </div>

@@ -12,7 +12,7 @@ class Header extends Component {
       <div>
         <div>Chinese App</div>
         <Link to="/">
-            home
+            play
           </Link>
           <div>
         {isLoggedIn && this.props.user.role === 'ADMIN' && (
@@ -34,11 +34,6 @@ class Header extends Component {
             </div>
           </div>
           )}
-            <div className="flex">
-              <Link to="/play">
-                play
-              </Link>
-            </div>
           </div>   
         <div className="flex flex-fixed">
           {isLoggedIn && this.props.user.role !== 'TESTER' ? (
