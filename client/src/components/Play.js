@@ -3,15 +3,12 @@ import {Query, Mutation} from 'react-apollo';
 import gql from 'graphql-tag';
 import { Howl } from 'howler';
 import ProgressBar from './ProgressBar'
-
-
-
-import '../styles/App.css';
+import Modal from './Modal'
 
 
 const MAKE_ATTEMPT = gql`
-  mutation makeAttempt($userId: Int!, $sentenceId: Int!, $isCorrect: Boolean!, $alreadySeen: Boolean!, $nextIntervalSentenceId: Int) {
-	makeClozeAttempt(userId: $userId, sentenceId: $sentenceId, isCorrect: $isCorrect,alreadySeen: $alreadySeen, nextIntervalSentenceId: $nextIntervalSentenceId)
+  mutation makeAttempt($userId: Int!, $sentenceId: Int!, $isCorrect: Boolean!, $nextIntervalSentenceId: Int) {
+	makeClozeAttempt(userId: $userId, sentenceId: $sentenceId, isCorrect: $isCorrect, nextIntervalSentenceId: $nextIntervalSentenceId)
   }
 
 `
@@ -43,10 +40,6 @@ const GET_SENTENCE = gql`
     interval{
       interval_order
     }
-    current_users{
-      user_name
-    }
-    already_seen
 		word_taught{
       word_id
 			text
@@ -90,6 +83,7 @@ class Play extends Component {
 
   componentDidMount(){
     if(this.props.user){
+      console.log(this.props.user,this.state.user)
       this.setState({user: this.props.user})
     }
   }
@@ -101,21 +95,24 @@ class Play extends Component {
     } 
   }
 
+  showModal = () => {
+    this.setState({ showCharacterDefinitions: true });
+  };
+
+  hideModal = () => {
+    this.setState({ showCharacterDefinitions: false });
+  };
+
 	checkAnswer(correct_response) {
 		return correct_response === this.state.userResponse
 	}
 
-  setAudio(alreadySeen, sentenceId, wordId) {
+  setAudio(sentenceId, wordId) {
     var Sounds
-    if(alreadySeen){
-        Sounds = new Howl({
-          src: ["/audio/sentences/" + sentenceId + ".m4a"]
-        })
-    } else {
-        Sounds = new Howl({
-          src: ["/audio/words/" + wordId + ".m4a"]
-        })
-    }
+     Sounds = new Howl({
+         src: ["/audio/sentences/" + sentenceId + ".m4a"]
+      })
+  
     return Sounds
   }
 
@@ -133,13 +130,12 @@ class Play extends Component {
     return color
   }
 
-  submitAnswer(makeAttempt, refetch, userId, sentenceId,time_fetched, isCorrect, alreadySeenWord, nextIntervalSentenceId){
+  submitAnswer(makeAttempt, refetch, userId, sentenceId,time_fetched, isCorrect, nextIntervalSentenceId){
     if(!this.state.showAnswer){
       makeAttempt({variables:{
         userId: userId,
         sentenceId: sentenceId,
         isCorrect: isCorrect,
-        alreadySeen: alreadySeenWord,
         nextIntervalSentenceId: nextIntervalSentenceId
       }})
     } else{
@@ -164,7 +160,7 @@ class Play extends Component {
   }
 
 
-  playDashboard(userId,userName, role){
+  playDashboard(userId,role){
     return(
       <Query query={GET_SENTENCE} variables={{userId: userId}}>
           {({ loading, error, data, refetch }) => {
@@ -174,9 +170,8 @@ class Play extends Component {
             if (this.state.timeFetched === data.getNextSentence.time_fetched)  return <div/>
             if(data.getNextSentence){
               const sentenceId = parseInt(data.getNextSentence._id)
-              const alreadySeenWord = data.getNextSentence.already_seen
               var nextIntervalSentenceId = null
-              if(userId && data.getNextSentence.next_interval_sentence_id && alreadySeenWord){
+              if(userId && data.getNextSentence.next_interval_sentence_id){
                 nextIntervalSentenceId = data.getNextSentence.next_interval_sentence_id
               } 
               /* TESTING purposes only
@@ -190,18 +185,12 @@ class Play extends Component {
                     <p>{"Cards Completed: " + data.getCurrentProgress.intervals_completed}</p>
                    <ProgressBar bgcolor={"rgb(245 109 109)"} completed={(data.getCurrentProgress.intervals_completed / (data.getCurrentProgress.total_word_count * 7)) * 100}  />
                   <div>
-                    {this.state.showAnswer && <button onClick={() => this.playSound(alreadySeenWord, data.getNextSentence._id, data.getNextSentence.word_taught.word_id)}>play</button>}
+                    {this.state.showAnswer && <button onClick={() => this.playSound(data.getNextSentence._id, data.getNextSentence.word_taught.word_id)}>play</button>}
                     {this.state.showAnswer && data.getNextSentence.word_taught.characters.length > 0 && <button onClick={() => this.setState(prevState => ({showCharacterDefinitions: !prevState.showCharacterDefinitions}))}>Character Definitions</button>}
-                    {this.state.showCharacterDefinitions && 
-                       data.getNextSentence.word_taught.characters.map(char => 
-                            <div>
-                            <p>{char.text}</p>
-                            <p>{char.english}</p>
-                            </div>
-                    )}
+                    <Modal characters={data.getNextSentence.word_taught.characters} show={this.state.showCharacterDefinitions} handleClose={this.hideModal}/>
                      <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-                     {alreadySeenWord ? this.getText(data.getNextSentence) : this.getText(data.getNextSentence.word_taught)}
-                      {this.state.showAnswer && <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}><p>{"|-----------|"}</p> <p>{alreadySeenWord ? data.getNextSentence.pinyin : data.getNextSentence.word_taught.pinyin}</p></div>}
+                     {this.getText(data.getNextSentence)}
+                      {this.state.showAnswer && <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}><p>{"|-----------|"}</p> <p>{data.getNextSentence.pinyin}</p></div>}
                       </div>
                      <Mutation mutation={MAKE_ATTEMPT}
                           update={(store) => {
@@ -211,7 +200,7 @@ class Play extends Component {
                               showCharacterDefinitions: false,
                               userResponse: data.getNextSentence.word_taught.text,
                               isCorrect: this.checkAnswer(data.getNextSentence.word_taught.text),
-                              audio: this.setAudio(alreadySeenWord, data.getNextSentence._id, data.getNextSentence.word_taught.word_id)
+                              audio: this.setAudio(data.getNextSentence._id, data.getNextSentence.word_taught.word_id)
                               }, () => {this.playSound()})
                             }
 
@@ -220,20 +209,20 @@ class Play extends Component {
                          >
                           {makeAttempt => (
                             <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-                            {alreadySeenWord && <p>{data.getNextSentence.display_text.substr(0,data.getNextSentence.display_text.indexOf('#'))}</p>}
+                             <p>{data.getNextSentence.display_text.substr(0,data.getNextSentence.display_text.indexOf('#'))}</p>
                             <input style={{width: `${data.getNextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px", color: this.getFontColor()}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
-                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), alreadySeenWord, nextIntervalSentenceId)
+                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), nextIntervalSentenceId)
                               }
                             }}
                             />
-                            {alreadySeenWord && <p>{data.getNextSentence.display_text.substr(data.getNextSentence.display_text.indexOf('#') + 1,data.getNextSentence.display_text.length)}</p>}
+                             <p>{data.getNextSentence.display_text.substr(data.getNextSentence.display_text.indexOf('#') + 1,data.getNextSentence.display_text.length)}</p>
                             <button
                               style={{margin: "15px 5px 15px 5px"}}
                               onClick={() => 
                                 {
-                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), alreadySeenWord, nextIntervalSentenceId)
+                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), nextIntervalSentenceId)
                                 }
                               }
                             >
@@ -244,9 +233,9 @@ class Play extends Component {
                     </Mutation>
                   </div>
                   <div>
-                    <p style={{fontSize: "12px"}}>{alreadySeenWord && (data.getNextSentence.clean_text !== data.getNextSentence.word_taught.text) && data.getNextSentence.word_taught.english}</p>
+                    <p style={{fontSize: "12px"}}>{(data.getNextSentence.clean_text !== data.getNextSentence.word_taught.text) && data.getNextSentence.word_taught.english}</p>
                   </div>
-                  {this.state.showAnswer && alreadySeenWord && (
+                  {this.state.showAnswer && (
                       <div>
                         <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
                         <p>{data.getNextSentence.word_taught.text}</p>
@@ -271,13 +260,12 @@ class Play extends Component {
 
 	render() {
 	  const userId = this.state.user.userId
-    const userName = this.state.user.user_name
     const role = this.state.user.role
-    console.log(this.state.user)
+    console.log(this)
 	  return (
 	    <div className="App">
 	      <header className="App-header">
-          {userId ? this.playDashboard(userId, userName, role): 
+          {userId ? this.playDashboard(userId, role): 
               <Mutation mutation={CREATE_USER}
                 onCompleted={data => this._confirm(data)}
                 >

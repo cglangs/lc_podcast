@@ -58,7 +58,6 @@ class Login extends Component {
 
  render() {
     const { isLogin, email, password, user_name, userId, role} = this.state
-    console.log(this.state)
     return (
     <div>
       <h4>{isLogin ? 'Login' : 'Sign Up'}</h4>
