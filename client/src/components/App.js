@@ -37,6 +37,7 @@ class App extends Component {
 
   render() {
       const user = this.state
+      console.log(document.cookie)
       return(
     <div>
       <Header removeUserInfo={this.removeUserInfo.bind(this)} user={user}/>

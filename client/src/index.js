@@ -13,7 +13,9 @@ import { getToken } from './constants'
 
 
 const httpLink = createHttpLink({
-  uri: ''
+  uri: '',
+  credentials: 'include'
+
 })
 
 
