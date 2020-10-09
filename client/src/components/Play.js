@@ -4,6 +4,8 @@ import gql from 'graphql-tag';
 import { Howl } from 'howler';
 import ProgressBar from './ProgressBar'
 import Modal from './Modal'
+import { getCookie} from '../utils'
+
 
 
 const MAKE_ATTEMPT = gql`
@@ -178,18 +180,14 @@ class Play extends Component {
           {({ loading, error, data, refetch }) => {
             if (loading) return <div>Fetching</div>
             if (error) return <div>error</div>
-            //Don't rerender when waiting for refetch
-            if (this.state.timeFetched === data.getNextSentence.time_fetched)  return <div/>
+            //Don't rerender when waiting for refetch or when there is no result
+            if (data.getNextSentence && this.state.timeFetched === data.getNextSentence.time_fetched)  return <div/>
             if(data.getNextSentence){
               const sentenceId = parseInt(data.getNextSentence._id)
               var nextIntervalSentenceId = null
               if(userId && data.getNextSentence.next_interval_sentence_id){
                 nextIntervalSentenceId = data.getNextSentence.next_interval_sentence_id
               } 
-              /* TESTING purposes only
-              else if((data.getNextSentence.next_interval_sentence_id || data.getNextSentence.interval.interval_order < 3) && !alreadySeenWord){
-                nextIntervalSentenceId = parseInt(sentenceId)
-              }*/
                 return(
                   <div style={{width: "50%"}}>
                     {role === "TESTER" && (<p>You are currently not logged in. Log in to save your progress.</p>)}
@@ -258,7 +256,7 @@ class Play extends Component {
               </div>
             ) 
          }
-          else return <div>Complete</div>
+          else return <div>{!!getCookie('token') ? "Demo Complete" : "Please login to to continue"}</div>
          }}
         </Query>
     )
