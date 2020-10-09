@@ -51,13 +51,19 @@ class Login extends Component {
 
   componentDidMount(){
     if(this.props.user){
-      const {user_name, userId,role} = this.props.user
-      this.setState({user_name: user_name, userId: userId, role: role})
+      const {user_name, _id ,role} = this.props.user
+      this.setUserInfo(user_name, parseInt(_id), role)
     }
+  }
+
+  setUserInfo(user_name, userId, role){
+    this.setState({user_name, userId:userId, role: role})
+
   }
 
  render() {
     const { isLogin, email, password, user_name, userId, role} = this.state
+    console.log(this.state)
     return (
     <div>
       <h4>{isLogin ? 'Login' : 'Sign Up'}</h4>
@@ -112,8 +118,7 @@ class Login extends Component {
  }
 
  _confirm = async data => {
-  const { user_name, _id, role, token } = data.Login || data.CreateUser || data.UpgradeUser
-  this.props.setUserInfo(user_name, parseInt(_id), role, token)
+  this.props.refetchUser()
   this.props.history.push('/')
 }
 

@@ -15,7 +15,7 @@ class Header extends Component {
             play
           </Link>
           <div>
-        {isLoggedIn && this.props.user.role === 'ADMIN' && (
+        {isLoggedIn && this.props.user && this.props.user.role === 'ADMIN' && (
           <div>
             <div className="flex">
               <Link to="/author">
@@ -36,11 +36,11 @@ class Header extends Component {
           )}
           </div>   
         <div className="flex flex-fixed">
-          {isLoggedIn && this.props.user.role !== 'TESTER' ? (
+          {isLoggedIn && this.props.user && this.props.user.role !== 'TESTER' ? (
             <div
               onClick={() => {
-                this.props.removeUserInfo()
                 document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                this.props.refetchUser()
                 this.props.history.push('/')
               }}
             >

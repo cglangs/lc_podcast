@@ -83,16 +83,28 @@ class Play extends Component {
 
   componentDidMount(){
     if(this.props.user){
-      console.log(this.props.user,this.state.user)
-      this.setState({user: this.props.user})
+      const {user_name, _id ,role} = this.props.user
+      this.setUserInfo(user_name, parseInt(_id), role)
     }
   }
 
-  componentDidUpdate(nextProps) {
-    const { user } = this.props
-    if (nextProps.user.userId !== user.userId || nextProps.user.role !== user.role) {
-      this.setState({user: user})
-    } 
+  setUserInfo(user_name, userId, role){
+    this.setState({user:{user_name, userId, role}})
+  }
+
+  componentDidUpdate(prevProps){
+    if(prevProps.user && this.props.user && this.props.user._id === prevProps.user._id && this.props.user.userId === prevProps.user.userId){
+      //do nothing
+    }else{
+      if(this.props.user){
+        const {user_name, _id ,role} = this.props.user
+        this.setUserInfo(user_name, parseInt(_id), role)
+      }else if(prevProps.user && !this.props.user){
+        this.setUserInfo(null,null,null)
+      }
+
+    }
+
   }
 
   showModal = () => {
@@ -254,8 +266,7 @@ class Play extends Component {
   }
 
    _confirm = async data => {
-    const { user_name, _id, role, token } = data.CreateUser
-    this.props.setUserInfo(user_name, parseInt(_id), role, token)
+    this.props.refetchUser()
   }
 
 	render() {

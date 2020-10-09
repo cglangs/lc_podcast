@@ -8,49 +8,50 @@ import Words from './Words'
 import WordEdit from './WordEdit'
 import Play from './Play'
 import {getRole} from '../constants.js'
-import {deleteToken, setToken} from '../constants'
+import {Query} from 'react-apollo';
+import gql from 'graphql-tag';
+
+
+const GET_USER = gql`
+query getUser {
+  me {
+    _id
+    user_name
+    role
+    password
+    token
+  }
+}
+`
 
 
 
 class App extends Component {
-  constructor(){
-    super()
-    this.baseState = {
-        user_name: null,
-        userId: null,
-        role: null
-    }
-    this.state = this.baseState
-  }
-
-  setUserInfo(user_name, userId, role, token){
-    setToken(token)
-    this.setState({user_name: user_name, userId: userId, role: role})
-  }
-
-  removeUserInfo(){
-    deleteToken()
-    this.setState(this.baseState)
-  }
-
-
   render() {
-      const user = this.state
-      console.log(document.cookie)
-      return(
-    <div>
-      <Header removeUserInfo={this.removeUserInfo.bind(this)} user={user}/>
+    return(
       <div>
-        <Switch>
-          <Route exact path="/" render={() => (<Play  user={user} setUserInfo={this.setUserInfo.bind(this)} /> )} />
-          {getRole() === 'ADMIN' && (<Route exact path="/author" component={Author} />)}
-          {getRole() === 'ADMIN' && (<Route exact path="/editor" component={Editor} />)}
-          {getRole() === 'ADMIN' && (<Route exact path="/words" component={Words} />)}
-          {getRole() === 'ADMIN' && (<Route exact path="/wordedit" component={WordEdit} />)}
-          <Route exact path="/login" render={() => (<Login user={user} setUserInfo={this.setUserInfo.bind(this)} />)} />
-        </Switch>
+      <Query query={GET_USER}>
+      {({ loading, error, data, refetch }) => {
+        if (loading) return <div>Fetching</div>
+        if (error) return <div>error</div>
+        console.log(data.me)
+        const user = data.me
+        return(
+        <div>
+          <Header user={user} refetchUser={refetch}/>
+          <Switch>
+            <Route exact path="/" render={() => (<Play  user={user} refetchUser={refetch}/> )} />
+            {getRole() === 'ADMIN' && (<Route exact path="/author" component={Author} />)}
+            {getRole() === 'ADMIN' && (<Route exact path="/editor" component={Editor} />)}
+            {getRole() === 'ADMIN' && (<Route exact path="/words" component={Words} />)}
+            {getRole() === 'ADMIN' && (<Route exact path="/wordedit" component={WordEdit} />)}
+            <Route exact path="/login" render={() => (<Login user={user} refetchUser={refetch}/>)} />
+          </Switch>
+        </div>
+        )
+      }}
+      </Query>
       </div>
-    </div>
     )
   }
 
