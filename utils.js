@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken')
-const APP_SECRET = 'lcChine$eP0dcast'
+const ACCESS_SECRET = 'Chine$eCl0ze4160'
+const REFRESH_SECRET = 'Cl0zeChine$e3139'
 
 function getUserId(context) {
   const Authorization = context.request.get('Authorization')
@@ -13,6 +14,7 @@ function getUserId(context) {
 }
 
 module.exports = {
-  APP_SECRET,
+  ACCESS_SECRET,
+  REFRESH_SECRET,
   getUserId,
 }

@@ -1,7 +1,7 @@
 const { neo4jgraphql, makeAugmentedSchema } = require("neo4j-graphql-js");
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const { APP_SECRET, getUserId } = require('./utils')
+const { ACCESS_SECRET, REFRESH_SECRET, getUserId } = require('./utils')
 const { ApolloServer, gql, SchemaDirectiveVisitor } = require('apollo-server-express');
 const neo4j = require('neo4j-driver')
 const path = require('path');
@@ -14,9 +14,11 @@ const cookieParser = require('cookie-parser')
 async function signup(object, params, ctx, resolveInfo) {
   params.password = await bcrypt.hash(params.password, 10)
   const user = await neo4jgraphql(object, params, ctx, resolveInfo)
-  const tokenString = jwt.sign({ userId: user._id, role: user.role}, APP_SECRET)
-  ctx.req.res.cookie('token', tokenString, { maxAge: 60 * 60 * 1000 })
-  user.token = tokenString
+  if(user.role !== 'TESTER'){
+    ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user._id, role: user.role }, REFRESH_SECRET), { maxAge: 24 * 60 * 60 * 1000})
+  } 
+  ctx.req.res.cookie("access-token", jwt.sign({ userId: user._id, role: user.role }, ACCESS_SECRET), { maxAge: 15 * 1000 })
+
   return user
 }
 
@@ -34,22 +36,10 @@ async function login(object, params, ctx, resolveInfo) {
   }
   user.password = null
 
-  const token = jwt.sign({ userId: user._id, role: user.role }, APP_SECRET)
-
-  user.token = token
-
-  ctx.req.res.cookie('token', token, { maxAge: 60 * 60 * 1000 })
+  ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user._id, role: user.role }, REFRESH_SECRET), { maxAge: 7 * 60 * 60 * 1000 })
+  ctx.req.res.cookie("access-token", jwt.sign({ userId: user._id, role: user.role }, ACCESS_SECRET), { maxAge: 15 * 1000 })
 
   return user
-}
-
-async function get_next_sentence(object, params, ctx, resolveInfo) {
-  //console.log(ctx.req.user)
-  const sentence = await neo4jgraphql(object, params, ctx, resolveInfo)
-  if(sentence){
-    sentence.current_users = null
-  }
-  return sentence
 }
 
 const resolvers = {
@@ -74,18 +64,33 @@ const resolvers = {
   },
   Query: {
      getNextSentence(object, params, ctx, resolveInfo){
-      return get_next_sentence(object, params, ctx, resolveInfo)
+      if(!ctx.req.userId){
+        return null
+      } else{
+          params.userId = ctx.req.userId
+          const user = neo4jgraphql(object, params, ctx, resolveInfo)
+          return user
+      }
     },
     me(object, params, ctx, resolveInfo){
       if(!ctx.req.userId){
         return null
       } else{
           params.userId = ctx.req.userId
-          console.log(params)
+          const user = neo4jgraphql(object, params, ctx, resolveInfo)
+          return user
+      }
+    },
+    getCurrentProgress(object, params, ctx, resolveInfo){
+      if(!ctx.req.userId){
+        return null
+      } else{
+          params.userId = ctx.req.userId
           const user = neo4jgraphql(object, params, ctx, resolveInfo)
           return user
       }
     }
+
   }
 }
 
@@ -100,7 +105,7 @@ const directiveResolvers = {
     const tokenWithBearer = req.headers.authorization || ''
     const token = tokenWithBearer.split(' ')[1]
     const user = jwt.verify(token, APP_SECRET)
-    */
+    
   isAdmin(next,src,args,context) {
     return next().then((sentence) => {
       if (context.req) {
@@ -109,7 +114,7 @@ const directiveResolvers = {
         throw Error("oh shit")
       }
     });
-    }
+    }*/
 }
 
 const typeDefs = `
@@ -266,7 +271,7 @@ type Query {
               """
               )
 
-    me(userId: Int!): User
+    me(userId: Int): User
     @cypher(
     statement:""" MATCH(u:User)
                   WHERE ID(u) = userId
@@ -404,12 +409,35 @@ app.use(cors(corsOptions));
 
 app.use(cookieParser())
 
-app.use((req, _, next) =>{
-  if(req.cookies['token']){
-    const user = jwt.verify(req.cookies['token'], APP_SECRET)
-    req.userId = user.userId
+app.use((req, res, next) =>{
+
+  const refreshToken = req.cookies["refresh-token"];
+  const accessToken = req.cookies["access-token"];
+  //no token
+  if (!refreshToken && !accessToken) {
+    return next();
   }
-  next()
+
+  if(accessToken){
+    const user = jwt.verify(accessToken, ACCESS_SECRET)
+    req.userId = user.userId
+    return next()
+  }
+
+  let refreshUserData;
+
+  try {
+    refreshUserData = jwt.verify(refreshToken, REFRESH_SECRET);
+  } catch {
+    //no access token, and refresh token error
+    return next();
+  }
+
+  //no access token, but there is a refresh token
+  res.cookie("refresh-token", jwt.sign({ userId: refreshUserData.userId, role: refreshUserData.role }, REFRESH_SECRET), { maxAge: 24 * 60 * 60 * 1000 })
+  res.cookie("access-token", jwt.sign({ userId: refreshUserData.userId, role: refreshUserData.role }, ACCESS_SECRET), { maxAge: 15 * 1000 })
+  req.userId = refreshUserData.userId;
+  next();
 })
 
 /*app.use(express.static('public'))
