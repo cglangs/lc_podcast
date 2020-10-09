@@ -7,7 +7,6 @@ import Editor from './Editor'
 import Words from './Words'
 import WordEdit from './WordEdit'
 import Play from './Play'
-import {getRole} from '../constants.js'
 import {Query} from 'react-apollo';
 import gql from 'graphql-tag';
 
@@ -41,10 +40,10 @@ class App extends Component {
           <Header user={user} refetchUser={refetch}/>
           <Switch>
             <Route exact path="/" render={() => (<Play  user={user} refetchUser={refetch}/> )} />
-            {getRole() === 'ADMIN' && (<Route exact path="/author" component={Author} />)}
-            {getRole() === 'ADMIN' && (<Route exact path="/editor" component={Editor} />)}
-            {getRole() === 'ADMIN' && (<Route exact path="/words" component={Words} />)}
-            {getRole() === 'ADMIN' && (<Route exact path="/wordedit" component={WordEdit} />)}
+            {user && user.role === 'ADMIN' && (<Route exact path="/author" component={Author} />)}
+            {user && user.role === 'ADMIN' && (<Route exact path="/editor" component={Editor} />)}
+            {user && user.role === 'ADMIN' && (<Route exact path="/words" component={Words} />)}
+            {user && user.role === 'ADMIN' && (<Route exact path="/wordedit" component={WordEdit} />)}
             <Route exact path="/login" render={() => (<Login user={user} refetchUser={refetch}/>)} />
           </Switch>
         </div>

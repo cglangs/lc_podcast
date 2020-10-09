@@ -1,28 +1,3 @@
-const AUTH_TOKEN = 'auth-token';
-const ROLE = 'role';
-const USER_NAME = 'user_name';
-const USER_ID = 'userId';
-
-
-export const getToken = () => localStorage.getItem(AUTH_TOKEN);
-export const setToken = token => localStorage.setItem(AUTH_TOKEN, token);
-export const deleteToken = () => localStorage.removeItem(AUTH_TOKEN);
-
-export const getRole = () => localStorage.getItem(ROLE);
-export const setRole = role => localStorage.setItem(ROLE, role);
-export const deleteRole = () => localStorage.removeItem(ROLE);
-
-
-export const getUserName = () => localStorage.getItem(USER_NAME);
-export const setUserName = user_name => localStorage.setItem(USER_NAME, user_name);
-export const deleteUserName = () => localStorage.removeItem(USER_NAME);
-
-
-export const getUserId = () => localStorage.getItem(USER_ID);
-export const setUserId = userId => localStorage.setItem(USER_ID, userId);
-export const deleteUserId = () => localStorage.removeItem(USER_ID);
-
-
 export const punctuations = [
 	{id: 1, text: '，', type: 'COMMA'},
 	{id: 2, text: '。', type: 'PERIOD'},
