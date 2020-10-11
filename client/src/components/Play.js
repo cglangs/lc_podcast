@@ -69,6 +69,7 @@ class Play extends Component {
     super()
     this.state = {
     	showAnswer: false,
+      isSubmitted: false,
       showCharacterDefinitions: false,
     	userResponse: '',
       isCorrect: true,
@@ -94,7 +95,7 @@ class Play extends Component {
     this.setState({user:{user_name, userId, role}})
   }
 
-  componentDidUpdate(prevProps){
+  /*componentDidUpdate(prevProps){
     console.log(prevProps, this.props)
     if(prevProps.user && this.props.user && this.props.user._id === prevProps.user._id && this.props.user.role === prevProps.user.role){
       //do nothing
@@ -110,7 +111,7 @@ class Play extends Component {
 
     }
 
-  }
+  }*/
 
   showModal = () => {
     this.setState({ showCharacterDefinitions: true });
@@ -124,7 +125,7 @@ class Play extends Component {
 		return correct_response === this.state.userResponse
 	}
 
-  setAudio(sentenceId, wordId) {
+  setAudio(sentenceId) {
     var Sounds
      Sounds = new Howl({
          src: ["/audio/sentences/" + sentenceId + ".m4a"]
@@ -141,23 +142,25 @@ class Play extends Component {
 
   getFontColor(){
     var color = 'black'
-    if(this.state.showAnswer){
-      color = this.state.isCorrect ? 'green' : 'grey'
+    if(this.state.isSubmitted){
+      color = this.state.isCorrect ? 'green' : 'red'
     }
     return color
   }
 
-  submitAnswer(makeAttempt, refetch, userId, sentenceId,time_fetched, isCorrect, nextIntervalSentenceId){
-    if(!this.state.showAnswer){
+  submitAnswer(makeAttempt, refetch, userId, sentenceId, correctResponse, time_fetched, isCorrect, nextIntervalSentenceId){
+    if(!this.state.isSubmitted){
       makeAttempt({variables:{
         userId: userId,
         sentenceId: sentenceId,
         isCorrect: isCorrect,
         nextIntervalSentenceId: nextIntervalSentenceId
       }})
-    } else{
+    }
+     else if(this.state.isSubmitted && this.state.showAnswer){
       this.setState({
           showAnswer: false,
+          isSubmitted: false,
           userResponse: '',
           timeFetched: time_fetched,
           showCharacterDefinitions: false,
@@ -165,6 +168,12 @@ class Play extends Component {
       }, () => {
         refetch()
       })
+    } else{
+        this.setState({
+        showAnswer: true,
+        userResponse: correctResponse,
+        isCorrect: true,
+        }, () => {this.playSound()})
     }
   }
 
@@ -208,14 +217,13 @@ class Play extends Component {
                       </div>
                      <Mutation mutation={MAKE_ATTEMPT}
                           update={(store) => {
-                            if(!this.state.showAnswer){
+                            if(!this.state.isSubmitted){
                               this.setState({
-                              showAnswer: true,
-                              showCharacterDefinitions: false,
-                              userResponse: data.getNextSentence.word_taught.text,
+                              isSubmitted: true,
+                              showAnswer: this.checkAnswer(data.getNextSentence.word_taught.text),
                               isCorrect: this.checkAnswer(data.getNextSentence.word_taught.text),
-                              audio: this.setAudio(data.getNextSentence._id, data.getNextSentence.word_taught.word_id)
-                              }, () => {this.playSound()})
+                              audio: this.setAudio(data.getNextSentence._id)
+                              }, () => {this.checkAnswer(data.getNextSentence.word_taught.text) && this.playSound()})
                             }
 
                             }
@@ -227,7 +235,7 @@ class Play extends Component {
                             <input style={{width: `${data.getNextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px", color: this.getFontColor()}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
-                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), nextIntervalSentenceId)
+                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, data.getNextSentence.word_taught.text, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), nextIntervalSentenceId)
                               }
                             }}
                             />
@@ -236,7 +244,7 @@ class Play extends Component {
                               style={{margin: "15px 5px 15px 5px"}}
                               onClick={() => 
                                 {
-                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), nextIntervalSentenceId)
+                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, data.getNextSentence.word_taught.text, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), nextIntervalSentenceId)
                                 }
                               }
                             >
@@ -272,6 +280,7 @@ class Play extends Component {
   }
 
 	render() {
+    console.log(this.state)
 	  const {userId, role} = this.state.user
 	  return (
 	    <div className="App">
