@@ -46,7 +46,7 @@ class Login extends Component {
     password: '',
     user_name: '',
     userId: null,
-    role: "STUDENT"
+    role: "TESTER"
   }
 
   componentDidMount(){
@@ -57,13 +57,12 @@ class Login extends Component {
   }
 
   setUserInfo(user_name, userId, role){
-    this.setState({user_name, userId:userId, role: role})
+    this.setState({user_name, userId: userId, role: role})
 
   }
 
  render() {
     const { isLogin, email, password, user_name, userId, role} = this.state
-    console.log(this.state)
     return (
     <div>
       <h4>{isLogin ? 'Login' : 'Sign Up'}</h4>
@@ -92,7 +91,7 @@ class Login extends Component {
       </div>
       <div>
       <Mutation
-        mutation={isLogin ? LOGIN_MUTATION : role === 'TESTER' ? UPGRADE_MUTATION :SIGNUP_MUTATION}
+        mutation={isLogin ? LOGIN_MUTATION : role === 'TESTER' ? UPGRADE_MUTATION : SIGNUP_MUTATION}
         variables={{ email, password, user_name, userId}}
         onCompleted={data => this._confirm(data)}
       >
@@ -118,8 +117,9 @@ class Login extends Component {
  }
 
  _confirm = async data => {
-  this.props.refetchUser()
   this.props.history.push('/')
+  window.location.reload(true);
+  //this.props.refetchUser()
 }
 
 

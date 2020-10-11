@@ -6,7 +6,7 @@ import { getCookie} from '../utils'
 class Header extends Component {
 
   render() {
-    const isLoggedIn = !!getCookie('token');
+    const isLoggedIn = !!getCookie('access-token');
 
     return (
       <div>
@@ -39,9 +39,12 @@ class Header extends Component {
           {isLoggedIn && this.props.user && this.props.user.role !== 'TESTER' ? (
             <div
               onClick={() => {
-                document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                this.props.refetchUser()
+                document.cookie = "access-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                document.cookie = "refresh-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
                 this.props.history.push('/')
+                window.location.reload(true);
+
+                //this.props.refetchUser()
               }}
             >
               logout

@@ -33,7 +33,6 @@ class App extends Component {
       {({ loading, error, data, refetch }) => {
         if (loading) return <div>Fetching</div>
         if (error) return <div>error</div>
-        console.log(data.me)
         const user = data.me
         return(
         <div>

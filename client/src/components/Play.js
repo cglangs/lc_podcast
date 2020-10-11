@@ -95,9 +95,12 @@ class Play extends Component {
   }
 
   componentDidUpdate(prevProps){
-    if(prevProps.user && this.props.user && this.props.user._id === prevProps.user._id && this.props.user.userId === prevProps.user.userId){
+    console.log(prevProps, this.props)
+    if(prevProps.user && this.props.user && this.props.user._id === prevProps.user._id && this.props.user.role === prevProps.user.role){
       //do nothing
+      console.log("do nothing")
     }else{
+      console.log("update state")
       if(this.props.user){
         const {user_name, _id ,role} = this.props.user
         this.setUserInfo(user_name, parseInt(_id), role)
@@ -182,6 +185,7 @@ class Play extends Component {
             if (error) return <div>error</div>
             //Don't rerender when waiting for refetch or when there is no result
             if (data.getNextSentence && this.state.timeFetched === data.getNextSentence.time_fetched)  return <div/>
+            console.log(data)
             if(data.getNextSentence){
               const sentenceId = parseInt(data.getNextSentence._id)
               var nextIntervalSentenceId = null
@@ -256,7 +260,7 @@ class Play extends Component {
               </div>
             ) 
          }
-          else return <div>{!!getCookie('token') ? "Demo Complete" : "Please login to to continue"}</div>
+          else return <div>{!!getCookie('access-token') && (data && data.getCurrentProgress && data.getCurrentProgress.words_learned === 150)  ? "Demo Complete" : !getCookie('access-token') && "Please login to continue"}</div>
          }}
         </Query>
     )
@@ -268,9 +272,7 @@ class Play extends Component {
   }
 
 	render() {
-	  const userId = this.state.user.userId
-    const role = this.state.user.role
-    console.log(this)
+	  const {userId, role} = this.state.user
 	  return (
 	    <div className="App">
 	      <header className="App-header">
