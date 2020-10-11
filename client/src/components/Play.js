@@ -180,7 +180,7 @@ class Play extends Component {
   getText(text){
     return(
       <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-      <p>{text.english}</p> <i style={{"marginBlockStart": "1em"}}>{text.italics}</i>
+      <p style={{fontSize: "16px"}}>{text.english}</p> <i style={{"marginBlockStart": "1em"}}>{text.italics}</i>
       </div>
       )
   }
@@ -209,11 +209,10 @@ class Play extends Component {
                    <ProgressBar bgcolor={"rgb(245 109 109)"} completed={(data.getCurrentProgress.intervals_completed / (data.getCurrentProgress.total_word_count * 7)) * 100}  />
                   <div>
                     {this.state.showAnswer && <button onClick={() => this.playSound(data.getNextSentence._id, data.getNextSentence.word_taught.word_id)}>play</button>}
-                    {this.state.showAnswer && data.getNextSentence.word_taught.characters.length > 0 && <button onClick={() => this.setState(prevState => ({showCharacterDefinitions: !prevState.showCharacterDefinitions}))}>Character Definitions</button>}
                     <Modal characters={data.getNextSentence.word_taught.characters} show={this.state.showCharacterDefinitions} handleClose={this.hideModal}/>
-                     <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
+                     <div style={{display: "flex", flexDirection: "column", justifyContent: "center"}}>
+                     {this.state.showAnswer && <p style={{fontSize: "16px"}}>{data.getNextSentence.pinyin}</p>}
                      {this.getText(data.getNextSentence)}
-                      {this.state.showAnswer && <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}><p>{"|-----------|"}</p> <p>{data.getNextSentence.pinyin}</p></div>}
                       </div>
                      <Mutation mutation={MAKE_ATTEMPT}
                           update={(store) => {
@@ -255,8 +254,9 @@ class Play extends Component {
                     </Mutation>
                   </div>
                   <div>
-                    <p style={{fontSize: "12px"}}>{(data.getNextSentence.clean_text !== data.getNextSentence.word_taught.text) && data.getNextSentence.word_taught.english}</p>
+                    <p style={{fontSize: "24px"}}>{(data.getNextSentence.clean_text !== data.getNextSentence.word_taught.text) && data.getNextSentence.word_taught.english}</p>
                   </div>
+                  {this.state.showAnswer && data.getNextSentence.word_taught.characters.length > 0 && <button onClick={() => this.setState(prevState => ({showCharacterDefinitions: !prevState.showCharacterDefinitions}))}>Character Definitions</button>}
                   {this.state.showAnswer && (
                       <div>
                         <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
