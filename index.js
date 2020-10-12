@@ -11,12 +11,37 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser')
 
 
+var graphenedbURL = process.env.GRAPHENEDB_BOLT_URL || 'bolt://localhost:11003'
+var graphenedbUser = process.env.GRAPHENEDB_BOLT_USER || 'neo4j'
+var graphenedbPass = process.env.GRAPHENEDB_BOLT_PASSWORD || 'password'
+
+
+if(process.env.GRAPHENEDB_BOLT_URL){
+  const driver = neo4j.driver(
+    graphenedbURL,
+    neo4j.auth.basic(graphenedbUser, graphenedbPass)
+  )
+} else{
+  const driver = neo4j.driver(graphenedbURL, neo4j.auth.basic(graphenedbUser, graphenedbPass), {encrypted: 'ENCRYPTION_ON'});
+}
+
+
+
+const driver = neo4j.driver(
+  'bolt://localhost:7687',
+  neo4j.auth.basic('neo4j','password')
+);
+
+
 async function signup(object, params, ctx, resolveInfo) {
+  //console.log(resolveInfo.fieldName)
   params.password = await bcrypt.hash(params.password, 10)
   const user = await neo4jgraphql(object, params, ctx, resolveInfo)
-  if(user.role !== 'TESTER'){
+  if(user.role === 'TESTER'){
+    // do nothing
+  } else{
     ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user._id, role: user.role }, REFRESH_SECRET), { maxAge: 24 * 60 * 60 * 1000})
-  } 
+  }
   ctx.req.res.cookie("access-token", jwt.sign({ userId: user._id, role: user.role }, ACCESS_SECRET), { maxAge: 15 * 1000 })
 
   return user
@@ -93,16 +118,9 @@ const resolvers = {
 
   }
 }
+  const directiveResolvers = {
 
-
-const driver = neo4j.driver(
-  'bolt://localhost:11003',
-  neo4j.auth.basic('neo4j','password')
-);
-
-const directiveResolvers = {
-  /*
-    const tokenWithBearer = req.headers.authorization || ''
+    /*const tokenWithBearer = req.headers.authorization || ''
     const token = tokenWithBearer.split(' ')[1]
     const user = jwt.verify(token, APP_SECRET)
     
@@ -266,7 +284,7 @@ type Query {
               WITH u, COUNT(w) AS total_words
               OPTIONAL MATCH(u)-[r:LEARNING]->(s:Sentence)
               OPTIONAL MATCH(u)-[:LEARNED]->(wl:Word)
-              WITH u, COUNT(wl) AS words_learned, SUM(r.CURRENT_TIME_INTERVAL) AS current_intervals, total_words
+              WITH u, COUNT(DISTINCT wl) AS words_learned, SUM(r.CURRENT_TIME_INTERVAL) AS current_intervals, total_words
               RETURN {words_learned: words_learned,  intervals_completed: (words_learned * 7) + current_intervals , total_word_count: total_words}
               """
               )
@@ -400,6 +418,7 @@ const schema = makeAugmentedSchema({
 
 // Allow cross-origin
 
+
 var corsOptions = {
   origin: 'http://localhost:3000',
   credentials: true // <-- REQUIRED backend setting
@@ -434,17 +453,18 @@ app.use((req, res, next) =>{
   }
 
   //no access token, but there is a refresh token
-  res.cookie("refresh-token", jwt.sign({ userId: refreshUserData.userId, role: refreshUserData.role }, REFRESH_SECRET), { maxAge: 24 * 60 * 60 * 1000 })
-  res.cookie("access-token", jwt.sign({ userId: refreshUserData.userId, role: refreshUserData.role }, ACCESS_SECRET), { maxAge: 15 * 1000 })
+  res.cookie("refresh-token", jwt.sign({ userId: refreshUserData.userId, role: refreshUserData.role }, REFRESH_SECRET), { maxAge:  10 * 24 * 60 * 60 * 1000 })
+  res.cookie("access-token", jwt.sign({ userId: refreshUserData.userId, role: refreshUserData.role }, ACCESS_SECRET), { maxAge: 20 * 60 * 1000 })
   req.userId = refreshUserData.userId;
   next();
 })
 
-/*app.use(express.static('public'))
+
+app.use(express.static('public'))
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
-});*/
+});
 
 
 
