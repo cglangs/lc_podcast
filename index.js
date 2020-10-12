@@ -11,26 +11,20 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser')
 
 
-var graphenedbURL = process.env.GRAPHENEDB_BOLT_URL || 'bolt://localhost:11003'
+var graphenedbURL = process.env.GRAPHENEDB_BOLT_URL || 'bolt://localhost:7687'
 var graphenedbUser = process.env.GRAPHENEDB_BOLT_USER || 'neo4j'
 var graphenedbPass = process.env.GRAPHENEDB_BOLT_PASSWORD || 'password'
-
+var driver
 
 if(process.env.GRAPHENEDB_BOLT_URL){
-  const driver = neo4j.driver(
+  driver = neo4j.driver(graphenedbURL, neo4j.auth.basic(graphenedbUser, graphenedbPass), {encrypted: 'ENCRYPTION_ON'});
+} else{
+  driver = neo4j.driver(
     graphenedbURL,
     neo4j.auth.basic(graphenedbUser, graphenedbPass)
   )
-} else{
-  const driver = neo4j.driver(graphenedbURL, neo4j.auth.basic(graphenedbUser, graphenedbPass), {encrypted: 'ENCRYPTION_ON'});
 }
 
-
-
-const driver = neo4j.driver(
-  'bolt://localhost:7687',
-  neo4j.auth.basic('neo4j','password')
-);
 
 
 async function signup(object, params, ctx, resolveInfo) {
@@ -93,8 +87,8 @@ const resolvers = {
         return null
       } else{
           params.userId = ctx.req.userId
-          const user = neo4jgraphql(object, params, ctx, resolveInfo)
-          return user
+          const sentence = neo4jgraphql(object, params, ctx, resolveInfo)
+          return sentence
       }
     },
     me(object, params, ctx, resolveInfo){
