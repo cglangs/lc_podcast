@@ -95,23 +95,18 @@ class Play extends Component {
     this.setState({user:{user_name, userId, role}})
   }
 
-  /*componentDidUpdate(prevProps){
-    console.log(prevProps, this.props)
+  componentDidUpdate(prevProps){
     if(prevProps.user && this.props.user && this.props.user._id === prevProps.user._id && this.props.user.role === prevProps.user.role){
       //do nothing
-      console.log("do nothing")
     }else{
-      console.log("update state")
       if(this.props.user){
         const {user_name, _id ,role} = this.props.user
         this.setUserInfo(user_name, parseInt(_id), role)
       }else if(prevProps.user && !this.props.user){
         this.setUserInfo(null,null,null)
       }
-
     }
-
-  }*/
+  }
 
   showModal = () => {
     this.setState({ showCharacterDefinitions: true });
@@ -194,7 +189,6 @@ class Play extends Component {
             if (error) return <div>error</div>
             //Don't rerender when waiting for refetch or when there is no result
             if (data.getNextSentence && this.state.timeFetched === data.getNextSentence.time_fetched)  return <div/>
-            console.log(data)
             if(data.getNextSentence){
               const sentenceId = parseInt(data.getNextSentence._id)
               var nextIntervalSentenceId = null
@@ -203,12 +197,12 @@ class Play extends Component {
               } 
                 return(
                   <div style={{width: "50%"}}>
-                    {role === "TESTER" && (<p>You are currently not logged in. Log in to save your progress.</p>)}
+                    {role === "TESTER" && (<p style={{fontSize: "16px"}}>You are currently not logged in. Log in to save your progress.</p>)}
                     <p>{"Words Learned: " + data.getCurrentProgress.words_learned + "/" + data.getCurrentProgress.total_word_count}</p>
                     <p>{"Cards Completed: " + data.getCurrentProgress.intervals_completed}</p>
                    <ProgressBar bgcolor={"rgb(245 109 109)"} completed={(data.getCurrentProgress.intervals_completed / (data.getCurrentProgress.total_word_count * 7)) * 100}  />
                   <div>
-                    {this.state.showAnswer && <button onClick={() => this.playSound(data.getNextSentence._id, data.getNextSentence.word_taught.word_id)}>play</button>}
+                    {this.state.showAnswer && <button onClick={() => this.playSound(data.getNextSentence._id, data.getNextSentence.word_taught.word_id)}>replay audio</button>}
                     <Modal characters={data.getNextSentence.word_taught.characters} show={this.state.showCharacterDefinitions} handleClose={this.hideModal}/>
                      <div style={{display: "flex", flexDirection: "column", justifyContent: "center"}}>
                      {this.state.showAnswer && <p style={{fontSize: "16px"}}>{data.getNextSentence.pinyin}</p>}
@@ -280,7 +274,6 @@ class Play extends Component {
   }
 
 	render() {
-    console.log(this.state)
 	  const {userId, role} = this.state.user
 	  return (
 	    <div className="App">

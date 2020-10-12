@@ -13,7 +13,7 @@ import { BrowserRouter } from 'react-router-dom'
 
 
 const httpLink = createHttpLink({
-  uri: '',
+  uri: '/graphql',
   credentials: 'include'
 
 })
