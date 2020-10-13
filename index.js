@@ -25,8 +25,6 @@ if(process.env.GRAPHENEDB_BOLT_URL){
   )
 }
 
-
-
 async function signup(object, params, ctx, resolveInfo) {
   //console.log(resolveInfo.fieldName)
   params.password = await bcrypt.hash(params.password, 10)
@@ -89,6 +87,33 @@ const resolvers = {
           params.userId = ctx.req.userId
           const sentence = neo4jgraphql(object, params, ctx, resolveInfo)
           return sentence
+      }
+    },
+     getNextConnectedSentence(object, params, ctx, resolveInfo){
+      if(!ctx.req.userId){
+        return null
+      } else{
+          params.userId = ctx.req.userId
+          const sentence = neo4jgraphql(object, params, ctx, resolveInfo)
+          return sentence
+      }
+    },
+     getNextNewSentence(object, params, ctx, resolveInfo){
+      if(!ctx.req.userId){
+        return null
+      } else{
+          params.userId = ctx.req.userId
+          const sentence = neo4jgraphql(object, params, ctx, resolveInfo)
+          return sentence
+      }
+    },
+     getCurrentProgress(object, params, ctx, resolveInfo){
+      if(!ctx.req.userId){
+        return null
+      } else{
+          params.userId = ctx.req.userId
+          const progress = neo4jgraphql(object, params, ctx, resolveInfo)
+          return progress
       }
     },
     me(object, params, ctx, resolveInfo){
@@ -237,7 +262,7 @@ type Query {
                   hops,
                   0 AS relevant_dependencies,
                   0 AS outgoing_dependencies,
-                  0 AS incoming_dependencies 
+                  0 AS incoming_dependencies
                   UNION
                   WITH u,s
                   MATCH (s)-[:AT_INTERVAL]->(:Interval {interval_order: 1})
@@ -251,6 +276,75 @@ type Query {
                   RETURN selection ORDER BY is_ready DESC, last_seen_dest ASC, last_seen_source ASC, hops DESC, relevant_dependencies DESC, outgoing_dependencies ASC, incoming_dependencies DESC, RAND() LIMIT 1
                   """
     )
+
+    getNextConnectedSentence(userId: Int!): Sentence
+    @cypher(
+    statement:""" 
+                  MATCH (u:User)
+                  WHERE ID(u) = userId
+                  WITH u
+                  MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
+                  OPTIONAL MATCH (u)-[r:LEARNING]->(s)
+                  WITH w,s,i,u,r,
+                  CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN r.CURRENT_TIME_INTERVAL ELSE 0 END AS cti
+                  OPTIONAL MATCH (t:TimeInterval {time_interval_id: cti})
+                  WITH w,s,i,u,
+                  CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN duration.inSeconds(r.last_seen,time()).seconds >= COALESCE(t.seconds, 0) ELSE TRUE END AS is_ready
+                  OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
+                  OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)
+                  WITH u,w,i,s,is_ready,
+                  collect({word_text: wd.text, current_interval:COALESCE(di.interval_order, CASE WHEN EXISTS((u)-[:LEARNED]->(wd)) THEN 6 ELSE 0 END)}) AS word_dependencies
+                  WHERE 
+                  NOT EXISTS((u)-[:LEARNED]->(w)) AND 
+                  ((EXISTS((u)-[:LEARNING]->(s)) AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order))
+                  OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1))
+                  WITH u,s, is_ready
+                  MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*]->(s))
+                  WITH u,s, is_ready, last(nodes(path)) AS destSentence, nodes(path)[1] AS sourceSentence, length(path) AS hops
+                  MATCH (u)-[rSource:LEARNING]->(sourceSentence)
+                  OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
+                  RETURN 
+                  destSentence AS selection
+                  ORDER BY 
+                  is_ready DESC,
+                  CASE WHEN EXISTS((u)-[:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE NULL END ASC,
+                  rSource.last_seen ASC,
+                  hops DESC
+                  """
+    )
+
+    getNextNewSentence(userId: Int!): Sentence
+    @cypher(
+    statement:""" 
+                  MATCH (u:User)
+                  WHERE ID(u) = userId
+                  WITH u
+                  MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
+                  OPTIONAL MATCH (u)-[r:LEARNING]->(s)
+                  WITH w,s,i,u,r,
+                  CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN r.CURRENT_TIME_INTERVAL ELSE 0 END AS cti
+                  OPTIONAL MATCH (t:TimeInterval {time_interval_id: cti})
+                  WITH w,s,i,u
+                  OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
+                  OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)
+                  WITH u,w,i,s,
+                  collect({word_text: wd.text, current_interval:COALESCE(di.interval_order, CASE WHEN EXISTS((u)-[:LEARNED]->(wd)) THEN 6 ELSE 0 END)}) AS word_dependencies
+                  WHERE 
+                  NOT EXISTS((u)-[:LEARNED]->(w)) AND 
+                  ((EXISTS((u)-[:LEARNING]->(s)) AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order))
+                  OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1))
+                  WITH u,s
+                  MATCH (s)-[:AT_INTERVAL]->(:Interval {interval_order: 1})
+                  OPTIONAL MATCH (s)-[:DEPENDS_ON]->(ods:Sentence)
+                  OPTIONAL MATCH (s)<-[:DEPENDS_ON]-(ids:Sentence)
+                  OPTIONAL MATCH (s)-[:DEPENDS_ON]->(rds:Sentence)<-[:LEARNING]-(u)
+                  WITH u,s,rds,ods,ids
+                  WHERE NOT EXISTS((u)-[:LEARNING]->(s))
+                  WITH s AS selection,COUNT(DISTINCT rds) AS relevant_dependencies, COUNT(DISTINCT ods) AS outgoing_dependencies, COUNT(DISTINCT ids) AS incoming_dependencies
+                  RETURN selection ORDER BY relevant_dependencies DESC, outgoing_dependencies ASC, incoming_dependencies DESC, RAND() LIMIT 1
+                  """
+    )
+
 
     getSentenceList(levelNumber: Int! intervalOrder: Int!): [Sentence]
     @cypher(

@@ -488,12 +488,8 @@ var file = app.chooseFile({
     };
 
 
- 
-
-
-
 var x = lines(readFile(file.toString()).just);
-var id,word
+var id,sentence
 
 var outputFolder = app.chooseFolder({
     withPrompt: "Please select an output folder:"
@@ -502,11 +498,11 @@ var outputFolder = app.chooseFolder({
 x.shift()
 x.forEach(function(line){
 	id = line.split(',')[0]
-	word = line.split(',')[1]
+	sentence = line.split(',')[1]
 	outputFile = outputFolder + "/" + id.toString() + ".aiff"
-	app.say(word, {
+	app.say(sentence, {
     	using: "Ting-Ting",
-		speakingRate: 100,
+		speakingRate: 120,
 		savingTo: outputFile
 	})
 })
@@ -520,3 +516,46 @@ FOREACH ( i IN range(0, 91) |
     ON MATCH SET tw.word_id = 151 + i
 )
 RETURN words
+
+
+MATCH (u:User)
+WHERE ID(u) = 723
+WITH u
+MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
+OPTIONAL MATCH (u)-[r:LEARNING]->(s)
+WITH w,s,i,u,r,
+CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN r.CURRENT_TIME_INTERVAL ELSE 0 END AS cti
+OPTIONAL MATCH (t:TimeInterval {time_interval_id: cti})
+WITH w,s,i,u,
+CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN duration.inSeconds(r.last_seen,time()).seconds >= COALESCE(t.seconds, 0) ELSE TRUE END AS is_ready
+OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
+OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)
+WITH u,w,i,s,is_ready,
+collect({word_text: wd.text, current_interval:COALESCE(di.interval_order, CASE WHEN EXISTS((u)-[:LEARNED]->(wd)) THEN 6 ELSE 0 END)}) AS word_dependencies
+WHERE 
+NOT EXISTS((u)-[:LEARNED]->(w)) AND 
+((EXISTS((u)-[:LEARNING]->(s)) AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order))
+OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1))
+CALL apoc.cypher.run('
+MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*]->(s))
+WITH last(nodes(path)) AS destSentence, nodes(path)[1] AS sourceSentence, length(path) AS hops
+MATCH (u)-[rSource:LEARNING]->(sourceSentence)
+OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
+RETURN destSentence AS selection, 
+CASE WHEN EXISTS((u)-[:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE NULL END AS last_seen_dest,
+rSource.last_seen AS last_seen_source,
+hops,
+0 AS relevant_dependencies,
+0 AS outgoing_dependencies,
+0 AS incoming_dependencies 
+UNION
+MATCH (s)-[:AT_INTERVAL]->(:Interval {interval_order: 1})
+OPTIONAL MATCH (s)-[:DEPENDS_ON]->(ods:Sentence)
+OPTIONAL MATCH (s)<-[:DEPENDS_ON]-(ids:Sentence)
+OPTIONAL MATCH (s)-[:DEPENDS_ON]->(rds:Sentence)<-[:LEARNING]-(u)
+WITH u,s,rds,ods,ids
+WHERE NOT EXISTS((u)-[:LEARNING]->(s))
+RETURN s AS selection, NULL AS last_seen_dest, NULL AS last_seen_source, 0 AS hops, COUNT(DISTINCT rds) AS relevant_dependencies, COUNT(DISTINCT ods) AS outgoing_dependencies, COUNT(DISTINCT ids) AS incoming_dependencies
+',{u:u, s:s}) yield value
+RETURN value ORDER BY value.is_ready DESC, value.last_seen_dest ASC, value.last_seen_source ASC, value.hops DESC, value.relevant_dependencies DESC, value.outgoing_dependencies ASC, value.incoming_dependencies DESC, RAND() LIMIT 100
+

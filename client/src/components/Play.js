@@ -29,7 +29,7 @@ mutation addTemporaryUser($user_name: String!, $email: String!, $password: Strin
 
 const GET_SENTENCE = gql`
   query getSentence($userId: Int!) {
-	getNextSentence(userId: $userId) {
+	getNextConnectedSentence(userId: $userId) {
 		_id
     time_fetched
 		next_interval_sentence_id
@@ -54,6 +54,31 @@ const GET_SENTENCE = gql`
 		}
 
 	}
+  getNextNewSentence(userId: $userId) {
+    _id
+    time_fetched
+    next_interval_sentence_id
+    raw_text
+    display_text
+    clean_text
+    pinyin
+    english
+    italics
+    interval{
+      interval_order
+    }
+    word_taught{
+      word_id
+      text
+      english
+      pinyin
+      characters{
+        text
+        english
+      }
+    }
+
+  }
   getCurrentProgress(userId: $userId){
     words_learned
     intervals_completed
@@ -187,13 +212,15 @@ class Play extends Component {
           {({ loading, error, data, refetch }) => {
             if (loading) return <div>Fetching</div>
             if (error) return <div>error</div>
+            console.log(data)
+            const nextSentence = data.getNextConnectedSentence || data.getNextNewSentence
             //Don't rerender when waiting for refetch or when there is no result
-            if (data.getNextSentence && this.state.timeFetched === data.getNextSentence.time_fetched)  return <div/>
-            if(data.getNextSentence){
-              const sentenceId = parseInt(data.getNextSentence._id)
+            if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
+            if(nextSentence){
+              const sentenceId = parseInt(nextSentence._id)
               var nextIntervalSentenceId = null
-              if(userId && data.getNextSentence.next_interval_sentence_id){
-                nextIntervalSentenceId = data.getNextSentence.next_interval_sentence_id
+              if(userId && nextSentence.next_interval_sentence_id){
+                nextIntervalSentenceId = nextSentence.next_interval_sentence_id
               } 
                 return(
                   <div style={{width: "50%"}}>
@@ -202,21 +229,21 @@ class Play extends Component {
                     <p>{"Cards Completed: " + data.getCurrentProgress.intervals_completed}</p>
                    <ProgressBar bgcolor={"rgb(245 109 109)"} completed={(data.getCurrentProgress.intervals_completed / (data.getCurrentProgress.total_word_count * 7)) * 100}  />
                   <div>
-                    {this.state.showAnswer && <button onClick={() => this.playSound(data.getNextSentence._id, data.getNextSentence.word_taught.word_id)}>replay audio</button>}
-                    <Modal characters={data.getNextSentence.word_taught.characters} show={this.state.showCharacterDefinitions} handleClose={this.hideModal}/>
+                    {this.state.showAnswer && <button onClick={() => this.playSound(nextSentence._id, nextSentence.word_taught.word_id)}>replay audio</button>}
+                    <Modal characters={nextSentence.word_taught.characters} show={this.state.showCharacterDefinitions} handleClose={this.hideModal}/>
                      <div style={{display: "flex", flexDirection: "column", justifyContent: "center"}}>
-                     {this.state.showAnswer && <p style={{fontSize: "16px"}}>{data.getNextSentence.pinyin}</p>}
-                     {this.getText(data.getNextSentence)}
+                     {this.state.showAnswer && <p style={{fontSize: "16px"}}>{nextSentence.pinyin}</p>}
+                     {this.getText(nextSentence)}
                       </div>
                      <Mutation mutation={MAKE_ATTEMPT}
                           update={(store) => {
                             if(!this.state.isSubmitted){
                               this.setState({
                               isSubmitted: true,
-                              showAnswer: this.checkAnswer(data.getNextSentence.word_taught.text),
-                              isCorrect: this.checkAnswer(data.getNextSentence.word_taught.text),
-                              audio: this.setAudio(data.getNextSentence._id)
-                              }, () => {this.checkAnswer(data.getNextSentence.word_taught.text) && this.playSound()})
+                              showAnswer: this.checkAnswer(nextSentence.word_taught.text),
+                              isCorrect: this.checkAnswer(nextSentence.word_taught.text),
+                              audio: this.setAudio(nextSentence._id)
+                              }, () => {this.checkAnswer(nextSentence.word_taught.text) && this.playSound()})
                             }
 
                             }
@@ -224,20 +251,20 @@ class Play extends Component {
                          >
                           {makeAttempt => (
                             <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-                             <p>{data.getNextSentence.display_text.substr(0,data.getNextSentence.display_text.indexOf('#'))}</p>
-                            <input style={{width: `${data.getNextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px", color: this.getFontColor()}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
+                             <p>{nextSentence.display_text.substr(0,nextSentence.display_text.indexOf('#'))}</p>
+                            <input style={{width: `${nextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px", color: this.getFontColor()}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
-                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, data.getNextSentence.word_taught.text, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), nextIntervalSentenceId)
+                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, nextSentence.word_taught.text, nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught.text), nextIntervalSentenceId)
                               }
                             }}
                             />
-                             <p>{data.getNextSentence.display_text.substr(data.getNextSentence.display_text.indexOf('#') + 1,data.getNextSentence.display_text.length)}</p>
+                             <p>{nextSentence.display_text.substr(nextSentence.display_text.indexOf('#') + 1,nextSentence.display_text.length)}</p>
                             <button
                               style={{margin: "15px 5px 15px 5px"}}
                               onClick={() => 
                                 {
-                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, data.getNextSentence.word_taught.text, data.getNextSentence.time_fetched, this.checkAnswer(data.getNextSentence.word_taught.text), nextIntervalSentenceId)
+                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, nextSentence.word_taught.text, nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught.text), nextIntervalSentenceId)
                                 }
                               }
                             >
@@ -248,14 +275,14 @@ class Play extends Component {
                     </Mutation>
                   </div>
                   <div>
-                    <p style={{fontSize: "24px"}}>{(data.getNextSentence.clean_text !== data.getNextSentence.word_taught.text) && data.getNextSentence.word_taught.english}</p>
+                    <p style={{fontSize: "24px"}}>{(nextSentence.clean_text !== nextSentence.word_taught.text) && nextSentence.word_taught.english}</p>
                   </div>
-                  {this.state.showAnswer && data.getNextSentence.word_taught.characters.length > 0 && <button onClick={() => this.setState(prevState => ({showCharacterDefinitions: !prevState.showCharacterDefinitions}))}>Character Definitions</button>}
+                  {this.state.showAnswer && nextSentence.word_taught.characters.length > 0 && <button onClick={() => this.setState(prevState => ({showCharacterDefinitions: !prevState.showCharacterDefinitions}))}>Character Definitions</button>}
                   {this.state.showAnswer && (
                       <div>
                         <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-                        <p>{data.getNextSentence.word_taught.text}</p>
-                        <p style={{marginLeft: "5px"}}>{data.getNextSentence.word_taught.pinyin}</p>
+                        <p>{nextSentence.word_taught.text}</p>
+                        <p style={{marginLeft: "5px"}}>{nextSentence.word_taught.pinyin}</p>
                         </div>
                       </div>
                   )} 
