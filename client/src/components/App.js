@@ -34,6 +34,7 @@ class App extends Component {
         if (loading) return <div>Fetching</div>
         if (error) return <div>error</div>
         const user = data.me
+        console.log(user)
         return(
         <div>
           <Header user={user} refetchUser={refetch}/>

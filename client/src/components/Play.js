@@ -121,6 +121,7 @@ class Play extends Component {
   }
 
   componentDidUpdate(prevProps){
+    console.log(prevProps, this.props.user)
     if(prevProps.user && this.props.user && this.props.user._id === prevProps.user._id && this.props.user.role === prevProps.user.role){
       //do nothing
     }else{
@@ -302,10 +303,11 @@ class Play extends Component {
 
 	render() {
 	  const {userId, role} = this.state.user
+    console.log(userId, role)
 	  return (
 	    <div className="App">
 	      <header className="App-header">
-          {userId ? this.playDashboard(userId, role): 
+          {userId !==null && typeof userId !== 'undefined' ? this.playDashboard(userId, role): 
               <Mutation mutation={CREATE_USER}
                 onCompleted={data => this._confirm(data)}
                 >

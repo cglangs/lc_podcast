@@ -11,19 +11,16 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser')
 
 
-var graphenedbURL = process.env.GRAPHENEDB_BOLT_URL || 'bolt://localhost:7687'
-var graphenedbUser = process.env.GRAPHENEDB_BOLT_USER || 'neo4j'
-var graphenedbPass = process.env.GRAPHENEDB_BOLT_PASSWORD || 'password'
+var dbURL = process.env.BOLT_URL || 'bolt://54.162.39.62:7687'
+var dbUser = process.env.BOLT_USER || 'neo4j'
+var dbPass = process.env.BOLT_PASSWORD || 'test'
 var driver
 
-if(process.env.GRAPHENEDB_BOLT_URL){
-  driver = neo4j.driver(graphenedbURL, neo4j.auth.basic(graphenedbUser, graphenedbPass), {encrypted: 'ENCRYPTION_ON'});
-} else{
-  driver = neo4j.driver(
-    graphenedbURL,
-    neo4j.auth.basic(graphenedbUser, graphenedbPass)
-  )
-}
+
+driver = neo4j.driver(
+  dbURL,
+  neo4j.auth.basic(dbUser, dbPass)
+)
 
 async function signup(object, params, ctx, resolveInfo) {
   //console.log(resolveInfo.fieldName)
@@ -55,7 +52,6 @@ async function login(object, params, ctx, resolveInfo) {
 
   ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user._id, role: user.role }, REFRESH_SECRET), { maxAge: 7 * 60 * 60 * 1000 })
   ctx.req.res.cookie("access-token", jwt.sign({ userId: user._id, role: user.role }, ACCESS_SECRET), { maxAge: 15 * 1000 })
-
   return user
 }
 
@@ -81,7 +77,7 @@ const resolvers = {
   },
   Query: {
      getNextSentence(object, params, ctx, resolveInfo){
-      if(!ctx.req.userId){
+      if(typeof ctx.req.userId === 'undefined' || ctx.req.userId === null){
         return null
       } else{
           params.userId = ctx.req.userId
@@ -90,7 +86,7 @@ const resolvers = {
       }
     },
      getNextConnectedSentence(object, params, ctx, resolveInfo){
-      if(!ctx.req.userId){
+      if(typeof ctx.req.userId === 'undefined' || ctx.req.userId === null){
         return null
       } else{
           params.userId = ctx.req.userId
@@ -99,7 +95,7 @@ const resolvers = {
       }
     },
      getNextNewSentence(object, params, ctx, resolveInfo){
-      if(!ctx.req.userId){
+      if(typeof ctx.req.userId === 'undefined' || ctx.req.userId === null){
         return null
       } else{
           params.userId = ctx.req.userId
@@ -108,7 +104,7 @@ const resolvers = {
       }
     },
      getCurrentProgress(object, params, ctx, resolveInfo){
-      if(!ctx.req.userId){
+      if(typeof ctx.req.userId === 'undefined' || ctx.req.userId === null){
         return null
       } else{
           params.userId = ctx.req.userId
@@ -117,7 +113,7 @@ const resolvers = {
       }
     },
     me(object, params, ctx, resolveInfo){
-      if(!ctx.req.userId){
+      if(typeof ctx.req.userId === 'undefined' || ctx.req.userId === null){
         return null
       } else{
           params.userId = ctx.req.userId
@@ -126,7 +122,7 @@ const resolvers = {
       }
     },
     getCurrentProgress(object, params, ctx, resolveInfo){
-      if(!ctx.req.userId){
+      if(typeof ctx.req.userId === 'undefined' || ctx.req.userId === null){
         return null
       } else{
           params.userId = ctx.req.userId

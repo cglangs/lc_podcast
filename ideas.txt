@@ -69,6 +69,30 @@ WHERE EXISTS((s)-[:CONTAINS]->(w1))
 CREATE (s)-[:CONTAINS]->(w2)
 RETURN s,w1,w2
 
+/Users/corygallagher/Library/Application Support/Neo4j Desktop/Application/neo4jDatabases/database-8eb4f4c5-8d0d-4ed8-a8a8-820f73b88051/installation-4.1.1/bin
+
+docker run \
+    --name testneo4j \
+    -p80:7474 -p7687:7687 \
+    -d \
+    -v $HOME/neo4j/data:/data \
+    -v $HOME/neo4j/logs:/logs \
+    -v $HOME/neo4j/import:/var/lib/neo4j/import \
+    -v $HOME/neo4j/plugins:/plugins \
+    --env NEO4J_AUTH=neo4j/test \
+    --env NEO4JLABS_PLUGINS='["apoc"]' \
+    neo4j:4.1
+
+    docker run \
+    --name testneo4j \
+    -p80:7474 -p7687:7687 \
+    -v $HOME/neo4j/data:/data \
+    -v $HOME/neo4j/logs:/logs \
+    -v $HOME/neo4j/import:/var/lib/neo4j/import \
+    -v $HOME/neo4j/plugins:/plugins \
+    --env NEO4J_AUTH=neo4j/test \
+    NEO4JLABS_PLUGINS='["apoc"]' \
+    neo4j:4.1
 
 CALL apoc.export.cypher.all("all-plain.cypher", {
     format: "plain",
