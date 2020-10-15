@@ -9,8 +9,8 @@ import { getCookie} from '../utils'
 
 
 const MAKE_ATTEMPT = gql`
-  mutation makeAttempt($userId: Int!, $sentenceId: Int!, $isCorrect: Boolean!, $nextIntervalSentenceId: Int) {
-	makeClozeAttempt(userId: $userId, sentenceId: $sentenceId, isCorrect: $isCorrect, nextIntervalSentenceId: $nextIntervalSentenceId)
+  mutation makeAttempt($userId: Int!, $sentenceId: Int!, $isCorrect: Boolean!) {
+	makeClozeAttempt(userId: $userId, sentenceId: $sentenceId, isCorrect: $isCorrect)
   }
 
 `
@@ -29,10 +29,9 @@ mutation addTemporaryUser($user_name: String!, $email: String!, $password: Strin
 
 const GET_SENTENCE = gql`
   query getSentence($userId: Int!) {
-	getNextConnectedSentence(userId: $userId) {
+	getNextSentence(userId: $userId) {
 		_id
     time_fetched
-		next_interval_sentence_id
 		raw_text
 		display_text
     clean_text
@@ -54,31 +53,7 @@ const GET_SENTENCE = gql`
 		}
 
 	}
-  getNextNewSentence(userId: $userId) {
-    _id
-    time_fetched
-    next_interval_sentence_id
-    raw_text
-    display_text
-    clean_text
-    pinyin
-    english
-    italics
-    interval{
-      interval_order
-    }
-    word_taught{
-      word_id
-      text
-      english
-      pinyin
-      characters{
-        text
-        english
-      }
-    }
 
-  }
   getCurrentProgress(userId: $userId){
     words_learned
     intervals_completed
@@ -146,10 +121,10 @@ class Play extends Component {
 		return correct_response === this.state.userResponse
 	}
 
-  setAudio(sentenceId) {
+  setAudio(interval, word_id) {
     var Sounds
      Sounds = new Howl({
-         src: ["/audio/sentences/" + sentenceId + ".m4a"]
+         src: ["/audio/sentences/" + interval + "-" + word_id + ".m4a"]
       })
   
     return Sounds
@@ -169,13 +144,12 @@ class Play extends Component {
     return color
   }
 
-  submitAnswer(makeAttempt, refetch, userId, sentenceId, correctResponse, time_fetched, isCorrect, nextIntervalSentenceId){
+  submitAnswer(makeAttempt, refetch, userId, sentenceId, correctResponse, time_fetched, isCorrect){
     if(!this.state.isSubmitted){
       makeAttempt({variables:{
         userId: userId,
         sentenceId: sentenceId,
-        isCorrect: isCorrect,
-        nextIntervalSentenceId: nextIntervalSentenceId
+        isCorrect: isCorrect
       }})
     }
      else if(this.state.isSubmitted && this.state.showAnswer){
@@ -201,7 +175,7 @@ class Play extends Component {
   getText(text){
     return(
       <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-      <p style={{fontSize: "16px"}}>{text.english}</p> <i style={{"marginBlockStart": "1em"}}>{text.italics}</i>
+      <p style={{fontSize: "16px"}}>{text.english}</p> <i style={{"marginBlockStart": "1em", fontSize: "16px"}}>{text.italics}</i>
       </div>
       )
   }
@@ -211,24 +185,21 @@ class Play extends Component {
     return(
       <Query query={GET_SENTENCE} variables={{userId: userId}}>
           {({ loading, error, data, refetch }) => {
-            if (loading) return <div>Fetching</div>
-            if (error) return <div>error</div>
-            console.log(data)
-            const nextSentence = data.getNextConnectedSentence || data.getNextNewSentence
+            if (loading) return <div style={{"marginTop": "30%"}}>Fetching</div>
+            if (error) return <div style={{"marginTop": "30%"}}>error</div>
+            const nextSentence = data.getNextSentence
             //Don't rerender when waiting for refetch or when there is no result
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
             if(nextSentence){
               const sentenceId = parseInt(nextSentence._id)
-              var nextIntervalSentenceId = null
-              if(userId && nextSentence.next_interval_sentence_id){
-                nextIntervalSentenceId = nextSentence.next_interval_sentence_id
-              } 
                 return(
                   <div style={{width: "50%"}}>
-                    {role === "TESTER" && (<p style={{fontSize: "16px"}}>You are currently not logged in. Log in to save your progress.</p>)}
-                    <p>{"Words Learned: " + data.getCurrentProgress.words_learned + "/" + data.getCurrentProgress.total_word_count}</p>
-                    <p>{"Cards Completed: " + data.getCurrentProgress.intervals_completed}</p>
-                   <ProgressBar bgcolor={"rgb(245 109 109)"} completed={(data.getCurrentProgress.intervals_completed / (data.getCurrentProgress.total_word_count * 7)) * 100}  />
+                  {role === "TESTER" && (<p style={{fontSize: "12px", "marginBottom": "20px"}}>You are currently not logged in. Log in to save your progress.</p>)}
+                    <div style={{width: "30%", "marginBottom": "100px", display: "inline-block"}}>
+                      <p style={{fontSize: "14px"}}>{"Words Learned: " + data.getCurrentProgress.words_learned + "/" + data.getCurrentProgress.total_word_count}</p>
+                      <p style={{fontSize: "14px"}}>{"Cards Completed: " + data.getCurrentProgress.intervals_completed}</p>
+                     <ProgressBar bgcolor={"rgb(245 109 109)"} completed={(data.getCurrentProgress.intervals_completed / (data.getCurrentProgress.total_word_count * 7)) * 100}  />
+                    </div>
                   <div>
                     {this.state.showAnswer && <button onClick={() => this.playSound(nextSentence._id, nextSentence.word_taught.word_id)}>replay audio</button>}
                     <Modal characters={nextSentence.word_taught.characters} show={this.state.showCharacterDefinitions} handleClose={this.hideModal}/>
@@ -243,7 +214,7 @@ class Play extends Component {
                               isSubmitted: true,
                               showAnswer: this.checkAnswer(nextSentence.word_taught.text),
                               isCorrect: this.checkAnswer(nextSentence.word_taught.text),
-                              audio: this.setAudio(nextSentence._id)
+                              audio: this.setAudio(nextSentence.interval.interval_order, nextSentence.word_taught.word_id)
                               }, () => {this.checkAnswer(nextSentence.word_taught.text) && this.playSound()})
                             }
 
@@ -256,7 +227,7 @@ class Play extends Component {
                             <input style={{width: `${nextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px", color: this.getFontColor()}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
-                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, nextSentence.word_taught.text, nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught.text), nextIntervalSentenceId)
+                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, nextSentence.word_taught.text, nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught.text))
                               }
                             }}
                             />
@@ -265,7 +236,7 @@ class Play extends Component {
                               style={{margin: "15px 5px 15px 5px"}}
                               onClick={() => 
                                 {
-                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, nextSentence.word_taught.text, nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught.text), nextIntervalSentenceId)
+                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, nextSentence.word_taught.text, nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught.text))
                                 }
                               }
                             >
@@ -279,7 +250,7 @@ class Play extends Component {
                     <p style={{fontSize: "24px"}}>{(nextSentence.clean_text !== nextSentence.word_taught.text) && nextSentence.word_taught.english}</p>
                   </div>
                   {this.state.showAnswer && nextSentence.word_taught.characters.length > 0 && <button onClick={() => this.setState(prevState => ({showCharacterDefinitions: !prevState.showCharacterDefinitions}))}>Character Definitions</button>}
-                  {this.state.showAnswer && (
+                  {(this.state.showAnswer &&  nextSentence.word_taught !==  nextSentence.word_taught.text) && (
                       <div>
                         <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
                         <p>{nextSentence.word_taught.text}</p>
@@ -312,7 +283,7 @@ class Play extends Component {
                 onCompleted={data => this._confirm(data)}
                 >
               {createUser => (
-              <button onClick={()=> createUser({variables:{user_name: "", email: "", password: "", role: "TESTER"}})}>BEGIN</button>
+              <button style={{"marginTop": "30%"}} onClick={()=> createUser({variables:{user_name: "", email: "", password: "", role: "TESTER"}})}>BEGIN</button>
               )}
             </Mutation>}
 	      </header>

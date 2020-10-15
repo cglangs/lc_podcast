@@ -77,82 +77,36 @@ const resolvers = {
   },
   Query: {
      getNextSentence(object, params, ctx, resolveInfo){
-      if(typeof ctx.req.userId === 'undefined' || ctx.req.userId === null){
-        return null
-      } else{
-          params.userId = ctx.req.userId
-          const sentence = neo4jgraphql(object, params, ctx, resolveInfo)
-          return sentence
-      }
-    },
-     getNextConnectedSentence(object, params, ctx, resolveInfo){
-      if(typeof ctx.req.userId === 'undefined' || ctx.req.userId === null){
-        return null
-      } else{
-          params.userId = ctx.req.userId
-          const sentence = neo4jgraphql(object, params, ctx, resolveInfo)
-          return sentence
-      }
-    },
-     getNextNewSentence(object, params, ctx, resolveInfo){
-      if(typeof ctx.req.userId === 'undefined' || ctx.req.userId === null){
-        return null
-      } else{
-          params.userId = ctx.req.userId
-          const sentence = neo4jgraphql(object, params, ctx, resolveInfo)
-          return sentence
-      }
+        params.userId = ctx.req.userId
+        const sentence = neo4jgraphql(object, params, ctx, resolveInfo)
+        return sentence
     },
      getCurrentProgress(object, params, ctx, resolveInfo){
-      if(typeof ctx.req.userId === 'undefined' || ctx.req.userId === null){
-        return null
-      } else{
-          params.userId = ctx.req.userId
-          const progress = neo4jgraphql(object, params, ctx, resolveInfo)
-          return progress
-      }
+        params.userId = ctx.req.userId
+        const progress = neo4jgraphql(object, params, ctx, resolveInfo)
+        return progress
     },
     me(object, params, ctx, resolveInfo){
-      if(typeof ctx.req.userId === 'undefined' || ctx.req.userId === null){
-        return null
-      } else{
-          params.userId = ctx.req.userId
-          const user = neo4jgraphql(object, params, ctx, resolveInfo)
-          return user
-      }
+        params.userId = ctx.req.userId
+        const user = neo4jgraphql(object, params, ctx, resolveInfo)
+        return user
     },
-    getCurrentProgress(object, params, ctx, resolveInfo){
-      if(typeof ctx.req.userId === 'undefined' || ctx.req.userId === null){
-        return null
-      } else{
-          params.userId = ctx.req.userId
-          const user = neo4jgraphql(object, params, ctx, resolveInfo)
-          return user
-      }
-    }
 
   }
 }
-  const directiveResolvers = {
-
-    /*const tokenWithBearer = req.headers.authorization || ''
-    const token = tokenWithBearer.split(' ')[1]
-    const user = jwt.verify(token, APP_SECRET)
-    
-  isAdmin(next,src,args,context) {
-    return next().then((sentence) => {
-      if (context.req) {
-        return sentence
+const directiveResolvers = {
+  hasToken(next,src,args,ctx) {
+      if (typeof ctx.req.userId === 'undefined' || ctx.req.userId === null) {
+        return null
       } else{
-        throw Error("oh shit")
+        return next()
       }
-    });
-    }*/
+  }
 }
 
 const typeDefs = `
 
-directive @isAdmin on FIELD_DEFINITION
+directive @hasToken on FIELD_DEFINITION
 
 type Mutation {
     AddSentenceDependencies(src_sentence: String! dest_words:[String]): Sentence
@@ -202,22 +156,21 @@ type Mutation {
                   RETURN u"""
     )
 
-    makeClozeAttempt(userId: Int!, sentenceId: Int!, isCorrect: Boolean!, nextIntervalSentenceId: Int, nextIntervalSentenceId: Int, wordId: Int): Int
+    makeClozeAttempt(userId: Int!, sentenceId: Int!, isCorrect: Boolean!): Int
     @cypher(
     statement:""" MATCH(u:User),(s:Sentence)-[:TEACHES]->(w:Word)
                   WHERE ID(u) = userId AND ID(s) = sentenceId
-                  OPTIONAL MATCH (s2:Sentence)
-                  WHERE ID(s2) = nextIntervalSentenceId
+                  OPTIONAL MATCH (w)<-[:TEACHES]-(s2:Sentence)-[:AT_INTERVAL]->(nextInterval:Interval)<-[:NEXT_TIME]-(:Interval)<-[:AT_INTERVAL]-(s)
                   MERGE (u)-[r:LEARNING]->(s)
                   SET r.last_seen = time()
-                  WITH u,s,s2,w,r,isCorrect,nextIntervalSentenceId
+                  WITH u,s,s2,w,r,isCorrect,nextInterval
                   CALL apoc.do.case(
                   [
                   NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND NOT isCorrect, 'DELETE r',
                   NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect, 'SET r.IN_PROGRESS = FALSE, r.CURRENT_TIME_INTERVAL = 1',
-                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND nextIntervalSentenceId IS NOT NULL AND r.IN_PROGRESS = FALSE,'SET r.IN_PROGRESS = TRUE, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1',
-                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND nextIntervalSentenceId IS NOT NULL AND r.IN_PROGRESS = TRUE,'SET r.IN_PROGRESS = FALSE, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1 WITH r,s2 CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
-                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND nextIntervalSentenceId IS NULL,'CREATE (u)-[:LEARNED]->(w) DELETE r'
+                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND r.IN_PROGRESS = FALSE,'SET r.IN_PROGRESS = TRUE, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1',
+                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND EXISTS(nextInterval.interval_order) AND r.IN_PROGRESS = TRUE,'SET r.IN_PROGRESS = FALSE, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1 WITH r,s2 CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
+                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND NOT EXISTS(nextInterval.interval_order) AND r.IN_PROGRESS = TRUE,'CREATE (u)-[:LEARNED]->(w) DELETE r'
                   ],'',{r:r,s2:s2, u:u, w:w}) YIELD value
                   RETURN 1
                     """
@@ -225,7 +178,7 @@ type Mutation {
 }
 
 type Query {
-    getNextSentence(userId: Int!): Sentence
+    getNextSentence(userId: Int!): Sentence @hasToken
     @cypher(
     statement:""" 
                   MATCH (u:User)
@@ -273,75 +226,6 @@ type Query {
                   """
     )
 
-    getNextConnectedSentence(userId: Int!): Sentence
-    @cypher(
-    statement:""" 
-                  MATCH (u:User)
-                  WHERE ID(u) = userId
-                  WITH u
-                  MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
-                  OPTIONAL MATCH (u)-[r:LEARNING]->(s)
-                  WITH w,s,i,u,r,
-                  CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN r.CURRENT_TIME_INTERVAL ELSE 0 END AS cti
-                  OPTIONAL MATCH (t:TimeInterval {time_interval_id: cti})
-                  WITH w,s,i,u,
-                  CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN duration.inSeconds(r.last_seen,time()).seconds >= COALESCE(t.seconds, 0) ELSE TRUE END AS is_ready
-                  OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
-                  OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)
-                  WITH u,w,i,s,is_ready,
-                  collect({word_text: wd.text, current_interval:COALESCE(di.interval_order, CASE WHEN EXISTS((u)-[:LEARNED]->(wd)) THEN 6 ELSE 0 END)}) AS word_dependencies
-                  WHERE 
-                  NOT EXISTS((u)-[:LEARNED]->(w)) AND 
-                  ((EXISTS((u)-[:LEARNING]->(s)) AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order))
-                  OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1))
-                  WITH u,s, is_ready
-                  MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*]->(s))
-                  WITH u,s, is_ready, last(nodes(path)) AS destSentence, nodes(path)[1] AS sourceSentence, length(path) AS hops
-                  MATCH (u)-[rSource:LEARNING]->(sourceSentence)
-                  OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
-                  RETURN 
-                  destSentence AS selection
-                  ORDER BY 
-                  is_ready DESC,
-                  CASE WHEN EXISTS((u)-[:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE NULL END ASC,
-                  rSource.last_seen ASC,
-                  hops DESC
-                  """
-    )
-
-    getNextNewSentence(userId: Int!): Sentence
-    @cypher(
-    statement:""" 
-                  MATCH (u:User)
-                  WHERE ID(u) = userId
-                  WITH u
-                  MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
-                  OPTIONAL MATCH (u)-[r:LEARNING]->(s)
-                  WITH w,s,i,u,r,
-                  CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN r.CURRENT_TIME_INTERVAL ELSE 0 END AS cti
-                  OPTIONAL MATCH (t:TimeInterval {time_interval_id: cti})
-                  WITH w,s,i,u
-                  OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
-                  OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)
-                  WITH u,w,i,s,
-                  collect({word_text: wd.text, current_interval:COALESCE(di.interval_order, CASE WHEN EXISTS((u)-[:LEARNED]->(wd)) THEN 6 ELSE 0 END)}) AS word_dependencies
-                  WHERE 
-                  NOT EXISTS((u)-[:LEARNED]->(w)) AND 
-                  ((EXISTS((u)-[:LEARNING]->(s)) AND ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order))
-                  OR (NOT EXISTS((u)-[:LEARNING]->(:Sentence)-[:TEACHES]->(w:Word)) AND i.interval_order = 1))
-                  WITH u,s
-                  MATCH (s)-[:AT_INTERVAL]->(:Interval {interval_order: 1})
-                  OPTIONAL MATCH (s)-[:DEPENDS_ON]->(ods:Sentence)
-                  OPTIONAL MATCH (s)<-[:DEPENDS_ON]-(ids:Sentence)
-                  OPTIONAL MATCH (s)-[:DEPENDS_ON]->(rds:Sentence)<-[:LEARNING]-(u)
-                  WITH u,s,rds,ods,ids
-                  WHERE NOT EXISTS((u)-[:LEARNING]->(s))
-                  WITH s AS selection,COUNT(DISTINCT rds) AS relevant_dependencies, COUNT(DISTINCT ods) AS outgoing_dependencies, COUNT(DISTINCT ids) AS incoming_dependencies
-                  RETURN selection ORDER BY relevant_dependencies DESC, outgoing_dependencies ASC, incoming_dependencies DESC, RAND() LIMIT 1
-                  """
-    )
-
-
     getSentenceList(levelNumber: Int! intervalOrder: Int!): [Sentence]
     @cypher(
     statement:""" 
@@ -360,20 +244,21 @@ type Query {
               """
               )
 
-    getCurrentProgress(userId: Int!): Progress
+    getCurrentProgress(userId: Int!): Progress @hasToken
     @cypher(
     statement:""" 
               MATCH(u:User), (w:Word)-[:INTRODUCED_IN]->()
               WHERE ID(u) = userId
               WITH u, COUNT(w) AS total_words
               OPTIONAL MATCH(u)-[r:LEARNING]->(s:Sentence)
+              WITH u,total_words, SUM(r.CURRENT_TIME_INTERVAL) AS current_intervals
               OPTIONAL MATCH(u)-[:LEARNED]->(wl:Word)
-              WITH u, COUNT(DISTINCT wl) AS words_learned, SUM(r.CURRENT_TIME_INTERVAL) AS current_intervals, total_words
+              WITH u,total_words,current_intervals, COUNT(DISTINCT wl) AS words_learned
               RETURN {words_learned: words_learned,  intervals_completed: (words_learned * 7) + current_intervals , total_word_count: total_words}
               """
               )
 
-    me(userId: Int): User
+    me(userId: Int): User @hasToken
     @cypher(
     statement:""" MATCH(u:User)
                   WHERE ID(u) = userId
@@ -479,12 +364,6 @@ type Sentence {
   interval: Interval @relation(name: "AT_INTERVAL" direction: OUT)
 	words_contained: [ContainedWord!]!
 	word_taught: Word! @relation(name: "TEACHES", direction: OUT)
-  next_interval_sentence_id: Int @cypher(
-        statement: """MATCH(this)-[:TEACHES]->(w:Word)
-                      WITH this, w
-                      MATCH (w)<-[:TEACHES]-(s2:Sentence)-[:AT_INTERVAL]->(i2:Interval)<-[:NEXT_TIME]-(i:Interval)<-[:AT_INTERVAL]-(this)
-                      RETURN ID(s2)
-                      """)
 }
 
 type ContainedWord @relation(name:"CONTAINS") {
