@@ -25,7 +25,10 @@ query getUser {
 
 
 
+
+
 class App extends Component {
+
   render() {
     return(
       <div>

@@ -162,7 +162,7 @@ type Mutation {
                   WHERE ID(u) = userId AND ID(s) = sentenceId
                   OPTIONAL MATCH (w)<-[:TEACHES]-(s2:Sentence)-[:AT_INTERVAL]->(nextInterval:Interval)<-[:NEXT_TIME]-(:Interval)<-[:AT_INTERVAL]-(s)
                   MERGE (u)-[r:LEARNING]->(s)
-                  SET r.last_seen = time()
+                  SET r.last_seen = datetime()
                   WITH u,s,s2,w,r,isCorrect,nextInterval
                   CALL apoc.do.case(
                   [
@@ -190,7 +190,7 @@ type Query {
                   CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN r.CURRENT_TIME_INTERVAL ELSE 0 END AS cti
                   OPTIONAL MATCH (t:TimeInterval {time_interval_id: cti})
                   WITH w,s,i,u,
-                  CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN duration.inSeconds(r.last_seen,time()).seconds >= COALESCE(t.seconds, 0) ELSE TRUE END AS is_ready
+                  CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN duration.inSeconds(r.last_seen,datetime()).seconds >= COALESCE(t.seconds, 0) ELSE TRUE END AS is_ready
                   OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
                   OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)
                   WITH u,w,i,s,is_ready,

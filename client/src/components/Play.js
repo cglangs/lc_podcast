@@ -73,14 +73,15 @@ class Play extends Component {
       showCharacterDefinitions: false,
     	userResponse: '',
       isCorrect: true,
-      lastSentenceId: null,
       audio: null,
       timeFetched: null,
       user:{
         user_name: null,
         userId: null,
         role: null
-      }
+      },
+      lastSentence: null
+
     }
   }
 
@@ -159,9 +160,8 @@ class Play extends Component {
           userResponse: '',
           timeFetched: time_fetched,
           showCharacterDefinitions: false,
-          audio: null
-      }, () => {
-        refetch()
+          audio: null,
+          lastSentence: null
       })
     } else{
         this.setState({
@@ -187,7 +187,7 @@ class Play extends Component {
           {({ loading, error, data, refetch }) => {
             if (loading) return <div style={{"marginTop": "30%"}}>Fetching</div>
             if (error) return <div style={{"marginTop": "30%"}}>error</div>
-            const nextSentence = data.getNextSentence
+            const nextSentence = this.state.lastSentence ||data.getNextSentence
             //Don't rerender when waiting for refetch or when there is no result
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
             if(nextSentence){
@@ -207,15 +207,20 @@ class Play extends Component {
                      {this.state.showAnswer && <p style={{fontSize: "16px"}}>{nextSentence.pinyin}</p>}
                      {this.getText(nextSentence)}
                       </div>
-                     <Mutation mutation={MAKE_ATTEMPT}
+                     <Mutation mutation={MAKE_ATTEMPT} refetchQueries={[{query: GET_SENTENCE, variables: {userId: userId}}]}
                           update={(store) => {
                             if(!this.state.isSubmitted){
                               this.setState({
                               isSubmitted: true,
                               showAnswer: this.checkAnswer(nextSentence.word_taught.text),
                               isCorrect: this.checkAnswer(nextSentence.word_taught.text),
-                              audio: this.setAudio(nextSentence.interval.interval_order, nextSentence.word_taught.word_id)
-                              }, () => {this.checkAnswer(nextSentence.word_taught.text) && this.playSound()})
+                              audio: this.setAudio(nextSentence.interval.interval_order, nextSentence.word_taught.word_id),
+                              lastSentence: nextSentence
+                              }, () => {
+                                if(this.checkAnswer(nextSentence.word_taught.text)){
+                                  this.playSound()
+                                }
+                              })
                             }
 
                             }
