@@ -112,7 +112,7 @@ class Login extends Component {
             {isLogin ? 'need to create an account?' : 'already have an account?'}
 
             </button>
-            {error && <p>{error.message.substring(error.message.lastIndexOf(':')+ 1)}</p>}
+            {error && <p>{error.message.substring(error.message.lastIndexOf(':') + 1)}</p>}
           </div>
         )}
       </Mutation>
