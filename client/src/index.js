@@ -4,6 +4,7 @@ import './styles/index.css'
 import App from './components/App'
 import * as serviceWorker from './serviceWorker';
 import { ApolloProvider } from 'react-apollo'
+//import { onError } from "apollo-link-error";
 import { ApolloClient } from 'apollo-client'
 import { createHttpLink } from 'apollo-link-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
@@ -28,6 +29,20 @@ const httpLink = createHttpLink({
     }
   }
 })*/
+/*const errorLink = onError(({ graphQLErrors, networkError }) => {
+    console.log(graphQLErrors, networkError)
+    if (graphQLErrors){
+      graphQLErrors.map(({ message, locations, path }) => {
+        console.log(
+          `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
+        )
+        
+
+      })
+    }
+
+
+  })*/
 
 const client = new ApolloClient({
   //link: authLink.concat(httpLink),

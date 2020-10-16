@@ -288,7 +288,10 @@ class Play extends Component {
                 onCompleted={data => this._confirm(data)}
                 >
               {createUser => (
-              <button style={{"marginTop": "30%"}} onClick={()=> createUser({variables:{user_name: "", email: "", password: "", role: "TESTER"}})}>BEGIN</button>
+              <div style={{"marginTop": "25%"}}>
+              <p>Remember to set your keyboard's language to Chinese</p>
+              <button onClick={()=> createUser({variables:{user_name: "", email: "", password: "", role: "TESTER"}})}>BEGIN</button>
+              </div>
               )}
             </Mutation>}
 	      </header>

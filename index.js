@@ -23,17 +23,21 @@ driver = neo4j.driver(
 )
 
 async function signup(object, params, ctx, resolveInfo) {
-  //console.log(resolveInfo.fieldName)
   params.password = await bcrypt.hash(params.password, 10)
-  const user = await neo4jgraphql(object, params, ctx, resolveInfo)
-  if(user.role === 'TESTER'){
-    // do nothing
-  } else{
-    ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user._id, role: user.role }, REFRESH_SECRET), { maxAge: 24 * 60 * 60 * 1000})
+  try {
+      const user = await neo4jgraphql(object, params, ctx, resolveInfo)
+      if(user.role === 'TESTER'){
+        // do nothing
+      } else{
+        ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user._id, role: user.role }, REFRESH_SECRET), { maxAge: 24 * 60 * 60 * 1000})
+      }
+      ctx.req.res.cookie("access-token", jwt.sign({ userId: user._id, role: user.role }, ACCESS_SECRET), { maxAge: 15 * 1000 })
+      return user
   }
-  ctx.req.res.cookie("access-token", jwt.sign({ userId: user._id, role: user.role }, ACCESS_SECRET), { maxAge: 15 * 1000 })
+  catch(error){
+    throw new Error("Email address already in use")
+  }
 
-  return user
 }
 
 async function login(object, params, ctx, resolveInfo) {

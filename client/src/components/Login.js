@@ -46,7 +46,7 @@ class Login extends Component {
     password: '',
     user_name: '',
     userId: null,
-    role: "TESTER"
+    role: "STUDENT"
   }
 
   componentDidMount(){
@@ -93,30 +93,42 @@ class Login extends Component {
       <Mutation
         mutation={isLogin ? LOGIN_MUTATION : role === 'TESTER' ? UPGRADE_MUTATION : SIGNUP_MUTATION}
         variables={{ email, password, user_name, userId}}
-        onCompleted={data => this._confirm(data)}
+        onCompleted={data => this._confirm()}
+        onError={(error) => console.log(error.message)}
       >
-        {mutation => (
-          <button
-            type="button"
-            onClick={mutation}
-          >
-            {isLogin ? 'login' : 'create account'}
-          </button>
+        {(mutation, { loading, error }) => (
+          <div>
+            <button
+              type="button"
+              onClick={e => this.handleLogin(e, mutation)}
+              disabled={!this.state.email.length || !this.state.password.length || (!this.state.user_name.length && !this.state.isLogin)}
+            >
+              {isLogin ? 'login' : 'create account'}
+            </button>
+            <button
+              type="button"
+              onClick={() => this.setState({ isLogin: !this.state.isLogin })}
+            >
+            {isLogin ? 'need to create an account?' : 'already have an account?'}
+
+            </button>
+            {error && <p>{error.message.substring(error.message.lastIndexOf(':')+ 1)}</p>}
+          </div>
         )}
       </Mutation>
-      <button
-        type="button"
-        onClick={() => this.setState({ isLogin: !this.state.isLogin })}
-      >
-        {isLogin ? 'need to create an account?' : 'already have an account?'}
-      </button>
       </div>
     </div>
   )
 
  }
 
- _confirm = async data => {
+
+ handleLogin(event, mutation){
+  event.preventDefault()
+  mutation()
+}
+
+ _confirm() {
   //this.props.refetchUser()
   this.props.history.push('/')
   window.location.reload(true);

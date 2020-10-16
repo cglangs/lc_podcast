@@ -7,6 +7,7 @@ import Editor from './Editor'
 import Words from './Words'
 import WordEdit from './WordEdit'
 import Play from './Play'
+import About from './About'
 import {Query} from 'react-apollo';
 import gql from 'graphql-tag';
 
@@ -48,7 +49,9 @@ class App extends Component {
             {user && user.role === 'ADMIN' && (<Route exact path="/words" component={Words} />)}
             {user && user.role === 'ADMIN' && (<Route exact path="/wordedit" component={WordEdit} />)}
             <Route exact path="/login" render={() => (<Login user={user} refetchUser={refetch}/>)} />
+            <Route exact path="/about" component={About} />
           </Switch>
+        {/*TODO: ADD footer with email adress*/}
         </div>
         )
       }}
