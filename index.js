@@ -35,6 +35,7 @@ async function signup(object, params, ctx, resolveInfo) {
       return user
   }
   catch(error){
+    console.log("HERE")
     throw new Error("Email address already in use")
   }
 
@@ -63,6 +64,9 @@ const resolvers = {
   // entry point to GraphQL service
   Mutation: {
     CreateUser(object, params, ctx, resolveInfo) {
+      return signup(object, params, ctx, resolveInfo)   
+    },
+    CreatePermanentUser(object, params, ctx, resolveInfo) {
       return signup(object, params, ctx, resolveInfo)   
     },
     UpgradeUser(object, params, ctx, resolveInfo) {
@@ -138,11 +142,24 @@ type Mutation {
 
     CreateUser(user_name: String! email: String! password: String! role: String! = "STUDENT"): User
 
+    CreatePermanentUser(user_name: String! email: String! password: String! role: String! = "STUDENT"): User
+        @cypher(
+        statement: """
+                CREATE(u:User:PermanentUser) 
+                SET
+                u.user_name = user_name, 
+                u.role = role, 
+                u.email = email, 
+                u.password = password
+                RETURN u
+               """
+      )
+
     UpgradeUser(userId: Int!, user_name: String! email: String! password: String!): User
     @cypher(
     statement:""" MATCH (u:User)
                   WHERE ID(u) = userId
-                  SET u.user_name = user_name, u.email = email, u.password = password, u.role = 'STUDENT'
+                  SET u.user_name = user_name, u.email = email, u.password = password, u.role = 'STUDENT', u:PermanentUser
                   RETURN u"""
     )
 

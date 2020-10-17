@@ -6,7 +6,7 @@ import { withRouter } from 'react-router-dom';
 
 const SIGNUP_MUTATION = gql`
   mutation SignupMutation($email: String!, $password: String!, $user_name: String!) {
-    CreateUser(email: $email, password: $password, user_name: $user_name) {
+    CreatePermanentUser(email: $email, password: $password, user_name: $user_name) {
       _id
       user_name
       password
