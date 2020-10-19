@@ -281,7 +281,7 @@ class Author extends Component {
                 Backspace
                 </button>
                 </div>
-                <Switch isOn={punctuationMode} handleToggle={() => 
+                <Switch isDisabled={false} isOn={punctuationMode} handleToggle={() => 
                   this.setState(prevState => ({punctuationMode: !prevState.punctuationMode}))} />
                   {punctuationMode ?
                     (

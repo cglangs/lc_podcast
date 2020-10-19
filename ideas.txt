@@ -250,6 +250,7 @@ RETURN i,a
 MATCH (i2:Interval)-[:NEXT_TIME]->(:Interval)<-[r:AUTHORING_INTERVAL]-(:Author)
 CALL apoc.refactor.to(r, i2) YIELD input, output
 RETURN 1
+                     <ProgressBar bgcolor={"rgb(245 109 109)"} completed={(data.getCurrentProgress.intervals_completed / (data.getCurrentProgress.total_word_count * 7)) * 100}  />
 
 
 CALL apoc.export.cypher.all(null)
@@ -306,6 +307,7 @@ const customStyles = {
 	}),
 
 }
+
 
 
 class Chinese extends Component {

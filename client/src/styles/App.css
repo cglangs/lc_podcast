@@ -24,6 +24,15 @@
   color: white;
 }
 
+.App-header-play {
+  background-color: #282B5B;
+  min-height: 100vh;
+  display: flex;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+
 .Author-dashboard{
   text-align: left;
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import '../styles/Switch.css';
 
-const Switch = ({ isOn, handleToggle }) => {
+const Switch = ({ isOn, handleToggle, isDisabled }) => {
   return (
     <>
       <input
@@ -10,6 +10,7 @@ const Switch = ({ isOn, handleToggle }) => {
         className="react-switch-checkbox"
         id={`react-switch-new`}
         type="checkbox"
+        disabled={isDisabled}
       />
       <label
         style={{ background: isOn && '#06D6A0' }}

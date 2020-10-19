@@ -3,6 +3,7 @@ import {Query, Mutation} from 'react-apollo';
 import gql from 'graphql-tag';
 import { Howl } from 'howler';
 import ProgressBar from './ProgressBar'
+import Switch from "./Switch";
 import Modal from './Modal'
 import { getCookie} from '../utils'
 
@@ -69,6 +70,7 @@ class Play extends Component {
     super()
     this.state = {
     	showAnswer: false,
+      showPinyin: false,
       isSubmitted: false,
       showCharacterDefinitions: false,
     	userResponse: '',
@@ -155,6 +157,7 @@ class Play extends Component {
      else if(this.state.isSubmitted && this.state.showAnswer){
       this.setState({
           showAnswer: false,
+          showPinyin: false,
           isSubmitted: false,
           userResponse: '',
           timeFetched: time_fetched,
@@ -165,6 +168,7 @@ class Play extends Component {
     } else{
         this.setState({
         showAnswer: true,
+        showPinyin: true,
         userResponse: correctResponse,
         isCorrect: true,
         }, () => {this.playSound()})
@@ -174,7 +178,7 @@ class Play extends Component {
   getText(text){
     return(
       <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-      <p style={{fontSize: "16px"}}>{text.english}</p> <i style={{"marginBlockStart": "1em", fontSize: "16px"}}>{text.italics}</i>
+      <p style={{fontSize: "14px"}}>{text.english}</p> <i style={{"marginBlockStart": "1em", fontSize: "14px"}}>{text.italics}</i>
       </div>
       )
   }
@@ -192,19 +196,14 @@ class Play extends Component {
             if(data.getNextSentence && data.getCurrentProgress){
               const sentenceId = parseInt(nextSentence._id)
                 return(
-                  <div style={{width: "50%"}}>
+                  <div style={{display: "flex", flexDirection: "row", "width": "100%", "marginLeft": "25%"}}>
+                  <div style={{"flexGrow": "2", "paddingTop": "20%"}}>
                   {role === "TESTER" && (<p style={{fontSize: "12px", "marginBottom": "20px"}}>You are currently not logged in. Log in to save your progress.</p>)}
-                    <div style={{width: "30%", "marginBottom": "100px", display: "inline-block"}}>
-                      <p style={{fontSize: "14px"}}>{"Words Learned: " + data.getCurrentProgress.words_learned + "/" + data.getCurrentProgress.total_word_count}</p>
-                      <p style={{fontSize: "14px"}}>{"Cards Completed: " + data.getCurrentProgress.intervals_completed}</p>
-                     <ProgressBar bgcolor={"rgb(245 109 109)"} completed={(data.getCurrentProgress.intervals_completed / (data.getCurrentProgress.total_word_count * 7)) * 100}  />
-                    </div>
                   <div>
                     {this.state.showAnswer && <button onClick={() => this.playSound(nextSentence._id, nextSentence.word_taught.word_id)}>replay audio</button>}
                     <Modal characters={nextSentence.word_taught.characters} show={this.state.showCharacterDefinitions} handleClose={this.hideModal}/>
                      <div style={{display: "flex", flexDirection: "column", justifyContent: "center"}}>
-                     {this.state.showAnswer && <p style={{fontSize: "16px"}}>{nextSentence.pinyin}</p>}
-                     {this.getText(nextSentence)}
+                     {this.state.showPinyin ? <p style={{fontSize: "14px"}}>{nextSentence.pinyin}</p> : this.getText(nextSentence)}
                       </div>
                      <Mutation mutation={MAKE_ATTEMPT} refetchQueries={[{query: GET_SENTENCE, variables: {userId: userId}}]}
                           update={(store) => {
@@ -212,6 +211,7 @@ class Play extends Component {
                               this.setState({
                               isSubmitted: true,
                               showAnswer: this.checkAnswer(nextSentence.word_taught.text),
+                              showPinyin: this.checkAnswer(nextSentence.word_taught.text),
                               isCorrect: this.checkAnswer(nextSentence.word_taught.text),
                               audio: this.setAudio(nextSentence.interval.interval_order, nextSentence.word_taught.word_id),
                               lastSentence: nextSentence
@@ -227,41 +227,45 @@ class Play extends Component {
                          >
                           {makeAttempt => (
                             <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-                             <p>{nextSentence.display_text.substr(0,nextSentence.display_text.indexOf('#'))}</p>
-                            <input style={{width: `${nextSentence.word_taught.text.length * 25}px`,fontSize: "calc(10px + 2vmin)", margin: "15px 5px 15px 5px", color: this.getFontColor()}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
+                             <p style={{fontSize: "40px"}}>{nextSentence.display_text.substr(0,nextSentence.display_text.indexOf('#'))}</p>
+                            <input style={{width: `${nextSentence.word_taught.text.length * 40}px`,fontSize: "40px", margin: "15px 5px 15px 5px", color: this.getFontColor(), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 this.submitAnswer(makeAttempt, refetch, userId, sentenceId, nextSentence.word_taught.text, nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught.text))
                               }
                             }}
                             />
-                             <p>{nextSentence.display_text.substr(nextSentence.display_text.indexOf('#') + 1,nextSentence.display_text.length)}</p>
+                             <p style={{fontSize: "40px"}}>{nextSentence.display_text.substr(nextSentence.display_text.indexOf('#') + 1,nextSentence.display_text.length)}</p>
                             <button
-                              style={{margin: "15px 5px 15px 5px"}}
+                              style={{margin: "15px 5px 15px 5px", height: "40px", "marginBlockStart": "3.2em"}}
                               onClick={() => 
                                 {
                                   this.submitAnswer(makeAttempt, refetch, userId, sentenceId, nextSentence.word_taught.text, nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught.text))
                                 }
                               }
                             >
-                            {this.state.showAnswer ? ">" : ">"}
+                            {!this.state.isSubmitted ? "Submit Answer" : (this.state.showAnswer ? "Next Phrase" : "Show Answer")}
                             </button>
                             </div>
                           )}
                     </Mutation>
                   </div>
                   <div>
-                    <p style={{fontSize: "24px"}}>{(nextSentence.clean_text !== nextSentence.word_taught.text) && nextSentence.word_taught.english}</p>
+                    <p>{(nextSentence.clean_text !== nextSentence.word_taught.text) && (this.state.showPinyin ? nextSentence.word_taught.pinyin : nextSentence.word_taught.english)}</p>
                   </div>
                   {this.state.showAnswer && nextSentence.word_taught.characters.length > 0 && <button onClick={() => this.setState(prevState => ({showCharacterDefinitions: !prevState.showCharacterDefinitions}))}>Character Definitions</button>}
-                  {(this.state.showAnswer &&  nextSentence.word_taught !==  nextSentence.word_taught.text) && (
-                      <div>
-                        <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-                        <p>{nextSentence.word_taught.text}</p>
-                        <p style={{marginLeft: "5px"}}>{nextSentence.word_taught.pinyin}</p>
-                        </div>
+              </div>
+              <div style={{"flexGrow": 1, "backgroundColor": "lightslategray"}}>
+                 <div style={{display: "flex", flexDirection: "column", justifyContent: "right"}}>
+                      <p style={{fontSize: "14px"}}>{"Words Learned: " + data.getCurrentProgress.words_learned + "/" + data.getCurrentProgress.total_word_count}</p>
+                      <p style={{fontSize: "14px"}}>{"Cards Completed: " + data.getCurrentProgress.intervals_completed}</p>
+                      <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
+                        <p style={{fontSize: "14px", "marginBlockStart": "0.5em"}}>{"English"}</p> 
+                        <Switch isDisabled={!this.state.showAnswer} isOn={this.state.showPinyin} handleToggle={() => this.setState(prevState => ({showPinyin: !prevState.showPinyin}))} />
+                        <p style={{fontSize: "14px", "marginBlockStart": "0.5em", "marginLeft": "5%"}}>{"Pinyin"}</p> 
                       </div>
-                  )} 
+                </div>
+              </div>
               </div>
             ) 
          }
@@ -280,7 +284,7 @@ class Play extends Component {
 	  const {userId, role} = this.state.user
 	  return (
 	    <div className="App">
-	      <header className="App-header">
+	      <header className="App-header-play">
           {userId !==null && typeof userId !== 'undefined' ? this.playDashboard(userId, role): 
               <Mutation mutation={CREATE_USER}
                 onCompleted={data => this._confirm(data)}
