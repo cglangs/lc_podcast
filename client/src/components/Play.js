@@ -226,7 +226,7 @@ class Play extends Component {
                   <div style={{"flexGrow": "2", "paddingTop": "20%"}}>
                   {role === "TESTER" && (<p style={{fontSize: "12px", "marginBottom": "20px"}}>You are currently not logged in. Log in to save your progress.</p>)}
                   <div>
-                    { !!userInterval && (<ProgressBar bgcolor={"rgb(245 109 109)"} completed={(userInterval/7) * 100}  />)}
+                    { !!userInterval && (<ProgressBar bgcolor={"rgb(245 109 109)"} completed={(userInterval/10) * 100}  />)}
                     <Modal characters={nextSentence.word_taught.characters} show={this.state.showCharacterDefinitions} handleClose={this.hideModal}/>
                      <div style={{display: "flex", justifyContent: "center"}}>
                       {this.state.showAnswer && <button  style={{"width": "25px", "height": "25px", "marginRight": "10px", "marginBlockStart": "1.8em"}} onClick={() => this.playSound(nextSentence._id, nextSentence.word_taught.word_id)}><img style={{"width": "100%"}} alt="replay audio" src="speaker_icon.svg"/></button>}
