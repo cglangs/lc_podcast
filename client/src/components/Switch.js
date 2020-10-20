@@ -1,21 +1,21 @@
 import React from 'react';
 import '../styles/Switch.css';
 
-const Switch = ({ isOn, handleToggle, isDisabled }) => {
+const Switch = ({switchId, isOn, handleToggle, isDisabled }) => {
   return (
     <>
       <input
         checked={isOn}
         onChange={handleToggle}
         className="react-switch-checkbox"
-        id={`react-switch-new`}
+        id={switchId ||`react-switch-new`}
         type="checkbox"
         disabled={isDisabled}
       />
       <label
         style={{ background: isOn && '#06D6A0' }}
         className="react-switch-label"
-        htmlFor={`react-switch-new`}
+        htmlFor={switchId ||`react-switch-new`}
       >
         <span className={`react-switch-button`} />
       </label>

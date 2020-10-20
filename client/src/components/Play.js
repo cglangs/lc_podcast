@@ -34,8 +34,11 @@ const GET_SENTENCE = gql`
 		_id
     time_fetched
 		raw_text
+    alt_raw_text
 		display_text
+    alt_display_text
     clean_text
+    alt_clean_text
 		pinyin
 		english
     italics
@@ -45,6 +48,7 @@ const GET_SENTENCE = gql`
 		word_taught{
       word_id
 			text
+      alt_text
 			english
       pinyin
 			characters{
@@ -77,6 +81,7 @@ class Play extends Component {
     this.state = {
     	showAnswer: false,
       showPinyin: false,
+      showTraditional: false,
       isSubmitted: false,
       showCharacterDefinitions: false,
     	userResponse: '',
@@ -126,7 +131,7 @@ class Play extends Component {
   };
 
 	checkAnswer(correct_response) {
-		return correct_response === this.state.userResponse
+		return correct_response.text === this.state.userResponse || correct_response.alt_text === this.state.userResponse
 	}
 
   setAudio(interval, word_id) {
@@ -215,7 +220,7 @@ class Play extends Component {
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
             if(data.getNextSentence && data.getCurrentProgress){
               const sentenceId = parseInt(nextSentence._id)
-              const userInterval = this.getUserInterval(this.state.showAnswer,this.checkAnswer(nextSentence.word_taught.text),nextSentence.current_learners[0])
+              const userInterval = this.getUserInterval(this.state.showAnswer,this.checkAnswer(nextSentence.word_taught),nextSentence.current_learners[0])
                 return(
                   <div style={{display: "flex", flexDirection: "row", "width": "100%", "marginLeft": "25%"}}>
                   <div style={{"flexGrow": "2", "paddingTop": "20%"}}>
@@ -224,7 +229,7 @@ class Play extends Component {
                     { !!userInterval && (<ProgressBar bgcolor={"rgb(245 109 109)"} completed={(userInterval/7) * 100}  />)}
                     <Modal characters={nextSentence.word_taught.characters} show={this.state.showCharacterDefinitions} handleClose={this.hideModal}/>
                      <div style={{display: "flex", justifyContent: "center"}}>
-                      {this.state.showAnswer && <button  style={{"width": "25px", "height": "25px", "marginRight": "10px", "marginBlockStart": "1.8em"}} onClick={() => this.playSound(nextSentence._id, nextSentence.word_taught.word_id)}><img style={{"width": "100%"}} src="speaker_icon.svg"/></button>}
+                      {this.state.showAnswer && <button  style={{"width": "25px", "height": "25px", "marginRight": "10px", "marginBlockStart": "1.8em"}} onClick={() => this.playSound(nextSentence._id, nextSentence.word_taught.word_id)}><img style={{"width": "100%"}} alt="replay audio" src="speaker_icon.svg"/></button>}
                      {this.state.showPinyin ? <p style={{fontSize: "calc(10px + 2vmin)"}}>{nextSentence.pinyin}</p> : this.getText(nextSentence)}
                       </div>
                      <Mutation mutation={MAKE_ATTEMPT} refetchQueries={[{query: GET_SENTENCE, variables: {userId: userId}}]}
@@ -232,13 +237,13 @@ class Play extends Component {
                             if(!this.state.isSubmitted){
                               this.setState({
                               isSubmitted: true,
-                              showAnswer: this.checkAnswer(nextSentence.word_taught.text),
-                              showPinyin: this.checkAnswer(nextSentence.word_taught.text),
-                              isCorrect: this.checkAnswer(nextSentence.word_taught.text),
+                              showAnswer: this.checkAnswer(nextSentence.word_taught),
+                              showPinyin: this.checkAnswer(nextSentence.word_taught),
+                              isCorrect: this.checkAnswer(nextSentence.word_taught),
                               audio: this.setAudio(nextSentence.interval.interval_order, nextSentence.word_taught.word_id),
                               lastSentence: nextSentence
                               }, () => {
-                                if(this.checkAnswer(nextSentence.word_taught.text)){
+                                if(this.checkAnswer(nextSentence.word_taught)){
                                   this.playSound()
                                 }
                               })
@@ -249,20 +254,20 @@ class Play extends Component {
                          >
                           {makeAttempt => (
                             <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-                             <p style={{fontSize: "40px"}}>{nextSentence.display_text.substr(0,nextSentence.display_text.indexOf('#'))}</p>
+                             <p style={{fontSize: "40px"}}>{this.state.showTraditional ? nextSentence.alt_display_text.substr(0,nextSentence.alt_display_text.indexOf('#')) : nextSentence.display_text.substr(0,nextSentence.display_text.indexOf('#'))}</p>
                             <input style={{width: `${nextSentence.word_taught.text.length * 40}px`,fontSize: "40px", margin: "15px 5px 15px 5px", color: this.getFontColor(), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
-                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, nextSentence.word_taught.text, nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught.text))
+                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (this.state.showTraditional ? nextSentence.word_taught.alt_text : nextSentence.word_taught.text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
                               }
                             }}
                             />
-                             <p style={{fontSize: "40px"}}>{nextSentence.display_text.substr(nextSentence.display_text.indexOf('#') + 1,nextSentence.display_text.length)}</p>
+                             <p style={{fontSize: "40px"}}>{this.state.showTraditional ? nextSentence.alt_display_text.substr(nextSentence.alt_display_text.indexOf('#') + 1,nextSentence.alt_display_text.length) : nextSentence.display_text.substr(nextSentence.display_text.indexOf('#') + 1,nextSentence.display_text.length)}</p>
                             <button
                               style={{margin: "15px 5px 15px 5px", height: "40px", "marginBlockStart": "3.2em"}}
                               onClick={() => 
                                 {
-                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, nextSentence.word_taught.text, nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught.text))
+                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (this.state.showTraditional ? nextSentence.word_taught.alt_text : nextSentence.word_taught.text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
                                 }
                               }
                             >
@@ -282,8 +287,13 @@ class Play extends Component {
                       <p style={{fontSize: "14px"}}>{"Words Learned: " + data.getCurrentProgress.words_learned + "/" + data.getCurrentProgress.total_word_count}</p>
                       <p style={{fontSize: "14px"}}>{"Cards Completed: " + data.getCurrentProgress.intervals_completed}</p>
                       <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
+                        <p style={{fontSize: "14px", "marginBlockStart": "0.5em"}}>{"Simplified"}</p> 
+                        <Switch switchId={`simplified-traditional-switch`} isDisabled={false} isOn={this.state.showTraditional} handleToggle={() => this.setState(prevState => ({showTraditional: !prevState.showTraditional}))} />
+                        <p style={{fontSize: "14px", "marginBlockStart": "0.5em", "marginLeft": "5%"}}>{"Traditional"}</p> 
+                      </div>
+                      <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center", "marginTop": "20px"}}>
                         <p style={{fontSize: "14px", "marginBlockStart": "0.5em"}}>{"English"}</p> 
-                        <Switch isDisabled={!this.state.showAnswer} isOn={this.state.showPinyin} handleToggle={() => this.setState(prevState => ({showPinyin: !prevState.showPinyin}))} />
+                        <Switch switchId={`english-pinyin-switch`} isDisabled={!this.state.showAnswer} isOn={this.state.showPinyin} handleToggle={() => this.setState(prevState => ({showPinyin: !prevState.showPinyin}))} />
                         <p style={{fontSize: "14px", "marginBlockStart": "0.5em", "marginLeft": "5%"}}>{"Pinyin"}</p> 
                       </div>
                 </div>
