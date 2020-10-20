@@ -208,8 +208,8 @@ class Play extends Component {
     return(
       <Query query={GET_SENTENCE} variables={{userId: userId}}>
           {({ loading, error, data, refetch }) => {
-            if (loading) return <div style={{"marginTop": "30%"}}>Fetching</div>
-            if (error) return <div style={{"marginTop": "30%"}}>error</div>
+            if (loading) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>Fetching Sentences</div>
+            if (error) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>error</div>
             const nextSentence = this.state.lastSentence ||data.getNextSentence
             //Don't rerender when waiting for refetch or when there is no result
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
@@ -312,7 +312,7 @@ class Play extends Component {
                 onCompleted={data => this._confirm(data)}
                 >
               {createUser => (
-              <div style={{"marginTop": "25%"}}>
+              <div style={{"marginTop": "25%",marginLeft: "30%"}}>
               <p>Remember to set your keyboard's language to Chinese</p>
               <button onClick={()=> createUser({variables:{user_name: "", email: "", password: "", role: "TESTER"}})}>BEGIN</button>
               </div>
