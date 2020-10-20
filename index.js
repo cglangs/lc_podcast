@@ -35,7 +35,6 @@ async function signup(object, params, ctx, resolveInfo) {
       return user
   }
   catch(error){
-    console.log("HERE")
     throw new Error("Email address already in use")
   }
 
@@ -58,6 +57,12 @@ async function login(object, params, ctx, resolveInfo) {
   ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user._id, role: user.role }, REFRESH_SECRET), { maxAge: 7 * 60 * 60 * 1000 })
   ctx.req.res.cookie("access-token", jwt.sign({ userId: user._id, role: user.role }, ACCESS_SECRET), { maxAge: 15 * 1000 })
   return user
+}
+
+async function processSentence (object, params, ctx, resolveInfo){
+  var sentence = await neo4jgraphql(object, params, ctx, resolveInfo)
+  sentence.current_learners = sentence.current_learners.filter((learner)=> learner.User._id === params.userId)
+  return sentence
 }
 
 const resolvers = {
@@ -86,7 +91,7 @@ const resolvers = {
   Query: {
      getNextSentence(object, params, ctx, resolveInfo){
         params.userId = ctx.req.userId
-        const sentence = neo4jgraphql(object, params, ctx, resolveInfo)
+        const sentence =processSentence(object, params, ctx, resolveInfo)
         return sentence
     },
      getCurrentProgress(object, params, ctx, resolveInfo){
@@ -380,11 +385,17 @@ type Sentence {
   english: String!
   italics: String
   time_fetched: String @cypher(statement: """RETURN toString(time())""")
-  current_users: [User] @relation(name: "LEARNING", direction: IN)
+  current_learners: [Learner]
   level: Level @relation(name: "SHOWN_IN" direction: OUT)
   interval: Interval @relation(name: "AT_INTERVAL" direction: OUT)
 	words_contained: [ContainedWord!]!
 	word_taught: Word! @relation(name: "TEACHES", direction: OUT)
+}
+
+type Learner @relation(name:"LEARNING") {
+  from: User
+  to: Sentence
+  CURRENT_TIME_INTERVAL: Int!
 }
 
 type ContainedWord @relation(name:"CONTAINS") {

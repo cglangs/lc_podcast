@@ -52,6 +52,12 @@ const GET_SENTENCE = gql`
 				english
 			}
 		}
+    current_learners{
+      CURRENT_TIME_INTERVAL
+      User{
+        _id
+      }
+    }
 
 	}
 
@@ -178,9 +184,23 @@ class Play extends Component {
   getText(text){
     return(
       <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-      <p style={{fontSize: "14px"}}>{text.english}</p> <i style={{"marginBlockStart": "1em", fontSize: "14px"}}>{text.italics}</i>
+      <p style={{fontSize: "calc(10px + 2vmin)"}}>{text.english}</p> <i style={{"marginBlockStart": "1em", fontSize: "calc(10px + 2vmin)"}}>{text.italics}</i>
       </div>
       )
+  }
+
+  getUserInterval(showAnswer, isCorrect, thisUser){
+    var progress
+    if(!thisUser){
+      progress = 0
+    } else{
+      progress = thisUser.CURRENT_TIME_INTERVAL
+    }
+    if(showAnswer && isCorrect){
+      progress = progress + 1
+    }
+    return progress
+
   }
 
 
@@ -195,15 +215,17 @@ class Play extends Component {
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
             if(data.getNextSentence && data.getCurrentProgress){
               const sentenceId = parseInt(nextSentence._id)
+              const userInterval = this.getUserInterval(this.state.showAnswer,this.checkAnswer(nextSentence.word_taught.text),nextSentence.current_learners[0])
                 return(
                   <div style={{display: "flex", flexDirection: "row", "width": "100%", "marginLeft": "25%"}}>
                   <div style={{"flexGrow": "2", "paddingTop": "20%"}}>
                   {role === "TESTER" && (<p style={{fontSize: "12px", "marginBottom": "20px"}}>You are currently not logged in. Log in to save your progress.</p>)}
                   <div>
+                    { !!userInterval && (<ProgressBar bgcolor={"rgb(245 109 109)"} completed={(userInterval/7) * 100}  />)}
                     {this.state.showAnswer && <button onClick={() => this.playSound(nextSentence._id, nextSentence.word_taught.word_id)}>replay audio</button>}
                     <Modal characters={nextSentence.word_taught.characters} show={this.state.showCharacterDefinitions} handleClose={this.hideModal}/>
                      <div style={{display: "flex", flexDirection: "column", justifyContent: "center"}}>
-                     {this.state.showPinyin ? <p style={{fontSize: "14px"}}>{nextSentence.pinyin}</p> : this.getText(nextSentence)}
+                     {this.state.showPinyin ? <p style={{fontSize: "calc(10px + 2vmin)"}}>{nextSentence.pinyin}</p> : this.getText(nextSentence)}
                       </div>
                      <Mutation mutation={MAKE_ATTEMPT} refetchQueries={[{query: GET_SENTENCE, variables: {userId: userId}}]}
                           update={(store) => {
