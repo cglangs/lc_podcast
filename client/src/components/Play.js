@@ -149,10 +149,17 @@ class Play extends Component {
     }
   }
 
-  getFontColor(){
+  stopSound(){
+    if(this.state.audio){
+        this.state.audio.stop()
+    }
+
+  }
+
+  getFontColor(word){
     var color = 'black'
     if(this.state.isSubmitted){
-      color = this.state.isCorrect ? 'green' : 'red'
+      color = this.checkAnswer(word) ? 'green' : 'red'
     }
     return color
   }
@@ -173,15 +180,13 @@ class Play extends Component {
           userResponse: '',
           timeFetched: time_fetched,
           showCharacterDefinitions: false,
-          audio: null,
           lastSentence: null
-      })
+      }, () => {this.stopSound()})
     } else{
         this.setState({
         showAnswer: true,
         showPinyin: true,
         userResponse: correctResponse,
-        isCorrect: true,
         }, () => {this.playSound()})
     }
   }
@@ -216,11 +221,12 @@ class Play extends Component {
             if (loading) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>Fetching Sentences</div>
             if (error) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>error</div>
             const nextSentence = this.state.lastSentence ||data.getNextSentence
+            console.log(nextSentence)
             //Don't rerender when waiting for refetch or when there is no result
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
             if(data.getNextSentence && data.getCurrentProgress){
               const sentenceId = parseInt(nextSentence._id)
-              const userInterval = this.getUserInterval(this.state.showAnswer,this.checkAnswer(nextSentence.word_taught),nextSentence.current_learners[0])
+              const userInterval = this.getUserInterval(this.state.showAnswer,this.state.isCorrect,nextSentence.current_learners[0])
                 return(
                   <div style={{display: "flex", flexDirection: "row", "width": "100%", "marginLeft": "25%"}}>
                   <div style={{"flexGrow": "2", "paddingTop": "20%"}}>
@@ -255,7 +261,7 @@ class Play extends Component {
                           {makeAttempt => (
                             <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
                              <p style={{fontSize: "40px"}}>{this.state.showTraditional ? nextSentence.alt_display_text.substr(0,nextSentence.alt_display_text.indexOf('#')) : nextSentence.display_text.substr(0,nextSentence.display_text.indexOf('#'))}</p>
-                            <input style={{width: `${nextSentence.word_taught.text.length * 40}px`,fontSize: "40px", margin: "15px 5px 15px 5px", color: this.getFontColor(), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
+                            <input style={{width: `${nextSentence.word_taught.text.length * 40}px`,fontSize: "40px", margin: "15px 5px 15px 5px", color: this.getFontColor(nextSentence.word_taught), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (this.state.showTraditional ? nextSentence.word_taught.alt_text : nextSentence.word_taught.text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
