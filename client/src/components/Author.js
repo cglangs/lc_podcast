@@ -73,9 +73,6 @@ const ADD_SENTENCE = gql`
 
 const REPLACE_SENTENCE = gql`
   mutation replacesentence($rawSentenceTextSimplified: String!, $cleanSentenceTextSimplified: String!, $displaySentenceTextSimplified: String!,$rawSentenceTextTraditional: String!, $cleanSentenceTextTraditional: String!, $displaySentenceTextTraditional: String!, $pinyin: String!, $english: String!, $italics: String! $wordToTeachId: Int!, $sentenceContainedWordListSimplified: [String!], $currentInterval: Int!, $formerSentenceRawText: String!) {
-    DeleteSentence(raw_text: $formerSentenceRawText){
-      raw_text
-    }
     CreateSentence(raw_text: $rawSentenceTextSimplified, clean_text: $cleanSentenceTextSimplified, display_text: $displaySentenceTextSimplified, alt_raw_text: $rawSentenceTextTraditional, alt_clean_text: $cleanSentenceTextTraditional, alt_display_text: $displaySentenceTextTraditional, pinyin: $pinyin, english: $english,, italics: $italics) {
       raw_text
     }
@@ -94,6 +91,12 @@ const REPLACE_SENTENCE = gql`
     AddSentenceDependencies(src_sentence: $rawSentenceTextSimplified, dest_words: $sentenceContainedWordListSimplified){
       raw_text
       display_text
+    }
+    TransferUserProgress(src_sentence: $formerSentenceRawText, dest_sentence: $rawSentenceTextSimplified){
+      raw_text
+    }
+    DeleteSentence(raw_text: $formerSentenceRawText){
+      raw_text
     }
   }
 

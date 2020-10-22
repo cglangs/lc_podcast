@@ -145,6 +145,16 @@ type Mutation {
                        RETURN s """
     )
 
+    TransferUserProgress(src_sentence: String! dest_sentence: String!): Sentence
+    @cypher(
+    statement:"""       MATCH (src:Sentence {raw_text: src_sentence})<-[r:LEARNING]-(:User)
+                        MATCH (dest:Sentence {raw_text: dest_sentence)
+                        WITH dest,r
+                        CALL apoc.refactor.to(r, dest) YIELD input
+                        RETURN dest
+                         """
+    )    
+
     CreateUser(user_name: String! email: String! password: String! role: String! = "STUDENT"): User
 
     CreatePermanentUser(user_name: String! email: String! password: String! role: String! = "STUDENT"): User
@@ -193,7 +203,7 @@ type Mutation {
                   CALL apoc.do.case(
                   [
                   NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND NOT isCorrect, 'DELETE r, rw',
-                  NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect, 'SET r.STEP_AT_INTERVAL = 1, r.CURRENT_TIME_INTERVAL = 1',
+                  NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect, 'SET r.STEP_AT_INTERVAL = 2, r.CURRENT_TIME_INTERVAL = 1',
                   EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND r.STEP_AT_INTERVAL < 3,'SET r.STEP_AT_INTERVAL = r.STEP_AT_INTERVAL + 1, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1',
                   EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND EXISTS(nextInterval.interval_order) AND r.STEP_AT_INTERVAL = 3,'SET r.STEP_AT_INTERVAL = 1, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1 WITH r,s2 CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
                   EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND NOT EXISTS(nextInterval.interval_order) AND r.STEP_AT_INTERVAL = 3,'CREATE (u)-[:LEARNED]->(w) DELETE r,rw'
@@ -399,6 +409,7 @@ type Learner @relation(name:"LEARNING") {
   from: User
   to: Sentence
   CURRENT_TIME_INTERVAL: Int!
+  STEP_AT_INTERVAL: Int!
 }
 
 type ContainedWord @relation(name:"CONTAINS") {

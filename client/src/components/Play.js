@@ -58,6 +58,7 @@ const GET_SENTENCE = gql`
 		}
     current_learners{
       CURRENT_TIME_INTERVAL
+      STEP_AT_INTERVAL
       User{
         _id
       }
@@ -199,10 +200,24 @@ class Play extends Component {
       )
   }
 
+  getUserIntervalStep(showAnswer, isCorrect, thisUser){
+    var progress
+    if(!thisUser){
+      progress = 1
+    } else{
+      progress = thisUser.STEP_AT_INTERVAL
+    }
+    if(showAnswer && isCorrect){
+      progress = progress + 1
+    }
+    return progress
+
+  }
+
   getUserInterval(showAnswer, isCorrect, thisUser){
     var progress
     if(!thisUser){
-      progress = 0
+      progress = 1
     } else{
       progress = thisUser.CURRENT_TIME_INTERVAL
     }
@@ -221,18 +236,18 @@ class Play extends Component {
             if (loading) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>Fetching Sentences</div>
             if (error) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>error</div>
             const nextSentence = this.state.lastSentence ||data.getNextSentence
-            console.log(nextSentence)
             //Don't rerender when waiting for refetch or when there is no result
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
             if(data.getNextSentence && data.getCurrentProgress){
               const sentenceId = parseInt(nextSentence._id)
-              const userInterval = this.getUserInterval(this.state.showAnswer,this.state.isCorrect,nextSentence.current_learners[0])
+              const userIntervalStep = this.getUserIntervalStep(this.state.showAnswer,this.state.isCorrect,nextSentence.current_learners[0])
+              const userInterval = this.getUserIntervalStep(this.state.showAnswer,this.state.isCorrect,nextSentence.current_learners[0])
                 return(
-                  <div style={{display: "flex", flexDirection: "row", "width": "100%", "marginLeft": "25%"}}>
-                  <div style={{"flexGrow": "2", "paddingTop": "20%"}}>
+                  <div style={{display: "flex", flexDirection: "row", "width": "100%"}}>
+                  <div style={{"flexGrow": "4", "paddingTop": "20%"}}>
                   {role === "TESTER" && (<p style={{fontSize: "12px", "marginBottom": "20px"}}>You are currently not logged in. Log in to save your progress.</p>)}
-                  <div>
-                    { !!userInterval && (<ProgressBar bgcolor={"rgb(245 109 109)"} completed={(userInterval/10) * 100}  />)}
+                  <div style={{display: "inline-block", "text-align": "center"}}>
+                    <ProgressBar bgcolor={"rgb(245 109 109)"} stepAtInterval={userIntervalStep} currentTimeInterval={userInterval} intervalOrder={nextSentence.interval.interval_order} />
                     <Modal characters={nextSentence.word_taught.characters} show={this.state.showCharacterDefinitions} handleClose={this.hideModal}/>
                      <div style={{display: "flex", justifyContent: "center"}}>
                       {this.state.showAnswer && <button  style={{"width": "25px", "height": "25px", "marginRight": "10px", "marginBlockStart": "1.8em"}} onClick={() => this.playSound(nextSentence._id, nextSentence.word_taught.word_id)}><img style={{"width": "100%"}} alt="replay audio" src="speaker_icon.svg"/></button>}
