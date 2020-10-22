@@ -1,9 +1,10 @@
 import React from "react";
 
 const ProgressBar = (props) => {
-  const { bgcolor, stepAtInterval, currentTimeInterval, intervalOrder } = props;
+  const {stepAtInterval, currentTimeInterval, intervalOrder } = props;
+  console.log(props)
 
-  const dotStyleEmpty = {
+const dotStyleEmpty = {
   height: "10px",
   width: "10px",
   "marginRight": "10px",
@@ -12,20 +13,45 @@ const ProgressBar = (props) => {
   "display": "inline-block"
 }
 
-  const dotStyleFull = {
+const textStyle = {
+  "margin-block-start": "1.2em",
+  "font-size": "10px",
+  "color": "aquamarine"
+}
+
+const dotGroup = {
+  "marginRight": "10px"
+}
+
+const dotStyleFullInterval1 = {
   height: "10px",
   width: "10px",
   "marginRight": "10px",
-  "background-color": bgcolor,
+  "backgroundColor": "rgb(85 233 255)",
   "border-radius": "50%",
   "display": "inline-block"
 }
 
-const textStyle = {
-  "margin-block-start": "0em",
-  "font-size": "10px",
-  "color": "aquamarine"
+const dotStyleFullInterval2 = {
+  height: "10px",
+  width: "10px",
+  "marginRight": "10px",
+  "backgroundColor": "rgb(255 97 255)",
+  "border-radius": "50%",
+  "display": "inline-block"
 }
+
+const dotStyleFullInterval3 = {
+  height: "10px",
+  width: "10px",
+  "marginRight": "10px",
+  "backgroundColor": "rgb(247 255 0)",
+  "border-radius": "50%",
+  "display": "inline-block"
+}
+
+
+
 
 function displayNewStatus(){
   var textToShow = ""
@@ -41,10 +67,22 @@ function displayNewStatus(){
 
 
   return (
-    <div style={{display: "flex", justifyContent: "flex-start"}}>
-      <span style={stepAtInterval >= 2 ? dotStyleFull : dotStyleEmpty}></span>
-      <span style={stepAtInterval >= 3 ? dotStyleFull : dotStyleEmpty}></span>
-      <span style={currentTimeInterval/3 > intervalOrder ? dotStyleFull : dotStyleEmpty}></span>
+    <div style={{display: "flex", justifyContent: "flex-start", flexDirection: "row"}}>
+      <div style={dotGroup}>
+      <span style={currentTimeInterval >= 1 ? dotStyleFullInterval1 : dotStyleEmpty}></span>
+      <span style={currentTimeInterval >= 2 ? dotStyleFullInterval1 : dotStyleEmpty}></span>
+      <span style={currentTimeInterval >= 3 ? dotStyleFullInterval1 : dotStyleEmpty}></span>
+      </div>
+      <div style={dotGroup}>
+      <span style={currentTimeInterval >= 4 ? dotStyleFullInterval2 : dotStyleEmpty}></span>
+      <span style={currentTimeInterval >= 5 ? dotStyleFullInterval2 : dotStyleEmpty}></span>
+      <span style={currentTimeInterval >= 6 ? dotStyleFullInterval2 : dotStyleEmpty}></span>
+      </div>
+      <div style={dotGroup}>
+      <span style={currentTimeInterval >= 7 ? dotStyleFullInterval3 : dotStyleEmpty}></span>
+      <span style={currentTimeInterval >= 8 ? dotStyleFullInterval3 : dotStyleEmpty}></span>
+      <span style={currentTimeInterval >= 9 ? dotStyleFullInterval3 : dotStyleEmpty}></span>
+      </div>
       <p style={textStyle}>{displayNewStatus()}</p>
     </div>
   );
