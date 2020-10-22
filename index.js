@@ -148,7 +148,7 @@ type Mutation {
     TransferUserProgress(src_sentence: String! dest_sentence: String!): Sentence
     @cypher(
     statement:"""       MATCH (src:Sentence {raw_text: src_sentence})<-[r:LEARNING]-(:User)
-                        MATCH (dest:Sentence {raw_text: dest_sentence)
+                        MATCH (dest:Sentence {raw_text: dest_sentence})
                         WITH dest,r
                         CALL apoc.refactor.to(r, dest) YIELD input
                         RETURN dest
