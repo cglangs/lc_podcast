@@ -32,6 +32,19 @@
   color: white;
 }
 
+.App-header-about {
+  background-color: #282B5B;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: 10%;
+  font-size: calc(10px + 1vmin);
+  color: white;
+  padding: 0 10%;
+  text-align: left;
+}
+
 
 .Author-dashboard{
   text-align: left;
