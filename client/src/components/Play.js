@@ -352,6 +352,9 @@ class Play extends Component {
               )}
             </Mutation>}
 	      </header>
+          <footer>
+            <span><b>Contact:</b> <a href="mailto:clozechinese@gmail.com">clozechinese@gmail.com</a></span> 
+          </footer>
 	    </div>
 	  );		
 	}

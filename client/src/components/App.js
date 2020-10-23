@@ -54,7 +54,6 @@ class App extends Component {
             <Route exact path="/about" component={About} />
             <Route exact path="/citations" component={Citations} />
           </Switch>
-        {/*TODO: ADD footer with email adress*/}
         </div>
         )
       }}

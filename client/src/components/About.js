@@ -23,8 +23,7 @@ class About extends Component {
 		  <li>Get as much feedback as possible on the app: What don’t you like about it? What could be better?</li>
 		  <li>Find a better method for creating audio</li>
 		</ul>
-		<p><b>Contact me:</b></p>
-		<p>fakeemail@jmail.com</p>
+		<span><p><b>Contact me:</b></p> <a href="mailto:clozechinese@gmail.com" style={{"color":"aquamarine"}}>clozechinese@gmail.com</a></span> 
 		<p>Please email me if you have any feedback or if you could get me in touch with a potential collaborator. I would be happy to chat with you!</p>
         </header>
       </div>

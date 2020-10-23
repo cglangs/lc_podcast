@@ -10,7 +10,7 @@ class Header extends Component {
 
     return (
       <div>
-        <div style={{"marginBottom": "10px"}}>Cloze Chinese</div>
+        <div style={{"marginBottom": "10px"}}>Cloze Chinese Prototype</div>
         <Link to="/">
             Learn
           </Link>
