@@ -10,9 +10,9 @@ class Header extends Component {
 
     return (
       <div>
-        <div>Chinese App</div>
+        <div style={{"marginBottom": "10px"}}>Cloze Chinese</div>
         <Link to="/">
-            play
+            Learn
           </Link>
           <div>
         {isLoggedIn && this.props.user && this.props.user.role === 'ADMIN' && (
@@ -34,10 +34,17 @@ class Header extends Component {
             </div>
           </div>
           )}
-          </div>  
-        <Link to="/about">
-            about
-        </Link>
+          </div>
+        <div>  
+          <Link to="/about">
+              about
+          </Link>
+        </div> 
+        <div>          
+          <Link to="/citations">
+              citations
+          </Link>
+        </div>
         <div className="flex flex-fixed">
           {isLoggedIn && this.props.user && this.props.user.role !== 'TESTER' ? (
             <div

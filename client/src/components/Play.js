@@ -347,7 +347,7 @@ class Play extends Component {
               {createUser => (
               <div style={{"marginTop": "25%",marginLeft: "30%"}}>
               <p>Remember to set your keyboard's language to Chinese</p>
-              <button onClick={()=> createUser({variables:{user_name: "", email: "", password: "", role: "TESTER"}})}>BEGIN</button>
+              <button onClick={()=> createUser({variables:{user_name: "", email: "", password: "", role: "TESTER"}})}>Start Learning</button>
               </div>
               )}
             </Mutation>}
