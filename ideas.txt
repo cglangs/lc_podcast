@@ -101,7 +101,9 @@ CALL apoc.export.cypher.all("all-plain.cypher", {
 YIELD file, batches, source, format, nodes, relationships, properties, time, rows, batchSize
 RETURN file, batches, source, format, nodes, relationships, properties, time, rows, batchSize;
 
+ssh -i "cdg_ec2_keys.pem" ec2-user@ec2-54-162-39-62.compute-1.amazonaws.com
 
+scp -i "cdg_ec2_keys.pem" ec2-user@ec2-54-162-39-62.compute-1.amazonaws.com:neo4j/import/all-plain.cypher ~/Documents/node_projects/lc_podcast/cypher/
 
 MATCH(s:Sentence)-[rel:CONTAINS]->(w1:Word {text: '他们'})
 DELETE rel
