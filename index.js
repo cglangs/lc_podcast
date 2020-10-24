@@ -199,7 +199,7 @@ type Mutation {
                   OPTIONAL MATCH (w)<-[:TEACHES]-(s2:Sentence)-[:AT_INTERVAL]->(nextInterval:Interval)<-[:NEXT_TIME]-(:Interval)<-[:AT_INTERVAL]-(s)
                   MERGE (u)-[r:LEARNING]->(s)
                   SET r.last_seen = datetime()
-                  WITH u,s,s2,w,r,rw,isCorrect,nextInterval
+                  WITH u,s,s2,w,r,isCorrect,nextInterval
                   CALL apoc.do.case(
                   [
                   NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND NOT isCorrect, 'DELETE r',
