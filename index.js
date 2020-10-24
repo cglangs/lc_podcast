@@ -197,16 +197,16 @@ type Mutation {
     statement:""" MATCH(u:User),(s:Sentence)-[:TEACHES]->(w:Word)
                   WHERE ID(u) = userId AND ID(s) = sentenceId
                   OPTIONAL MATCH (w)<-[:TEACHES]-(s2:Sentence)-[:AT_INTERVAL]->(nextInterval:Interval)<-[:NEXT_TIME]-(:Interval)<-[:AT_INTERVAL]-(s)
-                  MERGE (w)<-[rw:STUDYING]-(u)-[r:LEARNING]->(s)
+                  MERGE (u)-[r:LEARNING]->(s)
                   SET r.last_seen = datetime()
                   WITH u,s,s2,w,r,rw,isCorrect,nextInterval
                   CALL apoc.do.case(
                   [
-                  NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND NOT isCorrect, 'DELETE r, rw',
+                  NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND NOT isCorrect, 'DELETE r',
                   NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect, 'SET r.STEP_AT_INTERVAL = 2, r.CURRENT_TIME_INTERVAL = 1',
                   EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND r.STEP_AT_INTERVAL < 3,'SET r.STEP_AT_INTERVAL = r.STEP_AT_INTERVAL + 1, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1',
                   EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND EXISTS(nextInterval.interval_order) AND r.STEP_AT_INTERVAL = 3,'SET r.STEP_AT_INTERVAL = 1, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1 WITH r,s2 CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
-                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND NOT EXISTS(nextInterval.interval_order) AND r.STEP_AT_INTERVAL = 3,'CREATE (u)-[:LEARNED]->(w) DELETE r,rw'
+                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND NOT EXISTS(nextInterval.interval_order) AND r.STEP_AT_INTERVAL = 3,'CREATE (u)-[:LEARNED]->(w) DELETE r'
                   ],'',{r:r, rw:rw, s2:s2, u:u, w:w}) YIELD value
                   RETURN 1
                     """
@@ -235,7 +235,7 @@ type Query {
                   NOT EXISTS((u)-[:LEARNED]->(w)) AND
                   ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order) AND
                   (
-                    (NOT EXISTS((u)-[:STUDYING]->(w)) AND i.interval_order = 1) OR 
+                    (NOT EXISTS((u)-[:LEARNING]->()-[:TEACHES]->(w)) AND i.interval_order = 1) OR 
                     EXISTS((u)-[:LEARNING]->(s))
                   )
                   CALL {

@@ -234,7 +234,7 @@ class Play extends Component {
     return(
       <Query query={GET_SENTENCE} variables={{userId: userId}}>
           {({ loading, error, data, refetch }) => {
-            if (loading) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>Fetching Sentences</div>
+            if (loading) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>Loading</div>
             if (error) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>error</div>
             const nextSentence = this.state.lastSentence ||data.getNextSentence
             console.log(nextSentence)
