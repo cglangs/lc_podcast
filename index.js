@@ -207,7 +207,7 @@ type Mutation {
                   EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND r.STEP_AT_INTERVAL < 3,'SET r.STEP_AT_INTERVAL = r.STEP_AT_INTERVAL + 1, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1',
                   EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND EXISTS(nextInterval.interval_order) AND r.STEP_AT_INTERVAL = 3,'SET r.STEP_AT_INTERVAL = 1, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1 WITH r,s2 CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
                   EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND NOT EXISTS(nextInterval.interval_order) AND r.STEP_AT_INTERVAL = 3,'CREATE (u)-[:LEARNED]->(w) DELETE r'
-                  ],'',{r:r, rw:rw, s2:s2, u:u, w:w}) YIELD value
+                  ],'',{r:r, s2:s2, u:u, w:w}) YIELD value
                   RETURN 1
                     """
     )
