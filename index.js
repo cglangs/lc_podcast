@@ -199,15 +199,15 @@ type Mutation {
                   OPTIONAL MATCH (w)<-[:TEACHES]-(s2:Sentence)-[:AT_INTERVAL]->(nextInterval:Interval)<-[:NEXT_TIME]-(:Interval)<-[:AT_INTERVAL]-(s)
                   MERGE (u)-[r:LEARNING]->(s)
                   SET r.last_seen = datetime()
-                  WITH u,s,s2,w,r,isCorrect,nextInterval
+                  WITH u,s,s2,w,r,isCorrect,COALESCE(nextInterval.interval_order,0) AS nextIntervalOrder
                   CALL apoc.do.case(
                   [
                   NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND NOT isCorrect, 'DELETE r',
                   NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect, 'SET r.STEP_AT_INTERVAL = 2, r.CURRENT_TIME_INTERVAL = 1',
                   EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND r.STEP_AT_INTERVAL < 3,'SET r.STEP_AT_INTERVAL = r.STEP_AT_INTERVAL + 1, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1',
-                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND EXISTS(nextInterval.interval_order) AND r.STEP_AT_INTERVAL = 3,'SET r.STEP_AT_INTERVAL = 1, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1 WITH r,s2 CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
-                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND NOT EXISTS(nextInterval.interval_order) AND r.STEP_AT_INTERVAL = 3,'CREATE (u)-[:LEARNED]->(w) DELETE r'
-                  ],'',{r:r, s2:s2, u:u, w:w}) YIELD value
+                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND nextIntervalOrder > 0 AND r.STEP_AT_INTERVAL = 3,'SET r.STEP_AT_INTERVAL = 1, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1 WITH r,s2 CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
+                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND nextIntervalOrder = 0 AND r.STEP_AT_INTERVAL = 3,'CREATE (u)-[:LEARNED]->(w) DELETE r'
+                  ],'',{r:r, s2:s2, u:u, w:w, nextIntervalOrder:nextIntervalOrder}) YIELD value
                   RETURN 1
                     """
     )
