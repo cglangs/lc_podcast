@@ -293,7 +293,7 @@ type Query {
               WITH u,total_words, SUM(r.CURRENT_TIME_INTERVAL) AS current_intervals
               OPTIONAL MATCH(u)-[:LEARNED]->(wl:Word)
               WITH u,total_words,current_intervals, COUNT(DISTINCT wl) AS words_learned
-              RETURN {words_learned: words_learned,  intervals_completed: (words_learned * 7) + current_intervals , total_word_count: total_words}
+              RETURN {words_learned: words_learned,  intervals_completed: (words_learned * 9) + current_intervals , total_word_count: total_words}
               """
               )
 
