@@ -61,7 +61,10 @@ async function login(object, params, ctx, resolveInfo) {
 
 async function processSentence (object, params, ctx, resolveInfo){
   var sentence = await neo4jgraphql(object, params, ctx, resolveInfo)
-  sentence.current_learners = sentence.current_learners.filter((learner)=> learner.User._id === params.userId)
+  if(sentence){
+      sentence.current_learners = sentence.current_learners.filter((learner)=> learner.User._id === params.userId)
+  }
+
   return sentence
 }
 

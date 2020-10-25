@@ -324,7 +324,7 @@ class Play extends Component {
               </div>
             ) 
          }
-          else return <div>{!!getCookie('access-token') && (data && data.getCurrentProgress && data.getCurrentProgress.words_learned === 150)  ? "Demo Complete" : !getCookie('access-token') && "Please login to continue"}</div>
+          else return <div style={{display: "flex", justifyContent: "center", "width": "100%", "marginTop": "25%"}}>{!!getCookie('access-token') && (data && data.getCurrentProgress && data.getCurrentProgress.words_learned === 150)  ? (<p>{"Demo Complete"}</p>) : !getCookie('access-token') && (<p>{"Please login to continue"}</p>)}</div>
          }}
         </Query>
     )
