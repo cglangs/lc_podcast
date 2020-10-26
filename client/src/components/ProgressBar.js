@@ -2,20 +2,19 @@ import React from "react";
 
 const ProgressBar = (props) => {
   const {stepAtInterval, currentTimeInterval, intervalOrder } = props;
-  console.log(props)
 
 const dotStyleEmpty = {
   height: "10px",
   width: "10px",
   "marginRight": "10px",
-  "background-color": "#bbb",
-  "border-radius": "50%",
+  "backgroundColor": "#bbb",
+  "borderRadius": "50%",
   "display": "inline-block"
 }
 
 const textStyle = {
-  "margin-block-start": "1.2em",
-  "font-size": "10px",
+  "marginBlockStart": "1.2em",
+  "fontSize": "10px",
   "color": "aquamarine"
 }
 
@@ -28,7 +27,7 @@ const dotStyleFullInterval1 = {
   width: "10px",
   "marginRight": "10px",
   "backgroundColor": "rgb(85 233 255)",
-  "border-radius": "50%",
+  "borderRadius": "50%",
   "display": "inline-block"
 }
 
@@ -37,7 +36,7 @@ const dotStyleFullInterval2 = {
   width: "10px",
   "marginRight": "10px",
   "backgroundColor": "rgb(255 97 255)",
-  "border-radius": "50%",
+  "borderRadius": "50%",
   "display": "inline-block"
 }
 
@@ -46,7 +45,7 @@ const dotStyleFullInterval3 = {
   width: "10px",
   "marginRight": "10px",
   "backgroundColor": "rgb(247 255 0)",
-  "border-radius": "50%",
+  "borderRadius": "50%",
   "display": "inline-block"
 }
 

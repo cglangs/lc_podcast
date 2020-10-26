@@ -237,7 +237,6 @@ class Play extends Component {
             if (loading) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>Loading</div>
             if (error) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>error</div>
             const nextSentence = this.state.lastSentence ||data.getNextSentence
-            console.log(nextSentence)
             //Don't rerender when waiting for refetch or when there is no result
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
             if(data.getNextSentence && data.getCurrentProgress){
@@ -248,7 +247,7 @@ class Play extends Component {
                   <div style={{display: "flex", flexDirection: "row", "width": "100%"}}>
                   <div style={{"flexGrow": "4", "paddingTop": "20%"}}>
                   {role === "TESTER" && (<p style={{fontSize: "12px", "marginBottom": "20px"}}>You are currently not logged in. Log in to save your progress.</p>)}
-                  <div style={{display: "inline-block", "text-align": "center"}}>
+                  <div style={{display: "inline-block", "textAlign": "center"}}>
                     <ProgressBar stepAtInterval={userIntervalStep} currentTimeInterval={userInterval} intervalOrder={nextSentence.interval.interval_order} />
                     <Modal characters={nextSentence.word_taught.characters} show={this.state.showCharacterDefinitions} handleClose={this.hideModal}/>
                      <div style={{display: "flex", justifyContent: "center"}}>
@@ -277,7 +276,7 @@ class Play extends Component {
                          >
                           {makeAttempt => (
                             <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-                             <p style={{fontSize: "40px"}}>{this.state.showTraditional ? nextSentence.alt_display_text.substr(0,nextSentence.alt_display_text.indexOf('#')) : nextSentence.display_text.substr(0,nextSentence.display_text.indexOf('#'))}</p>
+                             <p className="cloze-text">{this.state.showTraditional ? nextSentence.alt_display_text.substr(0,nextSentence.alt_display_text.indexOf('#')) : nextSentence.display_text.substr(0,nextSentence.display_text.indexOf('#'))}</p>
                             <input style={{width: `${nextSentence.word_taught.text.length * 40}px`,fontSize: "40px", margin: "15px 5px 15px 5px", color: this.getFontColor(nextSentence.word_taught), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
@@ -285,7 +284,7 @@ class Play extends Component {
                               }
                             }}
                             />
-                             <p style={{fontSize: "40px"}}>{this.state.showTraditional ? nextSentence.alt_display_text.substr(nextSentence.alt_display_text.indexOf('#') + 1,nextSentence.alt_display_text.length) : nextSentence.display_text.substr(nextSentence.display_text.indexOf('#') + 1,nextSentence.display_text.length)}</p>
+                             <p className="cloze-text">{this.state.showTraditional ? nextSentence.alt_display_text.substr(nextSentence.alt_display_text.indexOf('#') + 1,nextSentence.alt_display_text.length) : nextSentence.display_text.substr(nextSentence.display_text.indexOf('#') + 1,nextSentence.display_text.length)}</p>
                             <button
                               style={{margin: "15px 5px 15px 5px", height: "40px", "marginBlockStart": "3.2em"}}
                               onClick={() => 
@@ -301,7 +300,7 @@ class Play extends Component {
                     </Mutation>
                   </div>
                   <div>
-                    <p>{(nextSentence.clean_text !== nextSentence.word_taught.text) && (this.state.showPinyin ? nextSentence.word_taught.pinyin : this.getText(nextSentence.word_taught))}</p>
+                    {(nextSentence.clean_text !== nextSentence.word_taught.text) && (this.state.showPinyin ? <p>{nextSentence.word_taught.pinyin}</p> : this.getText(nextSentence.word_taught))}
                   </div>
                   {this.state.showAnswer && nextSentence.word_taught.characters.length > 0 && <button onClick={() => this.setState(prevState => ({showCharacterDefinitions: !prevState.showCharacterDefinitions}))}>Character Definitions</button>}
               </div>

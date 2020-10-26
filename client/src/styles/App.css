@@ -13,6 +13,12 @@
   }
 }
 
+.cloze-text {
+  font-size: 40px;
+  font-family: "Hiragino Kaku Gothic Pro", "WenQuanYi Zen Hei", 微軟正黑體, 蘋果儷中黑, Helvetica, Arial, sans-serif;
+  margin-block-start: 0.8em;
+}
+
 .App-header {
   background-color: #282B5B;
   min-height: 100vh;
