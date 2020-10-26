@@ -277,7 +277,7 @@ class Play extends Component {
                           {makeAttempt => (
                             <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
                              <p className="cloze-text">{this.state.showTraditional ? nextSentence.alt_display_text.substr(0,nextSentence.alt_display_text.indexOf('#')) : nextSentence.display_text.substr(0,nextSentence.display_text.indexOf('#'))}</p>
-                            <input style={{width: `${nextSentence.word_taught.text.length * 40}px`,fontSize: "40px", margin: "15px 5px 15px 5px", color: this.getFontColor(nextSentence.word_taught), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
+                            <input style={{width: `${nextSentence.word_taught.text.length * 40}px`,fontSize: "37px", margin: "15px 5px 15px 5px", color: this.getFontColor(nextSentence.word_taught), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (this.state.showTraditional ? nextSentence.word_taught.alt_text : nextSentence.word_taught.text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
@@ -286,7 +286,7 @@ class Play extends Component {
                             />
                              <p className="cloze-text">{this.state.showTraditional ? nextSentence.alt_display_text.substr(nextSentence.alt_display_text.indexOf('#') + 1,nextSentence.alt_display_text.length) : nextSentence.display_text.substr(nextSentence.display_text.indexOf('#') + 1,nextSentence.display_text.length)}</p>
                             <button
-                              style={{margin: "15px 5px 15px 5px", height: "40px", "marginBlockStart": "3.2em"}}
+                              style={{margin: "15px 5px 15px 5px", height: "40px", marginBlockStart: "3em", fontSize: "14px"}}
                               onClick={() => 
                                 {
                                   this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (this.state.showTraditional ? nextSentence.word_taught.alt_text : nextSentence.word_taught.text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
