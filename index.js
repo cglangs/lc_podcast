@@ -13,7 +13,7 @@ const cookieParser = require('cookie-parser')
 
 var dbURL = process.env.BOLT_URL || 'bolt://54.162.39.62:7687'
 var dbUser = process.env.BOLT_USER || 'neo4j'
-var dbPass = process.env.BOLT_PASSWORD || 'test'
+var dbPass = process.env.BOLT_PASSWORD || 'cl0zep0dcast4$'
 var driver
 
 
