@@ -1,5 +1,6 @@
 from neo4j import GraphDatabase
 import csv
+import jieba
 
 driver = GraphDatabase.driver("bolt://localhost:11003", auth=("neo4j", "password"))
 
@@ -10,7 +11,8 @@ def print_sentence():
     		readCSV = csv.reader(csvfile, delimiter=',')
     		for row in readCSV:
     			exampleSentence = session.write_transaction(_create_and_return_greeting, characters=row[0])
-    			print(exampleSentence)
+    			seg_list = jieba.cut(exampleSentence)
+    			print(", ".join(seg_list))
 
 
 def _create_and_return_greeting(tx, characters):
