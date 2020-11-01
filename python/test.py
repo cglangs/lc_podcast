@@ -5,7 +5,7 @@ import regex
 
 
 
-jieba.set_dictionary("user_dict.txt")
+jieba.set_dictionary("hsk1_dict.txt")
 driver = GraphDatabase.driver("bolt://localhost:11003", auth=("neo4j", "password"))
 punc = "！？｡。＂＃＄％＆＇（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789a-zA-Z"
 word_frequencies = {}
@@ -58,7 +58,7 @@ def print_sentence():
 				sorted_sentence_data[s_key]["interval"] = interval
 
 				used_words.update(new_words)
-				print(new_words, sorted_sentence_data[s_key]["word_to_teach"],sorted_sentence_data[s_key]["interval"])
+				#print(words, new_words, sorted_sentence_data[s_key]["word_to_teach"],sorted_sentence_data[s_key]["interval"])
 			#print(word_intervals)
 			#print({k: v for k, v in sorted(word_frequencies.items(), key=lambda item: item[1], reverse=True)})
 			#print(sorted_sentence_data)
