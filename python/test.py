@@ -7,7 +7,7 @@ import regex
 
 jieba.set_dictionary("user_dict.txt")
 driver = GraphDatabase.driver("bolt://localhost:11003", auth=("neo4j", "password"))
-punc = "！？｡。＂＃＄％＆＇（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏."
+punc = "！？｡。＂＃＄％＆＇（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789a-zA-Z"
 word_frequencies = {}
 word_intervals = {}
 sentence_data={}
@@ -42,19 +42,25 @@ def print_sentence():
 				if(len(new_words) > 0):
 					lowest_frequency = min([word_frequencies[w] for w in new_words])
 					word_to_teach  = [ w for w in new_words if word_frequencies[w] == lowest_frequency][0]
+					for nw in new_words:
+						if nw not in word_intervals:
+							word_intervals[nw] = 0
+						word_intervals[nw] += 1
 					interval = 1
 				else:
 					fewest_intervals = min([word_intervals[w] for w in old_words])
-					word_to_teach  = [ w for w in old_words if word_intervals[w] == fewest_intervals][0]
+					words_at_fewest_intervals = [ w for w in old_words if word_intervals[w] == fewest_intervals]
+					highest_frequency= max([word_frequencies[w] for w in words_at_fewest_intervals])
+					word_to_teach  = [ w for w in words_at_fewest_intervals if word_frequencies[w] == highest_frequency][0]
+					word_intervals[word_to_teach] += 1
 					interval = fewest_intervals + 1
 				sorted_sentence_data[s_key]["word_to_teach"] = word_to_teach
 				sorted_sentence_data[s_key]["interval"] = interval
-				for nw in new_words:
-					if nw not in word_intervals:
-						word_intervals[nw] = 0
-					word_intervals[nw] += 1
+
 				used_words.update(new_words)
-				print(sorted_sentence_data[s_key])
+				print(new_words, sorted_sentence_data[s_key]["word_to_teach"],sorted_sentence_data[s_key]["interval"])
+			#print(word_intervals)
+			#print({k: v for k, v in sorted(word_frequencies.items(), key=lambda item: item[1], reverse=True)})
 			#print(sorted_sentence_data)
 			#	exampleSentence = session.write_transaction(_insert_sentence, words=row[0])
 			#	print(exampleSentence)
