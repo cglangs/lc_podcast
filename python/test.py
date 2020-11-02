@@ -57,6 +57,8 @@ def print_sentence():
 				sorted_sentence_data[s_key]["word_to_teach"] = word_to_teach
 				sorted_sentence_data[s_key]["interval"] = interval
 				sorted_sentence_data[s_key]["new_words"] = new_words
+				sorted_sentence_data[s_key]["contained_words"] = new_words
+				sorted_sentence_data[s_key]["alone_words"] = new_words.remove(word_to_teach) if word_to_teach in new_words else new_words
 				used_words.update(new_words)
 
 			for insert_sentence_key in sorted_sentence_data:
@@ -66,9 +68,10 @@ def print_sentence():
 				 sorted_sentence_data[insert_sentence_key]["formatted_sentence"],
 				 sorted_sentence_data[insert_sentence_key]["word_to_teach"],
 				 sorted_sentence_data[insert_sentence_key]["words"],
-				 sorted_sentence_data[insert_sentence_key]["new_words"]
+				 sorted_sentence_data[insert_sentence_key]["new_words"],
+				 sorted_sentence_data[insert_sentence_key]["alone_words"],
+				 sorted_sentence_data[insert_sentence_key]["interval"]
 				 )
-				print(exampleSentence)
 				#print(words, new_words, sorted_sentence_data[s_key]["word_to_teach"],sorted_sentence_data[s_key]["interval"])
 			#print(word_intervals)
 			#print({k: v for k, v in sorted(word_frequencies.items(), key=lambda item: item[1], reverse=True)})
@@ -78,19 +81,27 @@ def print_sentence():
 
 
 
-def _insert_sentence(tx, raw_sentence, formatted_sentence, word_to_teach, words, new_words):
-		result = tx.run("CREATE (s:Sentence) "
-						"SET s.raw_text = $raw_sentence, "
-						"s.clean_text=$formatted_sentence "
-						"FOREACH (word_text IN $new_words| "
-						"MERGE(w:Word {text: word_text}) )"
+def _insert_sentence(tx, raw_sentence, formatted_sentence, word_to_teach, words, new_words, alone_words, interval):
+		result = tx.run("CREATE (s:Sentence {raw_text: $raw_sentence, clean_text: $formatted_sentence}) "
+						"WITH s "
+						"MATCH(i:Interval {interval_order: $interval}),(i1:Interval {interval_order: 1})  "
+						"WITH s,i,i1 "
+						"MERGE (wt:Word {text: $word_to_teach})"
+						"MERGE(wt)<-[:TEACHES]-(s)-[:AT_INTERVAL]->(i) "
+						"FOREACH (word_text IN $alone_words| "
+						"MERGE(w:Word {text: word_text})"
+						"MERGE(w)<-[:CONTAINS]-(s) ) "
+						"MERGE (wt)<-[:TEACHES]-(:Sentence {raw_text: $word_to_teach, clean_text: $word_to_teach})-[:AT_INTERVAL]->(i1) "
 						"RETURN s.raw_text", 
 						raw_sentence=raw_sentence, 
 						formatted_sentence=formatted_sentence,
 						word_to_teach=word_to_teach,
 						words=words,
-						new_words=new_words)
-		return result.single()[0]
+						new_words=new_words,
+						alone_words=alone_words,
+						interval=interval
+						)
+		return result.single()
 
 
 
