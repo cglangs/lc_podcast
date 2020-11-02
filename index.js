@@ -124,39 +124,7 @@ const typeDefs = `
 
 directive @hasToken on FIELD_DEFINITION
 
-type Mutation {
-    AddSentenceDependencies(src_sentence: String! dest_words:[String]): Sentence
-    @cypher(
-    statement:"""      MATCH (s:Sentence {raw_text: $src_sentence})-[:AT_INTERVAL]->(i:Interval), (w:Word)
-                       WHERE w.text IN $dest_words
-                       OPTIONAL MATCH (i)<-[:NEXT_TIME]-(iPrev)
-                       OPTIONAL MATCH (iNext:Interval)
-                       WITH s,w,i,iPrev,iNext 
-                       WHERE i.interval_order = 1 AND iNext.interval_order = 1 OR iNext.interval_order = i.interval_order + 1
-                       OPTIONAL MATCH(:Interval{interval_order: COALESCE(iPrev.interval_order, 1)})<-[:AT_INTERVAL]-(ds:Sentence)-[:TEACHES]->(w)
-                       OPTIONAL MATCH (iNext)<-[:AT_INTERVAL]-(ids)-[:CONTAINS]->(:Word)<-[:TEACHES]-(s)
-                       WITH s, collect(w) AS w_list, collect(ds) AS ds_list, collect(ids) AS ids_list
-                       FOREACH(w in w_list |
-                          MERGE (s)-[:CONTAINS {contains_order: apoc.coll.indexOf($dest_words, w.text) + 1}]->(w)
-                       )
-                       FOREACH(ds in ds_list |
-                          MERGE (ds)<-[:DEPENDS_ON]-(s)
-                       )
-                       FOREACH(ids in ids_list |
-                          MERGE (ids)-[:DEPENDS_ON]->(s)  
-                       )
-                       RETURN s """
-    )
-
-    TransferUserProgress(src_sentence: String! dest_sentence: String!): Sentence
-    @cypher(
-    statement:"""       MATCH (src:Sentence {raw_text: src_sentence})<-[r:LEARNING]-(:User)
-                        MATCH (dest:Sentence {raw_text: dest_sentence})
-                        WITH dest,r
-                        CALL apoc.refactor.to(r, dest) YIELD input
-                        RETURN dest
-                         """
-    )    
+type Mutation {   
 
     CreateUser(user_name: String! email: String! password: String! role: String! = "STUDENT"): User
 
@@ -194,111 +162,10 @@ type Mutation {
                   WHERE u.email = $email
                   RETURN u"""
     )
-
-    makeClozeAttempt(userId: Int!, sentenceId: Int!, isCorrect: Boolean!): Int
-    @cypher(
-    statement:""" MATCH(u:User),(s:Sentence)-[:TEACHES]->(w:Word)
-                  WHERE ID(u) = userId AND ID(s) = sentenceId
-                  OPTIONAL MATCH (w)<-[:TEACHES]-(s2:Sentence)-[:AT_INTERVAL]->(nextInterval:Interval)<-[:NEXT_TIME]-(:Interval)<-[:AT_INTERVAL]-(s)
-                  MERGE (u)-[r:LEARNING]->(s)
-                  SET r.last_seen = datetime()
-                  WITH u,s,s2,w,r,isCorrect,COALESCE(nextInterval.interval_order,0) AS nextIntervalOrder
-                  CALL apoc.do.case(
-                  [
-                  NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND NOT isCorrect, 'DELETE r',
-                  NOT EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect, 'SET r.STEP_AT_INTERVAL = 2, r.CURRENT_TIME_INTERVAL = 1',
-                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND r.STEP_AT_INTERVAL < 3,'SET r.STEP_AT_INTERVAL = r.STEP_AT_INTERVAL + 1, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1',
-                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND nextIntervalOrder > 0 AND r.STEP_AT_INTERVAL = 3,'SET r.STEP_AT_INTERVAL = 1, r.CURRENT_TIME_INTERVAL = r.CURRENT_TIME_INTERVAL + 1 WITH r,s2 CALL apoc.refactor.to(r, s2) YIELD input RETURN 1',
-                  EXISTS (r.CURRENT_TIME_INTERVAL) AND isCorrect AND nextIntervalOrder = 0 AND r.STEP_AT_INTERVAL = 3,'CREATE (u)-[:LEARNED]->(w) DELETE r'
-                  ],'',{r:r, s2:s2, u:u, w:w, nextIntervalOrder:nextIntervalOrder}) YIELD value
-                  RETURN 1
-                    """
-    )
 }
 
 type Query {
-    getNextSentence(userId: Int!): Sentence @hasToken
-    @cypher(
-    statement:""" 
-                  MATCH (u:User)
-                  WHERE ID(u) = userId
-                  WITH u
-                  MATCH (i:Interval)<-[:AT_INTERVAL]-(s:Sentence)-[:TEACHES]->(w:Word)
-                  OPTIONAL MATCH (u)-[r:LEARNING]->(s)
-                  WITH w,s,i,u,r,
-                  CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN r.CURRENT_TIME_INTERVAL ELSE 0 END AS cti
-                  OPTIONAL MATCH (t:TimeInterval {time_interval_id: cti})
-                  WITH w,s,i,u,
-                  CASE WHEN  EXISTS((u)-[:LEARNING]->(s)) THEN duration.inSeconds(r.last_seen,datetime()).seconds >= COALESCE(t.seconds, 0) ELSE TRUE END AS is_ready
-                  OPTIONAL MATCH (s)-[:CONTAINS]->(wd:Word)
-                  OPTIONAL MATCH (wd)<-[:TEACHES]-(ds:Sentence)-[:AT_INTERVAL]->(di:Interval),(u)-[:LEARNING]->(ds)
-                  WITH u,w,i,s,is_ready,
-                  collect({word_text: wd.text, current_interval:COALESCE(di.interval_order, CASE WHEN EXISTS((u)-[:LEARNED]->(wd)) THEN 11 ELSE 0 END)}) AS word_dependencies
-                  WHERE 
-                  NOT EXISTS((u)-[:LEARNED]->(w)) AND
-                  ALL(wd IN word_dependencies WHERE wd.word_text IS NULL OR wd.current_interval >= i.interval_order) AND
-                  (
-                    (NOT EXISTS((u)-[:LEARNING]->()-[:TEACHES]->(w)) AND i.interval_order = 1) OR 
-                    EXISTS((u)-[:LEARNING]->(s))
-                  )
-                  CALL {
-                  WITH u,s
-                  MATCH path = shortestPath((u)-[:LEARNING|DEPENDS_ON*]->(s))
-                  WITH last(nodes(path)) AS destSentence, nodes(path)[1] AS sourceSentence, length(path) AS hops
-                  MATCH (u)-[rSource:LEARNING]->(sourceSentence)
-                  OPTIONAL MATCH (u)-[rDest:LEARNING]->(destSentence)
-                  RETURN destSentence AS selection, 
-                  CASE WHEN EXISTS((u)-[:LEARNING]->(destSentence)) THEN rDest.last_seen ELSE NULL END AS last_seen_dest,
-                  rSource.last_seen AS last_seen_source,
-                  hops,
-                  0 AS relevant_dependencies,
-                  0 AS outgoing_dependencies,
-                  0 AS incoming_dependencies
-                  UNION
-                  WITH u,s
-                  MATCH (s)-[:AT_INTERVAL]->(:Interval {interval_order: 1})
-                  OPTIONAL MATCH (s)-[:DEPENDS_ON]->(ods:Sentence)
-                  OPTIONAL MATCH (s)<-[:DEPENDS_ON]-(ids:Sentence)
-                  OPTIONAL MATCH (s)-[:DEPENDS_ON]->(rds:Sentence)<-[:LEARNING]-(u)
-                  WITH u,s,rds,ods,ids
-                  WHERE NOT EXISTS((u)-[:LEARNING]->(s))
-                  RETURN s AS selection, NULL AS last_seen_dest, NULL AS last_seen_source, 0 AS hops, COUNT(DISTINCT rds) AS relevant_dependencies, COUNT(DISTINCT ods) AS outgoing_dependencies, COUNT(DISTINCT ids) AS incoming_dependencies
-                  }
-                  RETURN selection ORDER BY is_ready DESC, last_seen_dest ASC, last_seen_source ASC, hops DESC, relevant_dependencies DESC, outgoing_dependencies ASC, incoming_dependencies DESC, RAND() LIMIT 1
-                  """
-    )
-
-    getSentenceList(levelNumber: Int! intervalOrder: Int!): [Sentence]
-    @cypher(
-    statement:""" 
-              MATCH (l:Level {level_number: levelNumber})<-[:SHOWN_IN]-(s:Sentence)-[:AT_INTERVAL]->(i:Interval {interval_order: intervalOrder})
-              RETURN s
-              """
-              )
-
-    getIntervalsAndLevels(userName: String): levelIntervalLists
-    @cypher(
-    statement:""" 
-              MATCH(l:Level),(i:Interval)
-              WITH l, i
-              ORDER BY l.level_number,i.interval_order
-              RETURN {levels: COLLECT(DISTINCT l.level_number),intervals: COLLECT( DISTINCT i.interval_order)}
-              """
-              )
-
-    getCurrentProgress(userId: Int!): Progress @hasToken
-    @cypher(
-    statement:""" 
-              MATCH(u:User), (w:Word)-[:INTRODUCED_IN]->()
-              WHERE ID(u) = userId
-              WITH u, COUNT(w) AS total_words
-              OPTIONAL MATCH(u)-[r:LEARNING]->(s:Sentence)
-              WITH u,total_words, SUM(r.CURRENT_TIME_INTERVAL) AS current_intervals
-              OPTIONAL MATCH(u)-[:LEARNED]->(wl:Word)
-              WITH u,total_words,current_intervals, COUNT(DISTINCT wl) AS words_learned
-              RETURN {words_learned: words_learned,  intervals_completed: (words_learned * 9) + current_intervals , total_word_count: total_words}
-              """
-              )
+   
 
     me(userId: Int): User @hasToken
     @cypher(
@@ -322,40 +189,7 @@ type Author {
   interval: Interval @relation(name: "AUTHORING_INTERVAL", direction: OUT)
 }
 
-type Progress {
-  words_learned: Int!
-  intervals_completed: Int!
-  total_word_count: Int!
-}
 
-type Level {
-  level_number: Int
-  points: Int
-  sentences: [Sentence] @relation(name: "SHOWN_IN", direction: IN)
-  minimum_usage: Int  @cypher(
-        statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word)
-                      OPTIONAL MATCH (:Sentence)-[r:CONTAINS]->(w)
-                      WITH w, count(r) AS times_used
-                      RETURN MIN(times_used) AS minimum_usage
-                      """)
-  all_words: [Word] @cypher(
-        statement: """MATCH(l:Level {level_number: 1})-[:INTRODUCED_IN| COMPOSED_OF*1..2]-(w:Word)
-                      RETURN DISTINCT w
-                      """)
-  teachable_words: [Word] @cypher(
-        statement: """MATCH (this)<-[:INTRODUCED_IN]-(w:Word),(a:Author)-[:AUTHORING_INTERVAL]->(i:Interval)
-                      OPTIONAL MATCH (w)<-[:TEACHES]-(s:Sentence)-[:AT_INTERVAL]->(i)
-                      WITH w,s
-                      WHERE s is NULL
-                      RETURN w AS word
-                      """)
-  addable_words: [Word] @cypher(
-        statement: """MATCH (this)<-[:SHOWN_IN]-(s:Sentence)-[:TEACHES | CONTAINS]->(w:Word)
-                      OPTIONAL MATCH (s)-[r:CONTAINS]->(w)
-                      WITH w, count(r) AS times_used
-                      RETURN w AS word ORDER BY times_used ASC
-                      """)
-}
 type Word {
   word_id: Int
   times_used: Int @cypher(

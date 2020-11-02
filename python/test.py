@@ -56,8 +56,19 @@ def print_sentence():
 					interval = fewest_intervals + 1
 				sorted_sentence_data[s_key]["word_to_teach"] = word_to_teach
 				sorted_sentence_data[s_key]["interval"] = interval
-
+				sorted_sentence_data[s_key]["new_words"] = new_words
 				used_words.update(new_words)
+
+			for insert_sentence_key in sorted_sentence_data:
+				exampleSentence = session.write_transaction(
+				 _insert_sentence,
+				 sorted_sentence_data[insert_sentence_key]["raw_sentence"],
+				 sorted_sentence_data[insert_sentence_key]["formatted_sentence"],
+				 sorted_sentence_data[insert_sentence_key]["word_to_teach"],
+				 sorted_sentence_data[insert_sentence_key]["words"],
+				 sorted_sentence_data[insert_sentence_key]["new_words"]
+				 )
+				print(exampleSentence)
 				#print(words, new_words, sorted_sentence_data[s_key]["word_to_teach"],sorted_sentence_data[s_key]["interval"])
 			#print(word_intervals)
 			#print({k: v for k, v in sorted(word_frequencies.items(), key=lambda item: item[1], reverse=True)})
@@ -67,10 +78,18 @@ def print_sentence():
 
 
 
-def _insert_sentence(tx, words):
+def _insert_sentence(tx, raw_sentence, formatted_sentence, word_to_teach, words, new_words):
 		result = tx.run("CREATE (s:Sentence) "
-						"SET s.raw_text = $words "
-						"RETURN s.raw_text", words=words)
+						"SET s.raw_text = $raw_sentence, "
+						"s.clean_text=$formatted_sentence "
+						"FOREACH (word_text IN $new_words| "
+						"MERGE(w:Word {text: word_text}) )"
+						"RETURN s.raw_text", 
+						raw_sentence=raw_sentence, 
+						formatted_sentence=formatted_sentence,
+						word_to_teach=word_to_teach,
+						words=words,
+						new_words=new_words)
 		return result.single()[0]
 
 
