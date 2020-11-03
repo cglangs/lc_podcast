@@ -12,6 +12,8 @@ CREATE TABLE cloze_chinese.words (
 	word_text varchar(255) NULL,
 	word_frequency_order int4 NULL,
 	word_insert_order int4 NULL,
+	pinyin varchar(255) NULL,
+	english varchar(255) NULL,
 	CONSTRAINT words_pkey PRIMARY KEY (word_id),
 	CONSTRAINT words_word_frequency_order_key UNIQUE (word_frequency_order),
 	CONSTRAINT words_word_insert_order_key UNIQUE (word_insert_order)
@@ -29,6 +31,8 @@ CREATE TABLE cloze_chinese.phrases (
 	clean_text varchar(255) NULL,
 	iteration int4 NOT NULL,
 	display_text varchar(255) NULL,
+	pinyin varchar(255) NULL,
+	english varchar(255) NULL,
 	CONSTRAINT phrases_pkey PRIMARY KEY (phrase_id)
 );
 
