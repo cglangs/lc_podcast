@@ -7,6 +7,9 @@ import regex
 
 jieba.set_dictionary("hsk1_dict.txt")
 #driver = GraphDatabase.driver("bolt://localhost:11003", auth=("neo4j", "password"))
+con = psycopg2.connect(database="postgres", user="postgres", password="pass", host="127.0.0.1", port="5432")
+print("Database opened successfully")
+cur = con.cursor()
 punc = "！？｡。＂＃＄％＆＇（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789a-zA-Z"
 word_frequencies = {}
 word_iterations = {}
@@ -60,6 +63,10 @@ def print_sentence():
 			sorted_sentence_data[s_key]["contained_words"] = new_words
 			sorted_sentence_data[s_key]["alone_words"] = new_words.remove(word_to_teach) if word_to_teach in new_words else new_words
 			used_words.update(new_words)
+		cur.execute("");
+		con.commit()
+		print("Record inserted successfully")
+		con.close()
 
 			#for insert_sentence_key in sorted_sentence_data:
 			#	exampleSentence = session.write_transaction(
