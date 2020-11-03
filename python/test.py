@@ -1,4 +1,4 @@
-from neo4j import GraphDatabase
+import psycopg2
 import csv
 import jieba
 import regex
@@ -6,74 +6,74 @@ import regex
 
 
 jieba.set_dictionary("hsk1_dict.txt")
-driver = GraphDatabase.driver("bolt://localhost:11003", auth=("neo4j", "password"))
+#driver = GraphDatabase.driver("bolt://localhost:11003", auth=("neo4j", "password"))
 punc = "！？｡。＂＃＄％＆＇（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789a-zA-Z"
 word_frequencies = {}
-word_intervals = {}
+word_iterations = {}
 sentence_data={}
 used_words = set()
 
 
 def print_sentence():
-	with driver.session() as session:
-		with open('interval3.csv') as csvfile:
-			readCSV = csv.reader(csvfile, delimiter=',')
-			rows = list(readCSV)
-			rows.pop(0)
-			counter = 1
-			for sentence in rows:
-				formatted_sentence = regex.sub(r"[%s]+" %punc, "", sentence[0])
-				seg_list = list(jieba.cut(formatted_sentence, cut_all=False, HMM=False))
+	#with driver.session() as session:
+	with open('interval3.csv') as csvfile:
+		readCSV = csv.reader(csvfile, delimiter=',')
+		rows = list(readCSV)
+		rows.pop(0)
+		counter = 1
+		for sentence in rows:
+			formatted_sentence = regex.sub(r"[%s]+" %punc, "", sentence[0])
+			seg_list = list(jieba.cut(formatted_sentence, cut_all=False, HMM=False))
 
-				sentence_data[counter]={"raw_sentence": sentence[0], "formatted_sentence": formatted_sentence, "words": seg_list}
-				for word in seg_list:
-						if word not in word_frequencies:
-							word_frequencies[word] = 0
-						word_frequencies[word] += 1
-				counter += 1
-			for key in sentence_data:
-				sentence_data[key]["freq_score"] = sum([word_frequencies[w] for w in sentence_data[key]["words"]]) / len(sentence_data[key]["words"])
-			sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: item[1]["freq_score"], reverse=True)}
+			sentence_data[counter]={"raw_sentence": sentence[0], "formatted_sentence": formatted_sentence, "words": seg_list}
+			for word in seg_list:
+					if word not in word_frequencies:
+						word_frequencies[word] = 0
+					word_frequencies[word] += 1
+			counter += 1
+		for key in sentence_data:
+			sentence_data[key]["freq_score"] = sum([word_frequencies[w] for w in sentence_data[key]["words"]]) / len(sentence_data[key]["words"])
+		sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: item[1]["freq_score"], reverse=True)}
 
-			for s_key in sorted_sentence_data:
-				words = sorted_sentence_data[s_key]["words"]
-				old_words = [w for w in words if w in used_words]
-				new_words = [w for w in words if w not in used_words]
-				if(len(new_words) > 0):
-					lowest_frequency = min([word_frequencies[w] for w in new_words])
-					word_to_teach  = [ w for w in new_words if word_frequencies[w] == lowest_frequency][0]
-					for nw in new_words:
-						if nw not in word_intervals:
-							word_intervals[nw] = 0
-						word_intervals[nw] += 1
-					interval = 1
-				else:
-					fewest_intervals = min([word_intervals[w] for w in old_words])
-					words_at_fewest_intervals = [ w for w in old_words if word_intervals[w] == fewest_intervals]
-					highest_frequency= max([word_frequencies[w] for w in words_at_fewest_intervals])
-					word_to_teach  = [ w for w in words_at_fewest_intervals if word_frequencies[w] == highest_frequency][0]
-					word_intervals[word_to_teach] += 1
-					interval = fewest_intervals + 1
-				sorted_sentence_data[s_key]["word_to_teach"] = word_to_teach
-				sorted_sentence_data[s_key]["interval"] = interval
-				sorted_sentence_data[s_key]["new_words"] = new_words
-				sorted_sentence_data[s_key]["contained_words"] = new_words
-				sorted_sentence_data[s_key]["alone_words"] = new_words.remove(word_to_teach) if word_to_teach in new_words else new_words
-				used_words.update(new_words)
+		for s_key in sorted_sentence_data:
+			words = sorted_sentence_data[s_key]["words"]
+			old_words = [w for w in words if w in used_words]
+			new_words = [w for w in words if w not in used_words]
+			if(len(new_words) > 0):
+				lowest_frequency = min([word_frequencies[w] for w in new_words])
+				word_to_teach  = [ w for w in new_words if word_frequencies[w] == lowest_frequency][0]
+				for nw in new_words:
+					if nw not in word_iterations:
+						word_iterations[nw] = 0
+					word_iterations[nw] += 1
+				iteration = 1
+			else:
+				fewest_iterations = min([word_iterations[w] for w in old_words])
+				words_at_fewest_iterations = [ w for w in old_words if word_iterations[w] == fewest_iterations]
+				highest_frequency= max([word_frequencies[w] for w in words_at_fewest_iterations])
+				word_to_teach  = [ w for w in words_at_fewest_iterations if word_frequencies[w] == highest_frequency][0]
+				word_iterations[word_to_teach] += 1
+				iteration = fewest_iterations + 1
+			sorted_sentence_data[s_key]["word_to_teach"] = word_to_teach
+			sorted_sentence_data[s_key]["iteration"] = iteration
+			sorted_sentence_data[s_key]["new_words"] = new_words
+			sorted_sentence_data[s_key]["contained_words"] = new_words
+			sorted_sentence_data[s_key]["alone_words"] = new_words.remove(word_to_teach) if word_to_teach in new_words else new_words
+			used_words.update(new_words)
 
-			for insert_sentence_key in sorted_sentence_data:
-				exampleSentence = session.write_transaction(
-				 _insert_sentence,
-				 sorted_sentence_data[insert_sentence_key]["raw_sentence"],
-				 sorted_sentence_data[insert_sentence_key]["formatted_sentence"],
-				 sorted_sentence_data[insert_sentence_key]["word_to_teach"],
-				 sorted_sentence_data[insert_sentence_key]["words"],
-				 sorted_sentence_data[insert_sentence_key]["new_words"],
-				 sorted_sentence_data[insert_sentence_key]["alone_words"],
-				 sorted_sentence_data[insert_sentence_key]["interval"]
-				 )
-				#print(words, new_words, sorted_sentence_data[s_key]["word_to_teach"],sorted_sentence_data[s_key]["interval"])
-			#print(word_intervals)
+			#for insert_sentence_key in sorted_sentence_data:
+			#	exampleSentence = session.write_transaction(
+			#	 _insert_sentence,
+			#	 sorted_sentence_data[insert_sentence_key]["raw_sentence"],
+			#	 sorted_sentence_data[insert_sentence_key]["formatted_sentence"],
+			#	 sorted_sentence_data[insert_sentence_key]["word_to_teach"],
+			#	 sorted_sentence_data[insert_sentence_key]["words"],
+			#	 sorted_sentence_data[insert_sentence_key]["new_words"],
+			#	 sorted_sentence_data[insert_sentence_key]["alone_words"],
+			#	 sorted_sentence_data[insert_sentence_key]["iteration"]
+			#	 )
+				#print(words, new_words, sorted_sentence_data[s_key]["word_to_teach"],sorted_sentence_data[s_key]["iteration"])
+			#print(word_iterations)
 			#print({k: v for k, v in sorted(word_frequencies.items(), key=lambda item: item[1], reverse=True)})
 			#print(sorted_sentence_data)
 			#	exampleSentence = session.write_transaction(_insert_sentence, words=row[0])
@@ -81,27 +81,16 @@ def print_sentence():
 
 
 
-def _insert_sentence(tx, raw_sentence, formatted_sentence, word_to_teach, words, new_words, alone_words, interval):
-		result = tx.run("CREATE (s:Sentence {raw_text: $raw_sentence, clean_text: $formatted_sentence}) "
-						"WITH s "
-						"MATCH(i:Interval {interval_order: $interval}),(i1:Interval {interval_order: 1})  "
-						"WITH s,i,i1 "
-						"MERGE (wt:Word {text: $word_to_teach})"
-						"MERGE(wt)<-[:TEACHES]-(s)-[:AT_INTERVAL]->(i) "
-						"FOREACH (word_text IN $alone_words| "
-						"MERGE(w:Word {text: word_text})"
-						"MERGE(w)<-[:CONTAINS]-(s) ) "
-						"MERGE (wt)<-[:TEACHES]-(:Sentence {raw_text: $word_to_teach, clean_text: $word_to_teach})-[:AT_INTERVAL]->(i1) "
-						"RETURN s.raw_text", 
-						raw_sentence=raw_sentence, 
-						formatted_sentence=formatted_sentence,
-						word_to_teach=word_to_teach,
-						words=words,
-						new_words=new_words,
-						alone_words=alone_words,
-						interval=interval
-						)
-		return result.single()
+#def _insert_sentence(tx, raw_sentence, formatted_sentence, word_to_teach, words, new_words, alone_words, iteration):
+#		result = tx.run(
+#						raw_sentence=raw_sentence, 
+#						formatted_sentence=formatted_sentence,
+#						word_to_teach=word_to_teach,
+#						words=words,
+#						new_words=new_words,
+#						alone_words=alone_words,
+#						)
+#		return result.single()
 
 
 

@@ -169,3 +169,150 @@ type Level {
                       RETURN w AS word ORDER BY times_used ASC
                       """)
 }
+
+
+
+directive @hasToken on FIELD_DEFINITION
+
+type Mutation {   
+
+    CreateUser(user_name: String! email: String! password: String! role: String! = "STUDENT"): User
+
+    CreatePermanentUser(user_name: String! email: String! password: String! role: String! = "STUDENT"): User
+        @cypher(
+        statement: """
+                CREATE(u:User:PermanentUser) 
+                SET
+                u.user_name = user_name, 
+                u.role = role, 
+                u.email = email, 
+                u.password = password
+                RETURN u
+               """
+      )
+
+    UpgradeUser(userId: Int!, user_name: String! email: String! password: String!): User
+    @cypher(
+    statement:""" MATCH (u:User)
+                  WHERE ID(u) = userId
+                  SET u.user_name = user_name, u.email = email, u.password = password, u.role = 'STUDENT', u:PermanentUser
+                  RETURN u"""
+    )
+
+    IncrementInterval(should_call: Boolean!): Int
+    @cypher(
+    statement:""" MATCH (i2:Interval)<-[:NEXT_TIME]-(:Interval)<-[r:AUTHORING_INTERVAL]-(:Author)
+                  CALL apoc.refactor.to(r, i2) YIELD input
+                  RETURN 1"""
+    )
+
+    Login(email: String! password: String!): User
+    @cypher(
+    statement:""" MATCH(u:User)
+                  WHERE u.email = $email
+                  RETURN u"""
+    )
+}
+
+type Query {
+   
+
+    me(userId: Int): User @hasToken
+    @cypher(
+    statement:""" MATCH(u:User)
+                  WHERE ID(u) = userId
+                  RETURN u"""
+    )
+}
+
+type clozeQuestion { 
+  next_sentence: Sentence
+}
+
+type levelIntervalLists{
+  levels: [Int]
+  intervals: [Int]
+}
+
+type Author {
+  level: Level @relation(name: "AUTHORING_LEVEL", direction: OUT)
+  interval: Interval @relation(name: "AUTHORING_INTERVAL", direction: OUT)
+}
+
+
+type Word {
+  word_id: Int
+  times_used: Int @cypher(
+        statement: """OPTIONAL MATCH (:Sentence)-[r:CONTAINS]->(this)
+                      WITH count(r) AS times_used
+                      RETURN times_used
+                      """)
+  text: String
+  alt_text: String
+  english: String
+  italics: String
+  pinyin: String
+  level: Level @relation(name: "INTRODUCED_IN", direction: OUT)
+  characters: [Word] @cypher(
+        statement: """MATCH (this)-[r:COMPOSED_OF]->(w:Word)
+                      RETURN w ORDER BY r.word_order
+                      """)
+}
+type User {
+  _id: Int!
+  user_name: String
+  email: String!
+  password: String
+  token: String
+  role: String!
+}
+type Interval {
+  interval_order: Int
+  seconds: Int
+  min_length: Int
+  max_length: Int
+  sentences: [Sentence] @relation(name: "AT_INTERVAL", direction: IN)
+}
+type Sentence {
+  _id: Int!
+  raw_text: String!
+  clean_text: String! 
+  display_text: String!
+  alt_raw_text: String!
+  alt_clean_text: String! 
+  alt_display_text: String!
+  pinyin: String!
+  english: String!
+  italics: String
+  time_fetched: String @cypher(statement: """RETURN toString(time())""")
+  current_learners: [Learner]
+  level: Level @relation(name: "SHOWN_IN" direction: OUT)
+  interval: Interval @relation(name: "AT_INTERVAL" direction: OUT)
+  words_contained: [ContainedWord!]!
+  word_taught: Word! @relation(name: "TEACHES", direction: OUT)
+}
+
+type Learner @relation(name:"LEARNING") {
+  from: User
+  to: Sentence
+  CURRENT_TIME_INTERVAL: Int!
+  STEP_AT_INTERVAL: Int!
+}
+
+type ContainedWord @relation(name:"CONTAINS") {
+  from: Sentence
+  to: Word
+  contains_order: Int!
+}
+
+"CREATE (s:Sentence {raw_text: $raw_sentence, clean_text: $formatted_sentence}) "
+            "WITH s "
+            "MATCH(i:Interval {interval_order: $interval}),(i1:Interval {interval_order: 1})  "
+            "WITH s,i,i1 "
+            "MERGE (wt:Word {text: $word_to_teach})"
+            "MERGE(wt)<-[:TEACHES]-(s)-[:AT_INTERVAL]->(i) "
+            "FOREACH (word_text IN $alone_words| "
+            "MERGE(w:Word {text: word_text})"
+            "MERGE(w)<-[:CONTAINS]-(s) ) "
+            "MERGE (wt)<-[:TEACHES]-(:Sentence {raw_text: $word_to_teach, clean_text: $word_to_teach})-[:AT_INTERVAL]->(i1) "
+            "RETURN s.raw_text", 
