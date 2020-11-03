@@ -28,6 +28,7 @@ CREATE TABLE cloze_chinese.phrases (
 	raw_text varchar(255) NULL,
 	clean_text varchar(255) NULL,
 	iteration int4 NOT NULL,
+	display_text varchar(255) NULL,
 	CONSTRAINT phrases_pkey PRIMARY KEY (phrase_id)
 );
 
