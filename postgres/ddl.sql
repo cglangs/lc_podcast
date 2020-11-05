@@ -10,13 +10,11 @@ CREATE TABLE cloze_chinese.users (
 CREATE TABLE cloze_chinese.words (
 	word_id serial NOT NULL DEFAULT nextval('cloze_chinese.words_word_id_seq'::regclass),
 	word_text varchar(255) NULL,
-	word_frequency_order int4 NULL,
-	word_insert_order int4 NULL,
+	word_occurrences int4 NULL,
 	pinyin varchar(255) NULL,
 	english varchar(255) NULL,
-	CONSTRAINT words_pkey PRIMARY KEY (word_id),
-	CONSTRAINT words_word_frequency_order_key UNIQUE (word_frequency_order),
-	CONSTRAINT words_word_insert_order_key UNIQUE (word_insert_order)
+	CONSTRAINT unique_word_text UNIQUE (word_text),
+	CONSTRAINT words_pkey PRIMARY KEY (word_id)
 );
 
 CREATE TABLE cloze_chinese.intervals (
@@ -29,7 +27,6 @@ CREATE TABLE cloze_chinese.phrases (
 	phrase_id serial NOT NULL DEFAULT nextval('cloze_chinese.phrases_phrase_id_seq'::regclass),
 	raw_text varchar(255) NULL,
 	clean_text varchar(255) NULL,
-	iteration int4 NOT NULL,
 	display_text varchar(255) NULL,
 	pinyin varchar(255) NULL,
 	english varchar(255) NULL,
@@ -48,6 +45,7 @@ CREATE TABLE cloze_chinese.phrase_contains_words (
 CREATE TABLE cloze_chinese.phrase_teaches_words (
 	phrase_id int4 NOT NULL,
 	word_id int4 NOT NULL,
+	iteration int4 NULL,
 	CONSTRAINT phrase_teaches_words_pkey PRIMARY KEY (phrase_id, word_id),
 	CONSTRAINT phrase_teaches_fk FOREIGN KEY (phrase_id) REFERENCES cloze_chinese.phrases(phrase_id),
 	CONSTRAINT word_taught_fk FOREIGN KEY (word_id) REFERENCES cloze_chinese.words(word_id)
