@@ -37,7 +37,7 @@ CREATE TABLE cloze_chinese.phrase_contains_words (
 	phrase_id int4 NOT NULL,
 	word_id int4 NOT NULL,
 	contains_order int4 NOT NULL,
-	CONSTRAINT phrase_contains_words_pkey PRIMARY KEY (phrase_id, word_id),
+	CONSTRAINT phrase_contains_words_pkey PRIMARY KEY (phrase_id, word_id, contains_order),
 	CONSTRAINT phrase_contains_fk FOREIGN KEY (phrase_id) REFERENCES cloze_chinese.phrases(phrase_id),
 	CONSTRAINT word_contained_fk FOREIGN KEY (word_id) REFERENCES cloze_chinese.words(word_id)
 );

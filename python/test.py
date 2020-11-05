@@ -59,7 +59,6 @@ def print_sentence():
 			sorted_sentence_data[s_key]["word_to_teach"] = word_to_teach
 			sorted_sentence_data[s_key]["display_text"] = sorted_sentence_data[s_key]["raw_text"].replace(word_to_teach, '#')
 			sorted_sentence_data[s_key]["iteration"] = iteration
-			sorted_sentence_data[s_key]["new_words"] = new_words
 			#sorted_sentence_data[s_key]["alone_words"] = new_words.remove(word_to_teach) if word_to_teach in new_words else new_words
 			used_words.update(new_words)
 		insert_phrases = []
@@ -72,25 +71,46 @@ def print_sentence():
 
 		cur.executemany(insert_words_query,insert_words)
 
+
 		for k,v in sorted_sentence_data.items():
 			current_row = []
-			current_row = (v["word_to_teach"],v["raw_text"], v["clean_text"], v["display_text"], v["pinyin"], v["english"],v["iteration"])
+			current_row = (v["word_to_teach"],v["raw_text"], v["clean_text"], v["display_text"], v["pinyin"], v["english"],v["iteration"], v["words"])
 			insert_phrases.append(current_row)
 
 		insert_phrases_query = """
-		WITH RECURSIVE word_to_teach_row AS (
+		WITH RECURSIVE 
+
+		word_to_teach_row AS (
+
 		SELECT word_id
 		FROM cloze_chinese.words w
 		WHERE w.word_text = %s
+
 		),
 		new_phrase_row AS (
+
 		INSERT INTO cloze_chinese.phrases (raw_text, clean_text, display_text, pinyin, english) VALUES (%s, %s, %s, %s, %s) RETURNING phrase_id
-		)
+
+		),
+		insert_phrase_teaches AS(
 
 		INSERT INTO cloze_chinese.phrase_teaches_words(phrase_id, word_id, iteration) VALUES((SELECT phrase_id FROM new_phrase_row), (SELECT word_id FROM word_to_teach_row), %s)
 
+		),
+		word_contained_rows AS (
+
+		SELECT (SELECT phrase_id FROM new_phrase_row) as phrase_id, word_id, ordinality AS contains_order
+		FROM cloze_chinese.words w INNER JOIN unnest(%s) WITH ORDINALITY as wl_text
+		on w.word_text = wl_text
+
+		)
+
+		INSERT INTO cloze_chinese.phrase_contains_words(phrase_id, word_id, contains_order)
+		SELECT phrase_id, word_id, contains_order
+		FROM word_contained_rows
+
 		"""
-		#print(insert_words)
+		#print(insert_phrases)
 		cur.executemany(insert_phrases_query,insert_phrases)
 
 
