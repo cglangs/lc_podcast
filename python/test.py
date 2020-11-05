@@ -74,13 +74,24 @@ def print_sentence():
 
 		for k,v in sorted_sentence_data.items():
 			current_row = []
-			current_row = (v["raw_text"], v["clean_text"], v["display_text"], v["pinyin"], v["english"])
+			current_row = (v["word_to_teach"],v["raw_text"], v["clean_text"], v["display_text"], v["pinyin"], v["english"],v["iteration"])
 			insert_phrases.append(current_row)
+
 		insert_phrases_query = """
-		INSERT INTO cloze_chinese.phrases (raw_text, clean_text, display_text, pinyin, english) VALUES (%s, %s, %s, %s, %s);
+		WITH RECURSIVE word_to_teach_row AS (
+		SELECT word_id
+		FROM cloze_chinese.words w
+		WHERE w.word_text = %s
+		),
+		new_phrase_row AS (
+		INSERT INTO cloze_chinese.phrases (raw_text, clean_text, display_text, pinyin, english) VALUES (%s, %s, %s, %s, %s) RETURNING phrase_id
+		)
+
+		INSERT INTO cloze_chinese.phrase_teaches_words(phrase_id, word_id, iteration) VALUES((SELECT phrase_id FROM new_phrase_row), (SELECT word_id FROM word_to_teach_row), %s)
+
 		"""
 		#print(insert_words)
-		#cur.executemany(insert_phrases_query,insert_phrases)
+		cur.executemany(insert_phrases_query,insert_phrases)
 
 
 		con.commit()
