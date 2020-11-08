@@ -22,7 +22,7 @@ driver = neo4j.driver(
   neo4j.auth.basic(dbUser, dbPass)
 )
 
-async function signup(object, params, ctx, resolveInfo) {
+/*async function signup(object, params, ctx, resolveInfo) {
   params.password = await bcrypt.hash(params.password, 10)
   try {
       const user = await neo4jgraphql(object, params, ctx, resolveInfo)
@@ -118,7 +118,7 @@ const directiveResolvers = {
         return next()
       }
   }
-}
+}*/
 
 const typeDefs = `
 

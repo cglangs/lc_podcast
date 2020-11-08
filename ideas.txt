@@ -587,3 +587,13 @@ RETURN s AS selection, NULL AS last_seen_dest, NULL AS last_seen_source, 0 AS ho
 ',{u:u, s:s}) yield value
 RETURN value ORDER BY value.is_ready DESC, value.last_seen_dest ASC, value.last_seen_source ASC, value.hops DESC, value.relevant_dependencies DESC, value.outgoing_dependencies ASC, value.incoming_dependencies DESC, RAND() LIMIT 100
 
+
+~/\.node/bin/prisma init cloze-chinese
+
+
+  1. Open folder: cd cloze-chinese
+  2. Start your Prisma server: docker-compose up -d
+  3. Deploy your Prisma service: prisma deploy
+  4. Read more about introspection:
+     http://bit.ly/prisma-introspection
+
