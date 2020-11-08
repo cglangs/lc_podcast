@@ -1,9 +1,9 @@
-const { neo4jgraphql, makeAugmentedSchema } = require("neo4j-graphql-js");
+//const { neo4jgraphql, makeAugmentedSchema } = require("neo4j-graphql-js");
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { ACCESS_SECRET, REFRESH_SECRET, getUserId } = require('./utils')
 const { ApolloServer, gql, SchemaDirectiveVisitor } = require('apollo-server-express');
-const neo4j = require('neo4j-driver')
+//const neo4j = require('neo4j-driver')
 const path = require('path');
 const express = require('express');
 const app = express();
@@ -11,16 +11,16 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser')
 
 
-var dbURL = process.env.BOLT_URL || 'bolt://54.162.39.62:7687'
-var dbUser = process.env.BOLT_USER || 'neo4j'
-var dbPass = process.env.BOLT_PASSWORD || 'cl0zep0dcast4$'
-var driver
+//var dbURL = process.env.BOLT_URL || 'bolt://54.162.39.62:7687'
+//var dbUser = process.env.BOLT_USER || 'neo4j'
+//var dbPass = process.env.BOLT_PASSWORD || 'cl0zep0dcast4$'
+//var driver
 
 
-driver = neo4j.driver(
+/*driver = neo4j.driver(
   dbURL,
   neo4j.auth.basic(dbUser, dbPass)
-)
+)*/
 
 /*async function signup(object, params, ctx, resolveInfo) {
   params.password = await bcrypt.hash(params.password, 10)

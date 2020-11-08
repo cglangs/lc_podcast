@@ -21,7 +21,11 @@
     "express": "^4.17.1",
     "express-graphql": "^0.11.0",
     "graphql-directive-auth": "^0.3.2",
-    "neo4j-graphql-js": "^2.14.2"
+    "neo4j-graphql-js": "^2.14.2",
+    "pg": "^8.4.2",
+    "pg-hstore": "^2.3.3",
+    "sequelize": "^6.3.5",
+    "sequelize-auto": "^0.7.1"
   },
   "engines": {
     "node": "12.18.1",
