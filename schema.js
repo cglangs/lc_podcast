@@ -14,9 +14,9 @@ module.exports =  gql`
   type User {
   	user_id: Int!
   	user_name: String!
-  	email: String!
-  	password: String!
-  	role: String!
+  	user_email: String!
+  	user_password: String!
+  	user_role: String!
   }
 
 `

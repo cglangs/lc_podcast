@@ -37,40 +37,57 @@ const models = initModels(sequelize)
 )*/
 
 async function signup(object, params, ctx, resolveInfo) {
-  console.log(ctx.models)
-  /*params.password = await bcrypt.hash(params.password, 10)
+  params.password = await bcrypt.hash(params.password, 10)
   try {
-      //const user = await neo4jgraphql(object, params, ctx, resolveInfo)
-      if(user.role === 'TESTER'){
+      const user = await ctx.models.users.create({ user_name: params.user_name, user_email: params.email, user_password: params.password, user_role: params.role})
+      if(user.user_role === 'TESTER'){
         // do nothing
       } else{
-        ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user._id, role: user.role }, REFRESH_SECRET), { maxAge: 24 * 60 * 60 * 1000})
+        ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user.user_id, role: user.user_role }, REFRESH_SECRET), { maxAge: 24 * 60 * 60 * 1000})
       }
-      ctx.req.res.cookie("access-token", jwt.sign({ userId: user._id, role: user.role }, ACCESS_SECRET), { maxAge: 15 * 60 * 1000 })
+      ctx.req.res.cookie("access-token", jwt.sign({ userId: user.user_id, role: user.user_role }, ACCESS_SECRET), { maxAge: 15 * 60 * 1000 })
       return user
   }
   catch(error){
     throw new Error("Email address already in use")
-  }*/
+  }
 
+}
+
+async function upgrade(object, params, ctx, resolveInfo) {
+  try {
+      //const user = await ctx.models.users.create({ user_name: params.user_name, user_email: params.email, user_password: params.password, user_role: params.role})
+      ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user.user__id, role: user.user_role }, REFRESH_SECRET), { maxAge: 24 * 60 * 60 * 1000})
+      ctx.req.res.cookie("access-token", jwt.sign({ userId: user.user_id, role: user.user_role }, ACCESS_SECRET), { maxAge: 15 * 60 * 1000 })
+      return user
+  }
+  catch(error){
+    throw new Error("Email address already in use")
+  }
 }
 
 async function login(object, params, ctx, resolveInfo) {
   const password = params.password
   delete params.password
-  //const user = await neo4jgraphql(object, params, ctx, resolveInfo)
+
+  const users = await ctx.models.users.findAll({
+  where: {
+    user_email: params.email
+  }
+  })
+  const user = users[0]
+
   if (!user) {
     throw new Error('No such user found')
   }
-
-  const valid = await bcrypt.compare(password, user.password)
+  const valid = await bcrypt.compare(password, user.user_password)
   if (!valid) {
     throw new Error('Invalid password')
   }
   user.password = null
 
-  ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user._id, role: user.role }, REFRESH_SECRET), { maxAge: 7 * 60 * 60 * 1000 })
-  ctx.req.res.cookie("access-token", jwt.sign({ userId: user._id, role: user.role }, ACCESS_SECRET), { maxAge: 15 * 60 * 1000 })
+  ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user.user_id, role: user.user_role }, REFRESH_SECRET), { maxAge: 7 * 60 * 60 * 1000 })
+  ctx.req.res.cookie("access-token", jwt.sign({ userId: user.user__id, role: user.user_role }, ACCESS_SECRET), { maxAge: 15 * 60 * 1000 })
   return user
 }
 
@@ -92,7 +109,7 @@ const resolvers = {
       return signup(object, params, ctx, resolveInfo)   
     },*/
     UpgradeUser(object, params, ctx, resolveInfo) {
-      return signup(object, params, ctx, resolveInfo)   
+      return upgrade(object, params, ctx, resolveInfo)   
     },
     Login(object, params, ctx, resolveInfo) {
      return login(object, params, ctx, resolveInfo)   
