@@ -32,8 +32,10 @@ CREATE TABLE cloze_chinese.phrases (
 	english varchar(255) NULL,
 	frequency_score float4 NULL,
 	is_sentence bool NULL,
+	sentence_order int4 NULL,
 	CONSTRAINT phrases_pkey PRIMARY KEY (phrase_id)
 );
+
 
 CREATE TABLE cloze_chinese.phrase_contains_words (
 	phrase_id int4 NOT NULL,

@@ -39,6 +39,7 @@ def print_sentence():
 			sentence_data[key]["freq_score"] = sum([word_frequencies[w] for w in sentence_data[key]["words"]]) / len(sentence_data[key]["words"])
 		sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: item[1]["freq_score"], reverse=True)}
 		new_word_key = len(sorted_sentence_data)
+		sentence_order_counter = 1
 		for s_key in sorted_sentence_data:
 			words = sorted_sentence_data[s_key]["words"]
 			old_words = [w for w in words if w in used_words]
@@ -52,7 +53,7 @@ def print_sentence():
 						word_iterations[nw] = 0
 					word_iterations[nw] += 1
 					if nw != word_to_teach:
-						one_word_sentences[new_word_key]={"raw_text": nw, "pinyin": None, "english": None, "clean_text": nw, "freq_score": None,  "is_sentence": False, "word_to_teach": nw, "words": [nw], "display_text": "#", "iteration": 1}
+						one_word_sentences[new_word_key]={"raw_text": nw, "pinyin": None, "english": None, "clean_text": nw, "freq_score": None,  "is_sentence": False, "sentence_order": None, "word_to_teach": nw, "words": [nw], "display_text": "#", "iteration": 1}
 						new_word_key += 1
 				iteration = 1
 			else:
@@ -65,9 +66,11 @@ def print_sentence():
 			sorted_sentence_data[s_key]["word_to_teach"] = word_to_teach
 			sorted_sentence_data[s_key]["display_text"] = sorted_sentence_data[s_key]["raw_text"].replace(word_to_teach, '#')
 			sorted_sentence_data[s_key]["iteration"] = iteration
+			sorted_sentence_data[s_key]["sentence_order"] = sentence_order_counter
 
-			#sorted_sentence_data[s_key]["alone_words"] = new_words.remove(word_to_teach) if word_to_teach in new_words else new_words
 			used_words.update(new_words)
+			sentence_order_counter += 1
+
 		insert_phrases = []
 		insert_words = []
 		#records_list_template = ','.join(['%s'] * 5)
@@ -82,7 +85,7 @@ def print_sentence():
 
 		for k,v in all_phrases.items():
 			current_row = []
-			current_row = (v["word_to_teach"],v["raw_text"], v["clean_text"], v["display_text"], v["pinyin"], v["english"],v["freq_score"],v["is_sentence"],v["iteration"],v["words"])
+			current_row = (v["word_to_teach"],v["raw_text"], v["clean_text"], v["display_text"], v["pinyin"], v["english"],v["freq_score"],v["is_sentence"],v["sentence_order"],v["iteration"],v["words"])
 			insert_phrases.append(current_row)
 
 		insert_phrases_query = """
@@ -97,7 +100,7 @@ def print_sentence():
 		),
 		new_phrase_row AS (
 
-		INSERT INTO cloze_chinese.phrases (raw_text, clean_text, display_text, pinyin, english,frequency_score,is_sentence) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING phrase_id
+		INSERT INTO cloze_chinese.phrases (raw_text, clean_text, display_text, pinyin, english,frequency_score,is_sentence, sentence_order) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING phrase_id
 
 		),
 		insert_phrase_teaches AS(

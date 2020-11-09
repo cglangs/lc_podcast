@@ -36,6 +36,10 @@ module.exports = function(sequelize, DataTypes) {
     is_sentence: {
       type: DataTypes.BOOLEAN,
       allowNull: true
+    },
+    sentence_order: {
+      type: DataTypes.INTEGER,
+      allowNull: true
     }
   }, {
     sequelize,

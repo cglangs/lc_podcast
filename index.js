@@ -10,6 +10,8 @@ const app = express();
 const cors = require('cors');
 const cookieParser = require('cookie-parser')
 
+const models = require('./models/init-models')
+
 
 //var dbURL = process.env.BOLT_URL || 'bolt://54.162.39.62:7687'
 //var dbUser = process.env.BOLT_USER || 'neo4j'
@@ -22,10 +24,10 @@ const cookieParser = require('cookie-parser')
   neo4j.auth.basic(dbUser, dbPass)
 )*/
 
-/*async function signup(object, params, ctx, resolveInfo) {
+async function signup(object, params, ctx, resolveInfo) {
   params.password = await bcrypt.hash(params.password, 10)
   try {
-      const user = await neo4jgraphql(object, params, ctx, resolveInfo)
+      //const user = await neo4jgraphql(object, params, ctx, resolveInfo)
       if(user.role === 'TESTER'){
         // do nothing
       } else{
@@ -43,7 +45,7 @@ const cookieParser = require('cookie-parser')
 async function login(object, params, ctx, resolveInfo) {
   const password = params.password
   delete params.password
-  const user = await neo4jgraphql(object, params, ctx, resolveInfo)
+  //const user = await neo4jgraphql(object, params, ctx, resolveInfo)
   if (!user) {
     throw new Error('No such user found')
   }
@@ -59,17 +61,16 @@ async function login(object, params, ctx, resolveInfo) {
   return user
 }
 
-async function processSentence (object, params, ctx, resolveInfo){
-  var sentence = await neo4jgraphql(object, params, ctx, resolveInfo)
+/*async function processSentence (object, params, ctx, resolveInfo){
+  //var sentence = await neo4jgraphql(object, params, ctx, resolveInfo)
   if(sentence){
       sentence.current_learners = sentence.current_learners.filter((learner)=> learner.User._id === params.userId)
   }
 
   return sentence
-}
+}*/
 
 const resolvers = {
-  // entry point to GraphQL service
   Mutation: {
     CreateUser(object, params, ctx, resolveInfo) {
       return signup(object, params, ctx, resolveInfo)   
@@ -82,35 +83,28 @@ const resolvers = {
     },
     Login(object, params, ctx, resolveInfo) {
      return login(object, params, ctx, resolveInfo)   
-    },
-    IncrementInterval(object, params, ctx, resolveInfo){
-      var return_val = 0
-      if(params.should_call){
-        return_val = neo4jgraphql(object, params, ctx, resolveInfo)
-      }
-      return return_val
     }
   },
   Query: {
      getNextSentence(object, params, ctx, resolveInfo){
         params.userId = ctx.req.userId
-        const sentence =processSentence(object, params, ctx, resolveInfo)
+        //const sentence =processSentence(object, params, ctx, resolveInfo)
         return sentence
     },
      getCurrentProgress(object, params, ctx, resolveInfo){
         params.userId = ctx.req.userId
-        const progress = neo4jgraphql(object, params, ctx, resolveInfo)
+        //const progress = neo4jgraphql(object, params, ctx, resolveInfo)
         return progress
     },
     me(object, params, ctx, resolveInfo){
         params.userId = ctx.req.userId
-        const user = neo4jgraphql(object, params, ctx, resolveInfo)
+        //const user = neo4jgraphql(object, params, ctx, resolveInfo)
         return user
     },
 
   }
 }
-const directiveResolvers = {
+/*const directiveResolvers = {
   hasToken(next,src,args,ctx) {
       if (typeof ctx.req.userId === 'undefined' || ctx.req.userId === null) {
         return null
@@ -120,16 +114,11 @@ const directiveResolvers = {
   }
 }*/
 
-const typeDefs = `
 
-
-`
-
-const schema = makeAugmentedSchema({
+/*const schema = makeAugmentedSchema({
   typeDefs,
-  resolvers,
-  directiveResolvers
-});
+  resolvers
+});*/
 
 // Allow cross-origin
 
@@ -184,10 +173,11 @@ app.get('*', (req, res) => {
 
 
 const server = new ApolloServer({
-  schema: schema,
+  typeDefs: schema,
+  resolvers,
   context: ({ req }) => {
     return {
-      driver,
+      models,
       req
     };
   }
