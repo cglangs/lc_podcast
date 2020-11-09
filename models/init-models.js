@@ -20,14 +20,14 @@ function initModels(sequelize) {
   words.belongsToMany(phrases, { through: phrase_contains_words, foreignKey: "word_id", otherKey: "phrase_id" });
   phrases.hasMany(phrase_contains_words, { foreignKey: "phrase_id"});
   phrase_contains_words.belongsTo(words, { foreignKey: "word_id"});
-  phrases.belongsToMany(words, { through: phrase_contains_words, foreignKey: "phrase_id", otherKey: "word_id" });
-  words.hasMany(phrase_contains_words, { foreignKey: "word_id"});
+  //phrases.belongsToMany(words, { through: phrase_contains_words, foreignKey: "phrase_id", otherKey: "word_id" });
+  //words.hasMany(phrase_contains_words, { foreignKey: "word_id"});
   phrase_teaches_words.belongsTo(phrases, { foreignKey: "phrase_id"});
   words.belongsToMany(phrases, { through: phrase_teaches_words, foreignKey: "word_id", otherKey: "phrase_id" });
   phrases.hasMany(phrase_teaches_words, { foreignKey: "phrase_id"});
   phrase_teaches_words.belongsTo(words, { foreignKey: "word_id"});
-  phrases.belongsToMany(words, { through: phrase_teaches_words, foreignKey: "phrase_id", otherKey: "word_id" });
-  words.hasMany(phrase_teaches_words, { foreignKey: "word_id"});
+  //phrases.belongsToMany(words, { through: phrase_teaches_words, foreignKey: "phrase_id", otherKey: "word_id" });
+  //words.hasMany(phrase_teaches_words, { foreignKey: "word_id"});
   user_progress.belongsTo(intervals, { foreignKey: "interval_id"});
   intervals.hasMany(user_progress, { foreignKey: "interval_id"});
   user_progress.belongsTo(users, { foreignKey: "user_id"});

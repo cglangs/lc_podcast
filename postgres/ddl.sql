@@ -1,9 +1,9 @@
 CREATE TABLE cloze_chinese.users (
 	user_id int4 NOT NULL DEFAULT nextval('cloze_chinese.users_userid_seq'::regclass),
-	username varchar(255) NULL,
+	user_name varchar(255) NULL,
 	email varchar(255) NULL,
-	userpassword varchar(255) NULL,
-	userrole cloze_chinese.roletype NULL,
+	user_password varchar(255) NULL,
+	user_role cloze_chinese.roletype NULL,
 	CONSTRAINT users_pkey PRIMARY KEY (user_id)
 );
 

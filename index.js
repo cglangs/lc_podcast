@@ -3,15 +3,27 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { ACCESS_SECRET, REFRESH_SECRET, getUserId } = require('./utils')
 const { ApolloServer, gql, SchemaDirectiveVisitor } = require('apollo-server-express');
+const Sequelize = require('sequelize')
 //const neo4j = require('neo4j-driver')
 const path = require('path');
 const express = require('express');
 const app = express();
 const cors = require('cors');
 const cookieParser = require('cookie-parser')
+const schema = require('./schema')
+const {initModels} = require('./models/init-models')
 
-const models = require('./models/init-models')
 
+const sequelize = new Sequelize(
+  'postgres',
+  'postgres',
+  'pass',
+  {
+    dialect: 'postgres',
+  },
+);
+
+const models = initModels(sequelize)
 
 //var dbURL = process.env.BOLT_URL || 'bolt://54.162.39.62:7687'
 //var dbUser = process.env.BOLT_USER || 'neo4j'
@@ -25,7 +37,8 @@ const models = require('./models/init-models')
 )*/
 
 async function signup(object, params, ctx, resolveInfo) {
-  params.password = await bcrypt.hash(params.password, 10)
+  console.log(ctx.models)
+  /*params.password = await bcrypt.hash(params.password, 10)
   try {
       //const user = await neo4jgraphql(object, params, ctx, resolveInfo)
       if(user.role === 'TESTER'){
@@ -38,7 +51,7 @@ async function signup(object, params, ctx, resolveInfo) {
   }
   catch(error){
     throw new Error("Email address already in use")
-  }
+  }*/
 
 }
 
@@ -75,9 +88,9 @@ const resolvers = {
     CreateUser(object, params, ctx, resolveInfo) {
       return signup(object, params, ctx, resolveInfo)   
     },
-    CreatePermanentUser(object, params, ctx, resolveInfo) {
+    /*CreatePermanentUser(object, params, ctx, resolveInfo) {
       return signup(object, params, ctx, resolveInfo)   
-    },
+    },*/
     UpgradeUser(object, params, ctx, resolveInfo) {
       return signup(object, params, ctx, resolveInfo)   
     },
@@ -86,7 +99,7 @@ const resolvers = {
     }
   },
   Query: {
-     getNextSentence(object, params, ctx, resolveInfo){
+     /*&getNextSentence(object, params, ctx, resolveInfo){
         params.userId = ctx.req.userId
         //const sentence =processSentence(object, params, ctx, resolveInfo)
         return sentence
@@ -95,7 +108,7 @@ const resolvers = {
         params.userId = ctx.req.userId
         //const progress = neo4jgraphql(object, params, ctx, resolveInfo)
         return progress
-    },
+    },*/
     me(object, params, ctx, resolveInfo){
         params.userId = ctx.req.userId
         //const user = neo4jgraphql(object, params, ctx, resolveInfo)
@@ -123,12 +136,12 @@ const resolvers = {
 // Allow cross-origin
 
 
-var corsOptions = {
+/*var corsOptions = {
   origin: 'http://localhost:3000',
   credentials: true // <-- REQUIRED backend setting
 };
 
-app.use(cors(corsOptions));
+app.use(cors(corsOptions));*/
 
 app.use(cookieParser())
 
@@ -164,15 +177,17 @@ app.use((req, res, next) =>{
 })
 
 
-app.use(express.static('public'))
+/*app.use(express.static('public'))
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
-});
+});*/
 
 
 
 const server = new ApolloServer({
+  introspection: true,
+  playground: true,
   typeDefs: schema,
   resolvers,
   context: ({ req }) => {

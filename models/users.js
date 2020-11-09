@@ -9,7 +9,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false,
       primaryKey: true
     },
-    username: {
+    user_name: {
       type: DataTypes.STRING(255),
       allowNull: true
     },
@@ -17,11 +17,11 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.STRING(255),
       allowNull: true
     },
-    userpassword: {
+    user_password: {
       type: DataTypes.STRING(255),
       allowNull: true
     },
-    userrole: {
+    user_role: {
       type: DataTypes.ENUM("ADMIN","STUDENT","TESTER"),
       allowNull: true
     }
