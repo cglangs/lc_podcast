@@ -33,6 +33,13 @@ module.exports = function(sequelize, DataTypes) {
     timestamps: false,
     indexes: [
       {
+        name: "user_email_unique",
+        unique: true,
+        fields: [
+          { name: "user_email" },
+        ]
+      },
+      {
         name: "users_pkey",
         unique: true,
         fields: [

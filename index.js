@@ -25,16 +25,6 @@ const sequelize = new Sequelize(
 
 const models = initModels(sequelize)
 
-//var dbURL = process.env.BOLT_URL || 'bolt://54.162.39.62:7687'
-//var dbUser = process.env.BOLT_USER || 'neo4j'
-//var dbPass = process.env.BOLT_PASSWORD || 'cl0zep0dcast4$'
-//var driver
-
-
-/*driver = neo4j.driver(
-  dbURL,
-  neo4j.auth.basic(dbUser, dbPass)
-)*/
 
 async function signup(object, params, ctx, resolveInfo) {
   params.password = await bcrypt.hash(params.password, 10)
@@ -87,8 +77,19 @@ async function login(object, params, ctx, resolveInfo) {
   user.password = null
 
   ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user.user_id, role: user.user_role }, REFRESH_SECRET), { maxAge: 7 * 60 * 60 * 1000 })
-  ctx.req.res.cookie("access-token", jwt.sign({ userId: user.user__id, role: user.user_role }, ACCESS_SECRET), { maxAge: 15 * 60 * 1000 })
+  ctx.req.res.cookie("access-token", jwt.sign({ userId: user.user_id, role: user.user_role }, ACCESS_SECRET), { maxAge: 15 * 60 * 1000 })
   return user
+}
+
+async function makeAttempt(object, params, ctx, resolveInfo) {
+  try {
+    await ctx.models.user_progress.upsert({ user_id: params.user_id, word_id: params.word_id, interval_id: params.interval_id, is_learned: params.interval_id === 11})
+  }
+  catch(error){
+    throw new Error('Unable to make attempt')
+  }
+
+  return params.user_id
 }
 
 /*async function processSentence (object, params, ctx, resolveInfo){
@@ -105,18 +106,19 @@ const resolvers = {
     CreateUser(object, params, ctx, resolveInfo) {
       return signup(object, params, ctx, resolveInfo)   
     },
-    /*CreatePermanentUser(object, params, ctx, resolveInfo) {
-      return signup(object, params, ctx, resolveInfo)   
-    },*/
     UpgradeUser(object, params, ctx, resolveInfo) {
       return upgrade(object, params, ctx, resolveInfo)   
     },
     Login(object, params, ctx, resolveInfo) {
      return login(object, params, ctx, resolveInfo)   
+    },
+    makeClozeAttempt(object, params, ctx, resolveInfo) {
+      return makeAttempt(object, params, ctx, resolveInfo)    
     }
+
   },
   Query: {
-     /*&getNextSentence(object, params, ctx, resolveInfo){
+     /*getNextSentence(object, params, ctx, resolveInfo){
         params.userId = ctx.req.userId
         //const sentence =processSentence(object, params, ctx, resolveInfo)
         return sentence

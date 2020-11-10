@@ -60,8 +60,28 @@ CREATE TABLE cloze_chinese.user_progress (
 	user_id int4 NOT NULL,
 	word_id int4 NOT NULL,
 	interval_id int4 NOT NULL,
+	last_seen timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+	is_learned bool NOT NULL DEFAULT false,
 	CONSTRAINT up_pkey PRIMARY KEY (user_id, word_id),
 	CONSTRAINT up_interval_fk FOREIGN KEY (interval_id) REFERENCES cloze_chinese.intervals(interval_id),
 	CONSTRAINT up_user_fk FOREIGN KEY (user_id) REFERENCES cloze_chinese.users(user_id),
 	CONSTRAINT up_word_fk FOREIGN KEY (word_id) REFERENCES cloze_chinese.words(word_id)
 );
+
+CREATE OR REPLACE FUNCTION cloze_chinese.update_lastseen_column()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+   NEW.last_seen = now(); 
+   RETURN NEW;
+END;
+$function$
+;
+
+create trigger update_up_lastseentimestamp before
+update
+    on
+    cloze_chinese.user_progress for each row execute function cloze_chinese.update_lastseen_column();
+
+

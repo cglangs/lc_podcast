@@ -37,6 +37,16 @@ module.exports = function(sequelize, DataTypes) {
         },
         key: 'interval_id'
       }
+    },
+    last_seen: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+    },
+    is_learned: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
     }
   }, {
     sequelize,
