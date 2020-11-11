@@ -3,6 +3,7 @@ const { gql } = require('apollo-server-express')
 module.exports =  gql`
   type Query {
   	me(userId: Int): User
+  	getNextSentence(user_id: Int!): Phrase
   }
  
   type Mutation {
@@ -19,5 +20,18 @@ module.exports =  gql`
   	user_password: String!
   	user_role: String!
   }
+
+  type Phrase {
+  	phrase_id: Int!
+  	raw_text: String!
+  	clean_text: String! 
+  	display_text: String!
+}
+
+  type Progress {
+  	words_learned: Int!
+  	intervals_completed: Int!
+  	total_word_count: Int!
+}
 
 `

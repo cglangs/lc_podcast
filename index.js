@@ -92,14 +92,30 @@ async function makeAttempt(object, params, ctx, resolveInfo) {
   return params.user_id
 }
 
-/*async function processSentence (object, params, ctx, resolveInfo){
-  //var sentence = await neo4jgraphql(object, params, ctx, resolveInfo)
-  if(sentence){
-      sentence.current_learners = sentence.current_learners.filter((learner)=> learner.User._id === params.userId)
-  }
+async function getSentence (object, params, ctx, resolveInfo){
+  const sentence = await sequelize.query(
+    `SELECT * 
+    FROM cloze_chinese.phrases p
+    LEFT JOIN cloze_chinese.phrase_teaches_words ptw 
+    ON p.phrase_id = ptw.phrase_id
+    LEFT JOIN cloze_chinese.user_progress up
+    ON ptw.word_id = up.word_id
+    WHERE is_sentence
+    AND up.word_id is null
+    ORDER BY sentence_order ASC LIMIT 1`)
+  return sentence[0][0]
+}
 
-  return sentence
-}*/
+async function currentProgress (object, params, ctx, resolveInfo){
+  const sentence = await sequelize.query(
+    `select 
+    sum(CASE WHEN is_learned THEN 1 END) as words_learned, 
+    sum(interval_id - 1) as intervals_completed,
+    (select count(word_id) from words) as total_words
+    from user_progress
+    where user_id =`)
+  return sentence[0][0]
+}
 
 const resolvers = {
   Mutation: {
@@ -113,17 +129,18 @@ const resolvers = {
      return login(object, params, ctx, resolveInfo)   
     },
     makeClozeAttempt(object, params, ctx, resolveInfo) {
+       //params.userId = ctx.req.userId
       return makeAttempt(object, params, ctx, resolveInfo)    
     }
 
   },
   Query: {
-     /*getNextSentence(object, params, ctx, resolveInfo){
-        params.userId = ctx.req.userId
-        //const sentence =processSentence(object, params, ctx, resolveInfo)
+     getNextSentence(object, params, ctx, resolveInfo){
+        //params.userId = ctx.req.userId
+        const sentence = getSentence(object, params, ctx, resolveInfo)
         return sentence
     },
-     getCurrentProgress(object, params, ctx, resolveInfo){
+     /*getCurrentProgress(object, params, ctx, resolveInfo){
         params.userId = ctx.req.userId
         //const progress = neo4jgraphql(object, params, ctx, resolveInfo)
         return progress
