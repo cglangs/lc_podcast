@@ -3,7 +3,7 @@ import { Switch, Route } from 'react-router-dom'
 import Login from './Login'
 import Header from './Header'
 //import Author from './Author'
-import Editor from './Editor'
+//import Editor from './Editor'
 import Words from './Words'
 import WordEdit from './WordEdit'
 import Play from './Play'
@@ -17,11 +17,10 @@ import gql from 'graphql-tag';
 const GET_USER = gql`
 query getUser {
   me {
-    _id
+    user_id
     user_name
-    role
-    password
-    token
+    user_role
+    user_password
   }
 }
 `

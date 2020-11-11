@@ -92,6 +92,21 @@ async function makeAttempt(object, params, ctx, resolveInfo) {
   return params.user_id
 }
 
+async function getMe(object, params, ctx, resolveInfo) {
+  const users = await ctx.models.users.findAll({
+  where: {
+    user_id: params.user_id
+  }
+  })
+  const user = users[0]
+
+  if (!user) {
+    throw new Error('Error')
+  }
+  return user
+}
+
+
 async function getSentence (object, params, ctx, resolveInfo){
   const sentence = await sequelize.query(
     `SELECT * 
@@ -107,14 +122,18 @@ async function getSentence (object, params, ctx, resolveInfo){
 }
 
 async function currentProgress (object, params, ctx, resolveInfo){
-  const sentence = await sequelize.query(
+  const progress = await sequelize.query(
     `select 
     sum(CASE WHEN is_learned THEN 1 END) as words_learned, 
     sum(interval_id - 1) as intervals_completed,
     (select count(word_id) from words) as total_words
-    from user_progress
-    where user_id =`)
-  return sentence[0][0]
+    from cloze_chinese.user_progress
+    where user_id = ?`,
+    {
+    replacements: params.user_id,
+    type: QueryTypes.SELECT
+    })
+  return progress[0][0]
 }
 
 const resolvers = {
@@ -129,14 +148,14 @@ const resolvers = {
      return login(object, params, ctx, resolveInfo)   
     },
     makeClozeAttempt(object, params, ctx, resolveInfo) {
-       //params.userId = ctx.req.userId
+       params.user_id = ctx.req.userId
       return makeAttempt(object, params, ctx, resolveInfo)    
     }
 
   },
   Query: {
      getNextSentence(object, params, ctx, resolveInfo){
-        //params.userId = ctx.req.userId
+        params.user_id = ctx.req.userId
         const sentence = getSentence(object, params, ctx, resolveInfo)
         return sentence
     },
@@ -146,8 +165,12 @@ const resolvers = {
         return progress
     },*/
     me(object, params, ctx, resolveInfo){
-        params.userId = ctx.req.userId
-        //const user = neo4jgraphql(object, params, ctx, resolveInfo)
+        params.user_id = ctx.req.userId
+        var user
+        if(ctx.req.userId){
+          params.user_id = ctx.req.userId
+          getMe(object, params, ctx, resolveInfo)
+        }
         return user
     },
 
@@ -172,12 +195,12 @@ const resolvers = {
 // Allow cross-origin
 
 
-/*var corsOptions = {
+var corsOptions = {
   origin: 'http://localhost:3000',
   credentials: true // <-- REQUIRED backend setting
 };
 
-app.use(cors(corsOptions));*/
+app.use(cors(corsOptions));
 
 app.use(cookieParser())
 
@@ -213,11 +236,11 @@ app.use((req, res, next) =>{
 })
 
 
-/*app.use(express.static('public'))
+app.use(express.static('public'))
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
-});*/
+});
 
 
 
