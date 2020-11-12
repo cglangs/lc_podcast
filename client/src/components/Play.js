@@ -4,7 +4,6 @@ import gql from 'graphql-tag';
 import { Howl } from 'howler';
 import ProgressBar from './ProgressBar'
 import Switch from "./Switch";
-import Modal from './Modal'
 import { getCookie} from '../utils'
 
 
@@ -181,26 +180,12 @@ class Play extends Component {
       )
   }
 
-  getUserIntervalStep(showAnswer, isCorrect, thisUser){
+  getUserInterval(showAnswer, isCorrect, current_interval){
     var progress
-    if(!thisUser){
-      progress = 1
-    } else{
-      progress = thisUser.STEP_AT_INTERVAL
-    }
-    if(showAnswer && isCorrect){
-      progress = progress + 1
-    }
-    return progress
-
-  }
-
-  getUserInterval(showAnswer, isCorrect, thisUser){
-    var progress
-    if(!thisUser){
+    if(!current_interval){
       progress = 0
     } else{
-      progress = thisUser.CURRENT_TIME_INTERVAL
+      progress = current_interval
     }
     if(showAnswer && isCorrect){
       progress = progress + 1
@@ -221,15 +206,14 @@ class Play extends Component {
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
             console.log(data)
             if(data.getNextSentence && data.getCurrentProgress){
-              const sentenceId = parseInt(nextSentence._id)
-              const userIntervalStep = this.getUserIntervalStep(this.state.showAnswer,this.state.isCorrect,nextSentence.current_learners[0])
-              const userInterval = this.getUserInterval(this.state.showAnswer,this.state.isCorrect,nextSentence.current_learners[0])
+              const sentenceId = parseInt(nextSentence.phrase_id)
+              const userInterval = this.getUserInterval(this.state.showAnswer,this.state.isCorrect,nextSentence.interval_id)
                 return(
                   <div style={{display: "flex", flexDirection: "row", "width": "100%"}}>
                   <div style={{"flexGrow": "4", "paddingTop": "20%"}}>
                   {role === "TESTER" && (<p style={{fontSize: "12px", "marginBottom": "20px"}}>You are currently not logged in. Log in to save your progress.</p>)}
                   <div style={{display: "inline-block", "textAlign": "center"}}>
-                    <ProgressBar stepAtInterval={userIntervalStep} currentTimeInterval={userInterval} intervalOrder={nextSentence.interval.interval_order} />
+                    <ProgressBar currentTimeInterval={userInterval} />
                      <div style={{display: "flex", justifyContent: "center"}}>
                       {this.state.showAnswer && <button  style={{"width": "25px", "height": "25px", "marginRight": "10px", "marginBlockStart": "1.8em"}} onClick={() => this.playSound(nextSentence._id, nextSentence.word_taught.word_id)}><img style={{"width": "100%"}} alt="replay audio" src="speaker_icon.svg"/></button>}
                      {this.state.showPinyin ? <p style={{fontSize: "calc(10px + 2vmin)"}}>{nextSentence.pinyin}</p> : this.getText(nextSentence)}
@@ -257,10 +241,10 @@ class Play extends Component {
                           {makeAttempt => (
                             <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
                              <p className="cloze-text">{nextSentence.display_text.substr(0,nextSentence.display_text.indexOf('#'))}</p>
-                            <input style={{width: `${nextSentence.word_taught.text.length * 40}px`,fontSize: "37px", margin: "15px 5px 15px 5px", color: this.getFontColor(nextSentence.word_taught), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
+                            <input style={{width: `${nextSentence.word_taught.word_text.length * 40}px`,fontSize: "37px", margin: "15px 5px 15px 5px", color: this.getFontColor(nextSentence.word_taught), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
-                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (nextSentence.word_taught.text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
+                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (nextSentence.word_taught.word_text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
                               }
                             }}
                             />
@@ -269,7 +253,7 @@ class Play extends Component {
                               style={{margin: "15px 5px 15px 5px", height: "40px", marginBlockStart: "3em", fontSize: "14px"}}
                               onClick={() => 
                                 {
-                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (nextSentence.word_taught.text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
+                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (nextSentence.word_taught.word_text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
                                 }
                               }
                             >
@@ -280,7 +264,7 @@ class Play extends Component {
                     </Mutation>
                   </div>
                   <div>
-                    {(nextSentence.clean_text !== nextSentence.word_taught.text) && (this.state.showPinyin ? <p>{nextSentence.word_taught.pinyin}</p> : this.getText(nextSentence.word_taught))}
+                    {(nextSentence.clean_text !== nextSentence.word_taught.word_text) && (this.state.showPinyin ? <p>{nextSentence.word_taught.pinyin}</p> : this.getText(nextSentence.word_taught))}
                   </div>
                   {this.state.showAnswer && nextSentence.word_taught.characters.length > 0 && <button onClick={() => this.setState(prevState => ({showCharacterDefinitions: !prevState.showCharacterDefinitions}))}>Character Definitions</button>}
               </div>
