@@ -42,10 +42,8 @@ const GET_SENTENCE = gql`
       word_text
 			english
       pinyin
-		}
-    intervals{
       interval_id
-    }
+		}
 
 	}
 

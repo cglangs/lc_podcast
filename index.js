@@ -109,14 +109,14 @@ async function getMe(object, params, ctx, resolveInfo) {
 
 
 async function getSentence (object, params, ctx, resolveInfo){
-  x = 'word_taught.word_text'
   const sentence = await sequelize.query(
     `SELECT p.*, 
     w.word_id AS "${types.word_taught}${fields.word_id}",
     w.word_text AS "${types.word_taught}${fields.word_text}",
     w.english AS "${types.word_taught}${fields.english}",
     w.pinyin AS "${types.word_taught}${fields.pinyin}",
-    up.interval_id AS "${types.word_taught}${fields.interval_id}"
+    up.interval_id AS "${types.word_taught}${fields.interval_id}",
+    TO_CHAR(NOW(), 'yyyy-mm-dd hh-mm-ss.ms') AS time_fetched
     FROM cloze_chinese.phrases p
     INNER JOIN cloze_chinese.phrase_teaches_words ptw
     ON p.phrase_id = ptw.phrase_id
@@ -133,49 +133,25 @@ async function getSentence (object, params, ctx, resolveInfo){
     raw: true,
     nest: true,
     type: sequelize.QueryTypes.SELECT })
-  console.log(sentence[0])
 
-  /*
-  select * 
-  from user_progress up
-  right join words w on up.word_id = w.word_id
-  inner join phrase_teaches_words ptw on w.word_id = ptw.word_id 
-  inner join phrases p on ptw.phrase_id = p.phrase_id
-  */
- /* const sentence = await ctx.models.phrases.findOne({
-      include: [
-         { model: ctx.models.words,
-          required: true,
-          as: 'word_taught',
-          include: [
-          {model: ctx.models.user_progress, required: false, as: "user_progresses"}]
-        }
-      ],
-      where: {
-        [Sequelize.Op.and]: [
-
-          {is_sentence: true},
-        ]
-      },
-      order: [ [ 'sentence_order', 'ASC' ]]
-  })*/
-  //console.log(sentence.word_taught[0].user_progresses)
   return sentence[0]
 }
 
 async function currentProgress (object, params, ctx, resolveInfo){
   const progress = await sequelize.query(
     `select 
-    sum(CASE WHEN is_learned THEN 1 END) as words_learned, 
+    sum(CASE WHEN is_learned THEN 1 ELSE 0 END) as words_learned, 
     sum(interval_id - 1) as intervals_completed,
-    (select count(word_id) from words) as total_words
+    (select count(word_id) from cloze_chinese.words) as total_word_count
     from cloze_chinese.user_progress
     where user_id = ?`,
     {
-    replacements: params.user_id,
-    type: QueryTypes.SELECT
+    replacements: [params.user_id],
+    raw: true,
+    type: sequelize.QueryTypes.SELECT
     })
-  return progress[0][0]
+  console.log(progress[0])
+  return progress[0]
 }
 
 const resolvers = {
@@ -201,11 +177,11 @@ const resolvers = {
         const sentence = getSentence(object, params, ctx, resolveInfo)
         return sentence
     },
-     /*getCurrentProgress(object, params, ctx, resolveInfo){
-        params.userId = ctx.req.userId
-        //const progress = neo4jgraphql(object, params, ctx, resolveInfo)
+     getCurrentProgress(object, params, ctx, resolveInfo){
+        params.user_id = ctx.req.userId || 9
+        const progress = currentProgress(object, params, ctx, resolveInfo)
         return progress
-    },*/
+    },
     me(object, params, ctx, resolveInfo){
         params.user_id = ctx.req.userId || 9
         var user

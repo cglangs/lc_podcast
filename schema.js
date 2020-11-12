@@ -3,7 +3,8 @@ const { gql } = require('apollo-server-express')
 module.exports =  gql`
   type Query {
   	me(userId: Int): User
-  	getNextSentence(user_id: Int!): Phrase
+  	getNextSentence: Phrase
+  	getCurrentProgress: Progress
   }
  
   type Mutation {
@@ -27,6 +28,7 @@ module.exports =  gql`
   	clean_text: String! 
   	display_text: String!
   	word_taught: Word!
+  	time_fetched: String
   }
 
   type Word {
