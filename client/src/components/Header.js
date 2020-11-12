@@ -46,7 +46,7 @@ class Header extends Component {
           </Link>
         </div>
         <div className="flex flex-fixed">
-          {isLoggedIn && this.props.user && this.props.user.role !== 'TESTER' ? (
+          {isLoggedIn && this.props.user && this.props.user.user_role !== 'TESTER' ? (
             <div
               onClick={() => {
                 document.cookie = "access-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";

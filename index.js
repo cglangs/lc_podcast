@@ -47,12 +47,16 @@ async function signup(object, params, ctx, resolveInfo) {
 
 async function upgrade(object, params, ctx, resolveInfo) {
   try {
-      //const user = await ctx.models.users.create({ user_name: params.user_name, user_email: params.email, user_password: params.password, user_role: params.role})
-      ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user.user__id, role: user.user_role }, REFRESH_SECRET), { maxAge: 24 * 60 * 60 * 1000})
-      ctx.req.res.cookie("access-token", jwt.sign({ userId: user.user_id, role: user.user_role }, ACCESS_SECRET), { maxAge: 15 * 60 * 1000 })
-      return user
+    const result = await ctx.models.users.update({ user_role: 'STUDENT',user_name: params.user_name, user_email: params.email, user_password: params.password},
+      { where: { user_id: params.user_id },
+        returning: true,
+        plain: true })
+    const user = result[1]
+    ctx.req.res.cookie("refresh-token", jwt.sign({ userId: user.user_id, role: user.user_role }, REFRESH_SECRET), { maxAge: 24 * 60 * 60 * 1000})
+    ctx.req.res.cookie("access-token", jwt.sign({ userId: user.user_id, role: user.user_role }, ACCESS_SECRET), { maxAge: 15 * 60 * 1000 })
   }
   catch(error){
+    console.log(error)
     throw new Error("Email address already in use")
   }
 }
@@ -61,12 +65,11 @@ async function login(object, params, ctx, resolveInfo) {
   const password = params.password
   delete params.password
 
-  const users = await ctx.models.users.findAll({
+  const user = await ctx.models.users.findOne({
   where: {
     user_email: params.email
   }
   })
-  const user = users[0]
 
   if (!user) {
     throw new Error('No such user found')
@@ -94,16 +97,16 @@ async function makeAttempt(object, params, ctx, resolveInfo) {
 }
 
 async function getMe(object, params, ctx, resolveInfo) {
-  const users = await ctx.models.users.findAll({
+  const user = await ctx.models.users.findOne({
   where: {
     user_id: params.user_id
   }
   })
-  const user = users[0]
 
   if (!user) {
     throw new Error('Error')
   }
+
   return user
 }
 
@@ -159,34 +162,36 @@ const resolvers = {
       return signup(object, params, ctx, resolveInfo)   
     },
     UpgradeUser(object, params, ctx, resolveInfo) {
+      params.user_id = ctx.req.userId
       return upgrade(object, params, ctx, resolveInfo)   
     },
     Login(object, params, ctx, resolveInfo) {
      return login(object, params, ctx, resolveInfo)   
     },
     makeClozeAttempt(object, params, ctx, resolveInfo) {
-       params.user_id = ctx.req.userId || 9
+       params.user_id = ctx.req.userId
       return makeAttempt(object, params, ctx, resolveInfo)    
     }
 
   },
   Query: {
      getNextSentence(object, params, ctx, resolveInfo){
-        params.user_id = ctx.req.userId || 9
+        params.user_id = ctx.req.userId
         const sentence = getSentence(object, params, ctx, resolveInfo)
         return sentence
     },
      getCurrentProgress(object, params, ctx, resolveInfo){
-        params.user_id = ctx.req.userId || 9
+        params.user_id = ctx.req.userId
         const progress = currentProgress(object, params, ctx, resolveInfo)
         return progress
     },
     me(object, params, ctx, resolveInfo){
-        var user
+        var user 
         if(ctx.req.userId){
-          params.user_id = ctx.req.userId
-          user = getMe(object, params, ctx, resolveInfo)
+            params.user_id = ctx.req.userId
+            user = getMe(object, params, ctx, resolveInfo)
         }
+
         return user
     },
 
@@ -211,12 +216,12 @@ const directiveResolvers = {
 // Allow cross-origin
 
 
-/*var corsOptions = {
+var corsOptions = {
   origin: 'http://localhost:3000',
   credentials: true // <-- REQUIRED backend setting
-};*/
+};
 
-//app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 
 app.use(cookieParser())
 
@@ -231,6 +236,7 @@ app.use((req, res, next) =>{
 
   if(accessToken){
     const user = jwt.verify(accessToken, ACCESS_SECRET)
+    console.log(user)
     req.userId = user.userId
     return next()
   }

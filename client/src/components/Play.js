@@ -180,12 +180,8 @@ class Play extends Component {
   }
 
   getUserInterval(showAnswer, isCorrect, current_interval){
-    var progress
-    if(!current_interval){
-      progress = 0
-    } else{
-      progress = current_interval
-    }
+    var progress = current_interval
+
     if(showAnswer && isCorrect){
       progress = progress + 1
     }

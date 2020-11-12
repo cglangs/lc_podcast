@@ -5,24 +5,22 @@ import { withRouter } from 'react-router-dom';
 
 
 const SIGNUP_MUTATION = gql`
-  mutation SignupMutation($email: String!, $password: String!, $user_name: String!) {
-    CreatePermanentUser(email: $email, password: $password, user_name: $user_name) {
-      _id
+  mutation SignupMutation($email: String!, $password: String!, $user_name: String!, $role: String!) {
+    CreateUser(email: $email, password: $password, user_name: $user_name, role: $role) {
+      user_id
       user_name
-      password
-      token
-      role
+      user_password
+      user_role
     }
   }
 `
 const UPGRADE_MUTATION = gql`
-  mutation UpgradeMutation($email: String!, $password: String!, $user_name: String!, $userId: Int!) {
-    UpgradeUser(email: $email, password: $password, user_name: $user_name, userId: $userId) {
-      _id
+  mutation UpgradeMutation($email: String!, $password: String!, $user_name: String!) {
+    UpgradeUser(email: $email, password: $password, user_name: $user_name) {
+      user_id
       user_name
-      password
-      token
-      role
+      user_password
+      user_role
     }
   }
 `
@@ -30,11 +28,10 @@ const UPGRADE_MUTATION = gql`
 const LOGIN_MUTATION = gql`
   mutation LoginMutation($email: String!, $password: String!) {
     Login(email: $email, password: $password) {
-      _id
+      user_id
       user_name
-      password
-      token
-      role
+      user_password
+      user_role
     }
   }
 `
@@ -51,8 +48,8 @@ class Login extends Component {
 
   componentDidMount(){
     if(this.props.user){
-      const {user_name, _id ,role} = this.props.user
-      this.setUserInfo(user_name, parseInt(_id), role)
+      const {user_name, user_id , user_role} = this.props.user
+      this.setUserInfo(user_name, parseInt(user_id), user_role)
     }
   }
 
@@ -92,7 +89,7 @@ class Login extends Component {
       <div>
       <Mutation
         mutation={isLogin ? LOGIN_MUTATION : role === 'TESTER' ? UPGRADE_MUTATION : SIGNUP_MUTATION}
-        variables={{ email, password, user_name, userId}}
+        variables={{ email, password, user_name, userId, role: "STUDENT"}}
         onCompleted={data => this._confirm()}
         onError={(error) => console.log(error.message)}
       >

@@ -46,7 +46,7 @@ function displayNewStatus(){
       <div style={dotGroup}>
       {[1,2,3,4,5,6,7,8,9,10].map(interval_id => {
         return(
-          <span style={currentTimeInterval >= interval_id ? dotStyleFullInterval : dotStyleEmpty}></span>
+          <span style={currentTimeInterval > interval_id ? dotStyleFullInterval : dotStyleEmpty}></span>
         )
       })}
       </div>
