@@ -115,7 +115,7 @@ async function getSentence (object, params, ctx, resolveInfo){
     w.word_text AS "${types.word_taught}${fields.word_text}",
     w.english AS "${types.word_taught}${fields.english}",
     w.pinyin AS "${types.word_taught}${fields.pinyin}",
-    up.interval_id AS "${types.word_taught}${fields.interval_id}",
+    COALESCE(up.interval_id,1) AS "${types.word_taught}${fields.interval_id}",
     TO_CHAR(NOW(), 'yyyy-mm-dd hh-mm-ss.ms') AS time_fetched
     FROM cloze_chinese.phrases p
     INNER JOIN cloze_chinese.phrase_teaches_words ptw

@@ -9,8 +9,8 @@ import { getCookie} from '../utils'
 
 
 const MAKE_ATTEMPT = gql`
-  mutation makeAttempt($sentenceId: Int!, $isCorrect: Boolean!) {
-	makeClozeAttempt(sentenceId: $sentenceId, isCorrect: $isCorrect)
+  mutation makeAttempt($word_id: Int!, $interval_id: Int!) {
+	makeClozeAttempt(word_id: $word_id, interval_id: $interval_id)
   }
 
 `
@@ -112,13 +112,13 @@ class Play extends Component {
   };
 
 	checkAnswer(correct_response) {
-		return correct_response.text === this.state.userResponse || correct_response.alt_text === this.state.userResponse
+		return correct_response.word_text === this.state.userResponse
 	}
 
-  setAudio(interval, word_id) {
+  setAudio(phrase_id) {
     var Sounds
      Sounds = new Howl({
-         src: ["/audio/sentences/" + interval + "-" + word_id + ".m4a"]
+         src: ["/audio/sentences/" + phrase_id + ".m4a"]
       })
   
     return Sounds
@@ -145,12 +145,11 @@ class Play extends Component {
     return color
   }
 
-  submitAnswer(makeAttempt, refetch, userId, sentenceId, correctResponse, time_fetched, isCorrect){
+  submitAnswer(makeAttempt, refetch, userId, wordId, correctResponse, time_fetched, isCorrect, interval_id){
     if(!this.state.isSubmitted){
       makeAttempt({variables:{
-        userId: userId,
-        sentenceId: sentenceId,
-        isCorrect: isCorrect
+        word_id: wordId,
+        interval_id: isCorrect ? interval_id + 1 : interval_id
       }})
     }
      else if(this.state.isSubmitted && this.state.showAnswer){
@@ -175,7 +174,7 @@ class Play extends Component {
   getText(text){
     return(
       <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-      <p style={{fontSize: "calc(10px + 2vmin)"}}>{text.english}</p> <i style={{"marginBlockStart": "1em", fontSize: "calc(10px + 2vmin)"}}>{text.italics}</i>
+      <p style={{fontSize: "calc(10px + 2vmin)"}}>{text.english}</p> 
       </div>
       )
   }
@@ -206,8 +205,8 @@ class Play extends Component {
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
             console.log(data)
             if(data.getNextSentence && data.getCurrentProgress){
-              const sentenceId = parseInt(nextSentence.phrase_id)
-              const userInterval = this.getUserInterval(this.state.showAnswer,this.state.isCorrect,nextSentence.interval_id)
+              const wordId = parseInt(nextSentence.word_taught.word_id)
+              const userInterval = this.getUserInterval(this.state.showAnswer,this.state.isCorrect, nextSentence.word_taught.interval_id)
                 return(
                   <div style={{display: "flex", flexDirection: "row", "width": "100%"}}>
                   <div style={{"flexGrow": "4", "paddingTop": "20%"}}>
@@ -226,7 +225,7 @@ class Play extends Component {
                               showAnswer: this.checkAnswer(nextSentence.word_taught),
                               showPinyin: this.checkAnswer(nextSentence.word_taught),
                               isCorrect: this.checkAnswer(nextSentence.word_taught),
-                              audio: this.setAudio(nextSentence.interval.interval_order, nextSentence.word_taught.word_id),
+                              audio: this.setAudio(nextSentence.phrase_id),
                               lastSentence: nextSentence
                               }, () => {
                                 if(this.checkAnswer(nextSentence.word_taught)){
@@ -244,7 +243,7 @@ class Play extends Component {
                             <input style={{width: `${nextSentence.word_taught.word_text.length * 40}px`,fontSize: "37px", margin: "15px 5px 15px 5px", color: this.getFontColor(nextSentence.word_taught), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
-                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (nextSentence.word_taught.word_text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
+                                this.submitAnswer(makeAttempt, refetch, userId, wordId, (nextSentence.word_taught.word_text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught), nextSentence.word_taught.interval_id)
                               }
                             }}
                             />
@@ -253,7 +252,7 @@ class Play extends Component {
                               style={{margin: "15px 5px 15px 5px", height: "40px", marginBlockStart: "3em", fontSize: "14px"}}
                               onClick={() => 
                                 {
-                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (nextSentence.word_taught.word_text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
+                                  this.submitAnswer(makeAttempt, refetch, userId, wordId, (nextSentence.word_taught.word_text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught), nextSentence.word_taught.interval_id)
                                 }
                               }
                             >
@@ -266,7 +265,6 @@ class Play extends Component {
                   <div>
                     {(nextSentence.clean_text !== nextSentence.word_taught.word_text) && (this.state.showPinyin ? <p>{nextSentence.word_taught.pinyin}</p> : this.getText(nextSentence.word_taught))}
                   </div>
-                  {this.state.showAnswer && nextSentence.word_taught.characters.length > 0 && <button onClick={() => this.setState(prevState => ({showCharacterDefinitions: !prevState.showCharacterDefinitions}))}>Character Definitions</button>}
               </div>
               <div style={{"flexGrow": 1, "backgroundColor": "lightslategray"}}>
                  <div style={{display: "flex", flexDirection: "column", justifyContent: "right"}}>
