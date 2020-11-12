@@ -1,17 +1,19 @@
 const { gql } = require('apollo-server-express')
 
 module.exports =  gql`
+  directive @hasToken on FIELD_DEFINITION
+  
   type Query {
-  	me(userId: Int): User
-  	getNextSentence: Phrase
-  	getCurrentProgress: Progress
+  	me: User @hasToken
+  	getNextSentence: Phrase @hasToken
+  	getCurrentProgress: Progress @hasToken
   }
  
   type Mutation {
   	CreateUser(user_name: String! email: String! password: String! role: String! = "STUDENT"): User
   	UpgradeUser(user_name: String! email: String! password: String!): User
   	Login(email: String! password: String!): User
-  	makeClozeAttempt(word_id: Int!, interval_id: Int!): Int
+  	makeClozeAttempt(word_id: Int!, interval_id: Int!): Int @hasToken
   }
  
   type User {
@@ -29,6 +31,8 @@ module.exports =  gql`
   	display_text: String!
   	word_taught: Word!
   	time_fetched: String
+  	pinyin: String
+  	english: String
   }
 
   type Word {

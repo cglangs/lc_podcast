@@ -10,7 +10,7 @@ import { getCookie} from '../utils'
 
 
 const MAKE_ATTEMPT = gql`
-  mutation makeAttempt($userId: Int!, $sentenceId: Int!, $isCorrect: Boolean!) {
+  mutation makeAttempt($sentenceId: Int!, $isCorrect: Boolean!) {
 	makeClozeAttempt(sentenceId: $sentenceId, isCorrect: $isCorrect)
   }
 
@@ -28,8 +28,8 @@ mutation addTemporaryUser($user_name: String!, $email: String!, $password: Strin
 `
 
 const GET_SENTENCE = gql`
-  query getSentence($userId: Int!) {
-	getNextSentence(userId: $userId) {
+  query getSentence {
+	getNextSentence {
 		phrase_id
     time_fetched
 		raw_text
@@ -47,7 +47,7 @@ const GET_SENTENCE = gql`
 
 	}
 
-  getCurrentProgress(userId: $userId){
+  getCurrentProgress {
     words_learned
     intervals_completed
     total_word_count
@@ -82,8 +82,8 @@ class Play extends Component {
 
   componentDidMount(){
     if(this.props.user){
-      const {user_name, _id ,role} = this.props.user
-      this.setUserInfo(user_name, parseInt(_id), role)
+      const {user_name, user_id ,user_role} = this.props.user
+      this.setUserInfo(user_name, parseInt(user_id), user_role)
     }
   }
 
@@ -96,8 +96,8 @@ class Play extends Component {
       //do nothing
     }else{
       if(this.props.user){
-        const {user_name, _id ,role} = this.props.user
-        this.setUserInfo(user_name, parseInt(_id), role)
+        const {user_name, user_id ,user_role} = this.props.user
+        this.setUserInfo(user_name, parseInt(user_id), user_role)
       }else if(prevProps.user && !this.props.user){
         this.setUserInfo(null,null,null)
       }
@@ -219,6 +219,7 @@ class Play extends Component {
             const nextSentence = this.state.lastSentence ||data.getNextSentence
             //Don't rerender when waiting for refetch or when there is no result
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
+            console.log(data)
             if(data.getNextSentence && data.getCurrentProgress){
               const sentenceId = parseInt(nextSentence._id)
               const userIntervalStep = this.getUserIntervalStep(this.state.showAnswer,this.state.isCorrect,nextSentence.current_learners[0])
@@ -314,6 +315,7 @@ class Play extends Component {
   }
 
 	render() {
+    console.log(this.state)
 	  const {userId, role} = this.state.user
 	  return (
 	    <div className="App">

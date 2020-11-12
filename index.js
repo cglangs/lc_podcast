@@ -140,8 +140,8 @@ async function getSentence (object, params, ctx, resolveInfo){
 async function currentProgress (object, params, ctx, resolveInfo){
   const progress = await sequelize.query(
     `select 
-    sum(CASE WHEN is_learned THEN 1 ELSE 0 END) as words_learned, 
-    sum(interval_id - 1) as intervals_completed,
+    COALESCE(sum(CASE WHEN is_learned THEN 1 ELSE 0 END),0) as words_learned, 
+    COALESCE(sum(interval_id - 1),0) as intervals_completed,
     (select count(word_id) from cloze_chinese.words) as total_word_count
     from cloze_chinese.user_progress
     where user_id = ?`,
@@ -150,7 +150,6 @@ async function currentProgress (object, params, ctx, resolveInfo){
     raw: true,
     type: sequelize.QueryTypes.SELECT
     })
-  console.log(progress[0])
   return progress[0]
 }
 
@@ -183,18 +182,17 @@ const resolvers = {
         return progress
     },
     me(object, params, ctx, resolveInfo){
-        params.user_id = ctx.req.userId || 9
         var user
         if(ctx.req.userId){
           params.user_id = ctx.req.userId
-          getMe(object, params, ctx, resolveInfo)
+          user = getMe(object, params, ctx, resolveInfo)
         }
         return user
     },
 
   }
 }
-/*const directiveResolvers = {
+const directiveResolvers = {
   hasToken(next,src,args,ctx) {
       if (typeof ctx.req.userId === 'undefined' || ctx.req.userId === null) {
         return null
@@ -202,7 +200,7 @@ const resolvers = {
         return next()
       }
   }
-}*/
+}
 
 
 /*const schema = makeAugmentedSchema({
@@ -267,6 +265,7 @@ const server = new ApolloServer({
   playground: true,
   typeDefs: schema,
   resolvers,
+  directiveResolvers,
   context: ({ req }) => {
     return {
       models,

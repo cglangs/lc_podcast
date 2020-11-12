@@ -1,11 +1,12 @@
 CREATE TABLE cloze_chinese.users (
 	user_id int4 NOT NULL DEFAULT nextval('cloze_chinese.users_userid_seq'::regclass),
 	user_name varchar(255) NULL,
-	email varchar(255) NULL,
+	user_email varchar(255) NULL,
 	user_password varchar(255) NULL,
 	user_role cloze_chinese.roletype NULL,
 	CONSTRAINT users_pkey PRIMARY KEY (user_id)
 );
+CREATE UNIQUE INDEX user_email_unique ON cloze_chinese.users USING btree (user_email) WHERE (user_role <> 'TESTER'::cloze_chinese.roletype);
 
 CREATE TABLE cloze_chinese.words (
 	word_id serial NOT NULL DEFAULT nextval('cloze_chinese.words_word_id_seq'::regclass),
