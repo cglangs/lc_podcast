@@ -26,7 +26,16 @@ module.exports =  gql`
   	raw_text: String!
   	clean_text: String! 
   	display_text: String!
-}
+  	word_taught: Word!
+  }
+
+  type Word {
+  	word_id: Int!
+    word_text: String!
+	english: String!
+    pinyin: String!
+    interval_id: Int
+  }
 
   type Progress {
   	words_learned: Int!

@@ -12,6 +12,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser')
 const schema = require('./schema')
 const {initModels} = require('./models/init-models')
+const {types, fields} = require('./global_strings')
 
 
 const sequelize = new Sequelize(
@@ -108,17 +109,58 @@ async function getMe(object, params, ctx, resolveInfo) {
 
 
 async function getSentence (object, params, ctx, resolveInfo){
+  x = 'word_taught.word_text'
   const sentence = await sequelize.query(
-    `SELECT * 
+    `SELECT p.*, 
+    w.word_id AS "${types.word_taught}${fields.word_id}",
+    w.word_text AS "${types.word_taught}${fields.word_text}",
+    w.english AS "${types.word_taught}${fields.english}",
+    w.pinyin AS "${types.word_taught}${fields.pinyin}",
+    up.interval_id AS "${types.word_taught}${fields.interval_id}"
     FROM cloze_chinese.phrases p
-    LEFT JOIN cloze_chinese.phrase_teaches_words ptw 
+    INNER JOIN cloze_chinese.phrase_teaches_words ptw
     ON p.phrase_id = ptw.phrase_id
+    INNER JOIN cloze_chinese.words w
+    ON ptw.word_id = w.word_id
     LEFT JOIN cloze_chinese.user_progress up
-    ON ptw.word_id = up.word_id
+    ON w.word_id = up.word_id
     WHERE is_sentence
     AND up.word_id is null
-    ORDER BY sentence_order ASC LIMIT 1`)
-  return sentence[0][0]
+    ORDER BY sentence_order ASC LIMIT 1`,
+    {
+    model: ctx.models.phrases,
+    mapToModel: true,
+    raw: true,
+    nest: true,
+    type: sequelize.QueryTypes.SELECT })
+  console.log(sentence[0])
+
+  /*
+  select * 
+  from user_progress up
+  right join words w on up.word_id = w.word_id
+  inner join phrase_teaches_words ptw on w.word_id = ptw.word_id 
+  inner join phrases p on ptw.phrase_id = p.phrase_id
+  */
+ /* const sentence = await ctx.models.phrases.findOne({
+      include: [
+         { model: ctx.models.words,
+          required: true,
+          as: 'word_taught',
+          include: [
+          {model: ctx.models.user_progress, required: false, as: "user_progresses"}]
+        }
+      ],
+      where: {
+        [Sequelize.Op.and]: [
+
+          {is_sentence: true},
+        ]
+      },
+      order: [ [ 'sentence_order', 'ASC' ]]
+  })*/
+  //console.log(sentence.word_taught[0].user_progresses)
+  return sentence[0]
 }
 
 async function currentProgress (object, params, ctx, resolveInfo){
@@ -148,14 +190,14 @@ const resolvers = {
      return login(object, params, ctx, resolveInfo)   
     },
     makeClozeAttempt(object, params, ctx, resolveInfo) {
-       params.user_id = ctx.req.userId
+       params.user_id = ctx.req.userId || 9
       return makeAttempt(object, params, ctx, resolveInfo)    
     }
 
   },
   Query: {
      getNextSentence(object, params, ctx, resolveInfo){
-        params.user_id = ctx.req.userId
+        params.user_id = ctx.req.userId || 9
         const sentence = getSentence(object, params, ctx, resolveInfo)
         return sentence
     },
@@ -165,7 +207,7 @@ const resolvers = {
         return progress
     },*/
     me(object, params, ctx, resolveInfo){
-        params.user_id = ctx.req.userId
+        params.user_id = ctx.req.userId || 9
         var user
         if(ctx.req.userId){
           params.user_id = ctx.req.userId
@@ -195,12 +237,12 @@ const resolvers = {
 // Allow cross-origin
 
 
-var corsOptions = {
+/*var corsOptions = {
   origin: 'http://localhost:3000',
   credentials: true // <-- REQUIRED backend setting
-};
+};*/
 
-app.use(cors(corsOptions));
+//app.use(cors(corsOptions));
 
 app.use(cookieParser())
 
@@ -236,11 +278,11 @@ app.use((req, res, next) =>{
 })
 
 
-app.use(express.static('public'))
+/*app.use(express.static('public'))
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
-});
+});*/
 
 
 

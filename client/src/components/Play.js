@@ -11,7 +11,7 @@ import { getCookie} from '../utils'
 
 const MAKE_ATTEMPT = gql`
   mutation makeAttempt($userId: Int!, $sentenceId: Int!, $isCorrect: Boolean!) {
-	makeClozeAttempt(userId: $userId, sentenceId: $sentenceId, isCorrect: $isCorrect)
+	makeClozeAttempt(sentenceId: $sentenceId, isCorrect: $isCorrect)
   }
 
 `
@@ -19,10 +19,9 @@ const MAKE_ATTEMPT = gql`
 const CREATE_USER = gql`
 mutation addTemporaryUser($user_name: String!, $email: String!, $password: String!, $role: String!) {
   CreateUser(user_name: $user_name, email: $email, password: $password, role: $role) {
-    _id
+    user_id
     user_name
-    role
-    token
+    user_role
   }
 }
 
@@ -31,38 +30,21 @@ mutation addTemporaryUser($user_name: String!, $email: String!, $password: Strin
 const GET_SENTENCE = gql`
   query getSentence($userId: Int!) {
 	getNextSentence(userId: $userId) {
-		_id
+		phrase_id
     time_fetched
 		raw_text
-    alt_raw_text
 		display_text
-    alt_display_text
     clean_text
-    alt_clean_text
 		pinyin
 		english
-    italics
-    interval{
-      interval_order
-    }
 		word_taught{
       word_id
-			text
-      alt_text
+      word_text
 			english
       pinyin
-      italics
-			characters{
-				text
-				english
-			}
 		}
-    current_learners{
-      CURRENT_TIME_INTERVAL
-      STEP_AT_INTERVAL
-      User{
-        _id
-      }
+    intervals{
+      interval_id
     }
 
 	}
@@ -249,7 +231,6 @@ class Play extends Component {
                   {role === "TESTER" && (<p style={{fontSize: "12px", "marginBottom": "20px"}}>You are currently not logged in. Log in to save your progress.</p>)}
                   <div style={{display: "inline-block", "textAlign": "center"}}>
                     <ProgressBar stepAtInterval={userIntervalStep} currentTimeInterval={userInterval} intervalOrder={nextSentence.interval.interval_order} />
-                    <Modal characters={nextSentence.word_taught.characters} show={this.state.showCharacterDefinitions} handleClose={this.hideModal}/>
                      <div style={{display: "flex", justifyContent: "center"}}>
                       {this.state.showAnswer && <button  style={{"width": "25px", "height": "25px", "marginRight": "10px", "marginBlockStart": "1.8em"}} onClick={() => this.playSound(nextSentence._id, nextSentence.word_taught.word_id)}><img style={{"width": "100%"}} alt="replay audio" src="speaker_icon.svg"/></button>}
                      {this.state.showPinyin ? <p style={{fontSize: "calc(10px + 2vmin)"}}>{nextSentence.pinyin}</p> : this.getText(nextSentence)}
@@ -276,20 +257,20 @@ class Play extends Component {
                          >
                           {makeAttempt => (
                             <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-                             <p className="cloze-text">{this.state.showTraditional ? nextSentence.alt_display_text.substr(0,nextSentence.alt_display_text.indexOf('#')) : nextSentence.display_text.substr(0,nextSentence.display_text.indexOf('#'))}</p>
+                             <p className="cloze-text">{nextSentence.display_text.substr(0,nextSentence.display_text.indexOf('#'))}</p>
                             <input style={{width: `${nextSentence.word_taught.text.length * 40}px`,fontSize: "37px", margin: "15px 5px 15px 5px", color: this.getFontColor(nextSentence.word_taught), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
-                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (this.state.showTraditional ? nextSentence.word_taught.alt_text : nextSentence.word_taught.text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
+                                this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (nextSentence.word_taught.text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
                               }
                             }}
                             />
-                             <p className="cloze-text">{this.state.showTraditional ? nextSentence.alt_display_text.substr(nextSentence.alt_display_text.indexOf('#') + 1,nextSentence.alt_display_text.length) : nextSentence.display_text.substr(nextSentence.display_text.indexOf('#') + 1,nextSentence.display_text.length)}</p>
+                             <p className="cloze-text">{nextSentence.display_text.substr(nextSentence.display_text.indexOf('#') + 1,nextSentence.display_text.length)}</p>
                             <button
                               style={{margin: "15px 5px 15px 5px", height: "40px", marginBlockStart: "3em", fontSize: "14px"}}
                               onClick={() => 
                                 {
-                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (this.state.showTraditional ? nextSentence.word_taught.alt_text : nextSentence.word_taught.text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
+                                  this.submitAnswer(makeAttempt, refetch, userId, sentenceId, (nextSentence.word_taught.text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught))
                                 }
                               }
                             >
@@ -308,11 +289,11 @@ class Play extends Component {
                  <div style={{display: "flex", flexDirection: "column", justifyContent: "right"}}>
                       <p style={{fontSize: "14px"}}>{"Words Learned: " + data.getCurrentProgress.words_learned + "/" + data.getCurrentProgress.total_word_count}</p>
                       <p style={{fontSize: "14px"}}>{"Cards Completed: " + data.getCurrentProgress.intervals_completed}</p>
-                      <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
+                      {/*<div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
                         <p style={{fontSize: "14px", "marginBlockStart": "0.5em"}}>{"Simplified"}</p> 
                         <Switch switchId={`simplified-traditional-switch`} isDisabled={false} isOn={this.state.showTraditional} handleToggle={() => this.setState(prevState => ({showTraditional: !prevState.showTraditional}))} />
                         <p style={{fontSize: "14px", "marginBlockStart": "0.5em", "marginLeft": "5%"}}>{"Traditional"}</p> 
-                      </div>
+                      </div>*/}
                       <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center", "marginTop": "20px"}}>
                         <p style={{fontSize: "14px", "marginBlockStart": "0.5em"}}>{"English"}</p> 
                         <Switch switchId={`english-pinyin-switch`} isDisabled={!this.state.showAnswer} isOn={this.state.showPinyin} handleToggle={() => this.setState(prevState => ({showPinyin: !prevState.showPinyin}))} />
