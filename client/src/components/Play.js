@@ -161,13 +161,13 @@ class Play extends Component {
           timeFetched: time_fetched,
           showCharacterDefinitions: false,
           lastSentence: null
-      }, () => {this.stopSound()})
+      }, () => {/*this.stopSound()*/})
     } else{
         this.setState({
         showAnswer: true,
         showPinyin: true,
         userResponse: correctResponse,
-        }, () => {this.playSound()})
+        }, () => {/*this.playSound()*/})
     }
   }
 
@@ -192,9 +192,10 @@ class Play extends Component {
     return(
       <Query query={GET_SENTENCE} variables={{userId: userId}}>
           {({ loading, error, data, refetch }) => {
+            
             if (loading) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>Loading</div>
             if (error) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>error</div>
-            const nextSentence = this.state.lastSentence ||data.getNextSentence
+            const nextSentence = this.state.lastSentence || data.getNextSentence
             //Don't rerender when waiting for refetch or when there is no result
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
             if(data.getNextSentence && data.getCurrentProgress){
@@ -218,12 +219,12 @@ class Play extends Component {
                               showAnswer: this.checkAnswer(nextSentence.word_taught),
                               showPinyin: this.checkAnswer(nextSentence.word_taught),
                               isCorrect: this.checkAnswer(nextSentence.word_taught),
-                              audio: this.setAudio(nextSentence.phrase_id),
+                              //audio: this.setAudio(nextSentence.phrase_id),
                               lastSentence: nextSentence
                               }, () => {
-                                if(this.checkAnswer(nextSentence.word_taught)){
+                                /*if(this.checkAnswer(nextSentence.word_taught)){
                                   this.playSound()
-                                }
+                                }*/
                               })
                             }
 
@@ -256,7 +257,7 @@ class Play extends Component {
                     </Mutation>
                   </div>
                   <div>
-                    {(nextSentence.clean_text !== nextSentence.word_taught.word_text) && (this.state.showPinyin ? <p>{nextSentence.word_taught.pinyin}</p> : this.getText(nextSentence.word_taught))}
+                    {(this.state.showPinyin ? <p>{nextSentence.word_taught.pinyin}</p> : this.getText(nextSentence.word_taught))}
                   </div>
               </div>
               <div style={{"flexGrow": 1, "backgroundColor": "lightslategray"}}>
