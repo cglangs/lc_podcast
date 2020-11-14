@@ -46,7 +46,7 @@ def print_sentence():
 			new_words = [w for w in words if w not in used_words]
 			if(len(new_words) > 0):
 				lowest_frequency = min([word_frequencies[w] for w in new_words])
-				#TODO: change word to teacch to be least used when possible
+				#TODO: change word to teach to be least used when possible
 				word_to_teach  = [ w for w in new_words if word_frequencies[w] == lowest_frequency][0]
 				for nw in new_words:
 					if nw not in word_iterations:

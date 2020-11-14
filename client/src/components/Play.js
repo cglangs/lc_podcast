@@ -186,9 +186,7 @@ class Play extends Component {
       progress = progress + 1
     }
     return progress
-
   }
-
 
   playDashboard(userId,role){
     return(
@@ -199,7 +197,6 @@ class Play extends Component {
             const nextSentence = this.state.lastSentence ||data.getNextSentence
             //Don't rerender when waiting for refetch or when there is no result
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
-            console.log(data)
             if(data.getNextSentence && data.getCurrentProgress){
               const wordId = parseInt(nextSentence.word_taught.word_id)
               const userInterval = this.getUserInterval(this.state.showAnswer,this.state.isCorrect, nextSentence.word_taught.interval_id)
