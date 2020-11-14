@@ -133,7 +133,17 @@ async function getSentence (object, params, ctx, resolveInfo){
       )
     ),
 
-    all_seen_phrases AS (
+  next_sentence_order AS(
+    select coalesce(MIN(p.sentence_order),0) + 1 AS min_s
+    FROM cloze_chinese.user_progress up 
+    INNER JOIN cloze_chinese.phrase_teaches_words ptw 
+    on up.word_id = ptw.word_id
+    INNER JOIN cloze_chinese.phrases p
+    ON ptw.phrase_id = p.phrase_id
+    WHERE up.user_id = :userId
+  ),
+
+  all_seen_phrases AS (
     SELECT p.*, 
     w.word_id AS "${types.word_taught}${fields.word_id}",
     w.word_text AS "${types.word_taught}${fields.word_text}",
@@ -153,12 +163,12 @@ async function getSentence (object, params, ctx, resolveInfo){
     ON up.interval_id = i.interval_id
     WHERE EXTRACT(EPOCH FROM (NOW() - up.last_seen)) > i.seconds
     AND up.user_id = :userId
-    ORDER BY p.sentence_order ASC, w.word_occurrences DESC
+    ORDER BY EXTRACT(EPOCH FROM (NOW() - up.last_seen))
     LIMIT 1
 ),
 
-all_unseen_phrases AS (
-    SELECT p.*, 
+  unseen_full_phrases AS (
+    SELECT p.*,
     w.word_id AS "${types.word_taught}${fields.word_id}",
     w.word_text AS "${types.word_taught}${fields.word_text}",
     w.english AS "${types.word_taught}${fields.english}",
@@ -175,14 +185,47 @@ all_unseen_phrases AS (
     ON ptw.word_id = up_teaches.word_id
     AND up_teaches.user_id = :userId
     WHERE up_teaches.word_id IS NULL
-    ORDER BY p.sentence_order ASC, w.word_occurrences DESC
+    AND p.is_sentence = TRUE
+    ORDER BY p.sentence_order ASC
+    LIMIT 1
+),
+
+  unseen_words AS (
+    SELECT p.*,
+    w.word_id AS "${types.word_taught}${fields.word_id}",
+    w.word_text AS "${types.word_taught}${fields.word_text}",
+    w.english AS "${types.word_taught}${fields.english}",
+    w.pinyin AS "${types.word_taught}${fields.pinyin}",
+    COALESCE(up_teaches.interval_id,1) AS "${types.word_taught}${fields.interval_id}",
+    TO_CHAR(NOW(), 'yyyy-mm-dd hh-mm-ss.ms') AS time_fetched,
+    3 AS rank
+    FROM cloze_chinese.phrases parent_phrase
+    INNER JOIN cloze_chinese.phrase_contains_words pcw 
+    ON parent_phrase.phrase_id = pcw.phrase_id
+    inner join cloze_chinese.phrase_teaches_words ptw 
+    on pcw.word_id = ptw.word_id
+    inner join cloze_chinese.words w
+    on ptw.word_id = w.word_id
+    inner join cloze_chinese.phrases p
+    on ptw.phrase_id = p.phrase_id
+    LEFT JOIN cloze_chinese.user_progress up_teaches
+    ON ptw.word_id = up_teaches.word_id
+    AND up_teaches.user_id = :userId
+    WHERE up_teaches.word_id IS NULL
+    AND p.is_sentence = false
+    and parent_phrase.sentence_order = (select min_s from next_sentence_order)
+    ORDER BY w.word_occurrences DESC
     LIMIT 1
 )
+
     SELECT *
     FROM all_seen_phrases
     UNION 
     SELECT *
-    FROM all_unseen_phrases
+    FROM unseen_full_phrases
+    UNION 
+    SELECT *
+    FROM unseen_words
     order by rank ASC
     LIMIT 1`,
     {
