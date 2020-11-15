@@ -87,7 +87,7 @@ async function login(object, params, ctx, resolveInfo) {
 
 async function makeAttempt(object, params, ctx, resolveInfo) {
   try {
-    await ctx.models.user_progress.upsert({ user_id: params.user_id, word_id: params.word_id, interval_id: params.interval_id, is_learned: params.interval_id === 11})
+    await ctx.models.user_progress.upsert({ user_id: params.user_id, word_id: params.word_id, interval_id: params.interval_id})
   }
   catch(error){
     throw new Error('Unable to make attempt')
@@ -154,7 +154,10 @@ async function getSentence (object, params, ctx, resolveInfo){
     w.pinyin AS "${types.word_taught}${fields.pinyin}",
     COALESCE(up.interval_id,1) AS "${types.word_taught}${fields.interval_id}",
     TO_CHAR(NOW(), 'yyyy-mm-dd hh-mm-ss.ms') AS time_fetched,
-    1 AS rank
+    CASE 
+      WHEN EXTRACT(EPOCH FROM (NOW() - up.last_seen)) > i.seconds THEN 1
+    ELSE 4
+    END AS rank
     FROM all_valid_phrases p
     INNER JOIN cloze_chinese.phrase_contains_words ptw
     ON p.phrase_id = ptw.phrase_id
@@ -165,9 +168,8 @@ async function getSentence (object, params, ctx, resolveInfo){
     ON w.word_id = up.word_id
     INNER JOIN cloze_chinese.intervals i
     ON up.interval_id = i.interval_id
-    WHERE EXTRACT(EPOCH FROM (NOW() - up.last_seen)) > i.seconds
     AND up.user_id = :userId
-    ORDER BY EXTRACT(EPOCH FROM (NOW() - up.last_seen))
+    ORDER BY EXTRACT(EPOCH FROM (NOW() - up.last_seen)) DESC
     LIMIT 1
 ),
 
