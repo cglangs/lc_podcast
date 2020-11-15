@@ -38,7 +38,7 @@ def print_sentence():
 		for key in sentence_data:
 			sentence_data[key]["freq_score"] = sum([word_frequencies[w] for w in sentence_data[key]["words"]]) / len(sentence_data[key]["words"])
 		sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: item[1]["freq_score"], reverse=True)}
-		new_word_key = len(sorted_sentence_data)
+		new_word_key = len(sorted_sentence_data) + 1
 		sentence_order_counter = 1
 		for s_key in sorted_sentence_data:
 			words = sorted_sentence_data[s_key]["words"]
@@ -77,9 +77,10 @@ def print_sentence():
 		for k,v in word_frequencies.items():
 			insert_words.append((k,v))
 
-		insert_words_query = 'INSERT INTO cloze_chinese.words (word_text,word_occurrences) VALUES (%s, %s)'
+		#insert_words_query = 'INSERT INTO cloze_chinese.words (word_text,word_occurrences) VALUES (%s, %s)'
 
-		cur.executemany(insert_words_query,insert_words)
+		#cur.executemany(insert_words_query,insert_words)
+		print(one_word_sentences)
 
 		all_phrases = one_word_sentences | sorted_sentence_data
 
@@ -110,23 +111,23 @@ def print_sentence():
 		),
 		word_contained_rows AS (
 
-		SELECT (SELECT phrase_id FROM new_phrase_row) as phrase_id, word_id, ordinality AS contains_order
+		SELECT (SELECT phrase_id FROM new_phrase_row) as phrase_id, word_id, ordinality AS contains_order, word_id = (SELECT word_id FROM word_to_teach_row) AS teaches
 		FROM cloze_chinese.words w INNER JOIN UNNEST(%s) WITH ORDINALITY as wl_text
 		on w.word_text = wl_text
 
 		)
 
-		INSERT INTO cloze_chinese.phrase_contains_words(phrase_id, word_id, contains_order)
-		SELECT phrase_id, word_id, contains_order
+		INSERT INTO cloze_chinese.phrase_contains_words(phrase_id, word_id, contains_order, teaches)
+		SELECT phrase_id, word_id, contains_order, teaches
 		FROM word_contained_rows
 
 		"""
-		#print(insert_phrases)
+		#print(sorted_sentence_data)
 		cur.executemany(insert_phrases_query,insert_phrases)
 
 
 		con.commit()
-		print("Record inserted successfully")
+		#rint("Record inserted successfully")
 		con.close()
 
 

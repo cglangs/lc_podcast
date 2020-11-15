@@ -128,19 +128,22 @@ async function getSentence (object, params, ctx, resolveInfo){
           ON pcw.word_id = up.word_id
           AND up.user_id =  :userId
           WHERE pcw.phrase_id = p.phrase_id
+          AND pcw.teaches = FALSE
           AND up.word_id IS NULL
       )
       )
     ),
 
   next_sentence_order AS(
-    select coalesce(MIN(p.sentence_order),0) + 1 AS min_s
+    select up.word_id, MIN(COALESCE(p.sentence_order,0)) AS min_s
     FROM cloze_chinese.user_progress up 
-    INNER JOIN cloze_chinese.phrase_teaches_words ptw 
-    on up.word_id = ptw.word_id
+    INNER JOIN cloze_chinese.phrase_contains_words ptw 
+    ON up.word_id = ptw.word_id
+    AND ptw.teaches = TRUE
     INNER JOIN cloze_chinese.phrases p
     ON ptw.phrase_id = p.phrase_id
     WHERE up.user_id = :userId
+    GROUP BY up.word_id
   ),
 
   all_seen_phrases AS (
@@ -153,8 +156,9 @@ async function getSentence (object, params, ctx, resolveInfo){
     TO_CHAR(NOW(), 'yyyy-mm-dd hh-mm-ss.ms') AS time_fetched,
     1 AS rank
     FROM all_valid_phrases p
-    INNER JOIN cloze_chinese.phrase_teaches_words ptw
+    INNER JOIN cloze_chinese.phrase_contains_words ptw
     ON p.phrase_id = ptw.phrase_id
+    AND ptw.teaches = TRUE
     INNER JOIN cloze_chinese.words w
     ON ptw.word_id = w.word_id
     INNER JOIN cloze_chinese.user_progress up
@@ -177,8 +181,9 @@ async function getSentence (object, params, ctx, resolveInfo){
     TO_CHAR(NOW(), 'yyyy-mm-dd hh-mm-ss.ms') AS time_fetched,
     2 AS rank
     FROM all_valid_phrases p
-    INNER JOIN cloze_chinese.phrase_teaches_words ptw
+    INNER JOIN cloze_chinese.phrase_contains_words ptw
     ON p.phrase_id = ptw.phrase_id
+    AND ptw.teaches = TRUE
     INNER JOIN cloze_chinese.words w
     ON ptw.word_id = w.word_id
     LEFT JOIN cloze_chinese.user_progress up_teaches
@@ -202,8 +207,10 @@ async function getSentence (object, params, ctx, resolveInfo){
     FROM cloze_chinese.phrases parent_phrase
     INNER JOIN cloze_chinese.phrase_contains_words pcw 
     ON parent_phrase.phrase_id = pcw.phrase_id
-    inner join cloze_chinese.phrase_teaches_words ptw 
+    AND pcw.teaches = FALSE
+    inner join cloze_chinese.phrase_contains_words ptw 
     on pcw.word_id = ptw.word_id
+    AND ptw.teaches = TRUE
     inner join cloze_chinese.words w
     on ptw.word_id = w.word_id
     inner join cloze_chinese.phrases p
@@ -213,7 +220,7 @@ async function getSentence (object, params, ctx, resolveInfo){
     AND up_teaches.user_id = :userId
     WHERE up_teaches.word_id IS NULL
     AND p.is_sentence = false
-    and parent_phrase.sentence_order = (select min_s from next_sentence_order)
+    and parent_phrase.sentence_order = (select coalesce(MAX(min_s),0) + 1 from next_sentence_order)
     ORDER BY w.word_occurrences DESC
     LIMIT 1
 )
@@ -287,7 +294,7 @@ const resolvers = {
         return progress
     },
     me(object, params, ctx, resolveInfo){
-        var user 
+        var user
         if(ctx.req.userId){
             params.user_id = ctx.req.userId
             user = getMe(object, params, ctx, resolveInfo)
