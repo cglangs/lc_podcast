@@ -129,7 +129,7 @@ async function getSentence (object, params, ctx, resolveInfo){
           AND up.user_id =  :userId
           WHERE pcw.phrase_id = p.phrase_id
           AND pcw.teaches = FALSE
-          AND up.word_id IS NULL
+          AND (up.word_id IS NULL OR up.interval_id = 1)
       )
       )
     ),
