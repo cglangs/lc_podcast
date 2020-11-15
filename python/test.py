@@ -104,11 +104,6 @@ def print_sentence():
 		INSERT INTO cloze_chinese.phrases (raw_text, clean_text, display_text, pinyin, english,frequency_score,is_sentence, sentence_order) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING phrase_id
 
 		),
-		insert_phrase_teaches AS(
-
-		INSERT INTO cloze_chinese.phrase_teaches_words(phrase_id, word_id, iteration) VALUES((SELECT phrase_id FROM new_phrase_row), (SELECT word_id FROM word_to_teach_row), %s)
-
-		),
 		word_contained_rows AS (
 
 		SELECT (SELECT phrase_id FROM new_phrase_row) as phrase_id, word_id, ordinality AS contains_order, word_id = (SELECT word_id FROM word_to_teach_row) AS teaches

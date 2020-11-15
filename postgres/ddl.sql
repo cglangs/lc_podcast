@@ -42,10 +42,12 @@ CREATE TABLE cloze_chinese.phrase_contains_words (
 	phrase_id int4 NOT NULL,
 	word_id int4 NOT NULL,
 	contains_order int4 NOT NULL,
+	teaches bool NULL,
 	CONSTRAINT phrase_contains_words_pkey PRIMARY KEY (phrase_id, word_id, contains_order),
 	CONSTRAINT phrase_contains_fk FOREIGN KEY (phrase_id) REFERENCES cloze_chinese.phrases(phrase_id),
 	CONSTRAINT word_contained_fk FOREIGN KEY (word_id) REFERENCES cloze_chinese.words(word_id)
 );
+
 
 CREATE TABLE cloze_chinese.phrase_teaches_words (
 	phrase_id int4 NOT NULL,
@@ -84,5 +86,25 @@ create trigger update_up_lastseentimestamp before
 update
     on
     cloze_chinese.user_progress for each row execute function cloze_chinese.update_lastseen_column();
+
+
+
+CREATE OR REPLACE FUNCTION cloze_chinese.set_is_learned_column()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+   IF NEW.interval_id = 11 then
+   NEW.is_learned = TRUE;
+   END IF;
+   RETURN NEW;
+END;
+$function$
+;
+
+create trigger update_up_islearned before
+update
+    on
+    cloze_chinese.user_progress for each row execute function cloze_chinese.set_is_learned_column();
 
 
