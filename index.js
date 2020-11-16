@@ -129,21 +129,21 @@ async function getSentence (object, params, ctx, resolveInfo){
           AND up.user_id =  :userId
           WHERE pcw.phrase_id = p.phrase_id
           AND pcw.teaches = FALSE
-          AND (up.word_id IS NULL OR up.interval_id = 1)
+          AND (up.word_id IS NULL OR up.interval_id <= 2)
       )
       )
     ),
 
   next_sentence_order AS(
-    select up.word_id, MIN(COALESCE(p.sentence_order,0)) AS min_s
-    FROM cloze_chinese.user_progress up 
-    INNER JOIN cloze_chinese.phrase_contains_words ptw 
-    ON up.word_id = ptw.word_id
-    AND ptw.teaches = TRUE
+    SELECT MIN(p.sentence_order) AS min_s
+    FROM cloze_chinese.phrase_contains_words pcw 
     INNER JOIN cloze_chinese.phrases p
-    ON ptw.phrase_id = p.phrase_id
-    WHERE up.user_id = :userId
-    GROUP BY up.word_id
+    ON pcw.phrase_id = p.phrase_id
+    LEFT JOIN cloze_chinese.user_progress up
+    ON pcw.word_id = up.word_id
+    AND up.user_id = :userId
+    WHERE pcw.teaches = false
+    AND up.word_id is NULL
   ),
 
   all_seen_phrases AS (
@@ -222,7 +222,7 @@ async function getSentence (object, params, ctx, resolveInfo){
     AND up_teaches.user_id = :userId
     WHERE up_teaches.word_id IS NULL
     AND p.is_sentence = false
-    and parent_phrase.sentence_order = (select coalesce(MAX(min_s),0) + 1 from next_sentence_order)
+    and parent_phrase.sentence_order = (select min_s from next_sentence_order)
     ORDER BY w.word_occurrences DESC
     LIMIT 1
 )
