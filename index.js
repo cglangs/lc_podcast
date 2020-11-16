@@ -161,7 +161,7 @@ async function getSentence (object, params, ctx, resolveInfo){
     INNER JOIN cloze_chinese.intervals i
     ON up.interval_id = i.interval_id
     AND up.user_id = :userId
-    ORDER BY i.interval_id ASC, EXTRACT(EPOCH FROM (NOW() - up.last_seen)) DESC
+    ORDER BY i.interval_id ASC, EXTRACT(EPOCH FROM (NOW() - up.last_seen)) DESC, p.iteration DESC
     LIMIT 1
 ),
 
@@ -185,7 +185,7 @@ async function getSentence (object, params, ctx, resolveInfo){
     AND up_teaches.user_id = :userId
     WHERE up_teaches.word_id IS NULL
     AND p.is_sentence = TRUE
-    ORDER BY p.sentence_order ASC
+    ORDER BY p.iteration DESC
     LIMIT 1
 ),
 

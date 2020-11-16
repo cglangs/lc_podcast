@@ -35,6 +35,7 @@ CREATE TABLE cloze_chinese.phrases (
 	frequency_score float4 NULL,
 	is_sentence bool NULL,
 	sentence_order int4 NULL,
+	iteration int2 NULL,
 	CONSTRAINT phrases_pkey PRIMARY KEY (phrase_id)
 );
 
@@ -44,12 +45,10 @@ CREATE TABLE cloze_chinese.phrase_contains_words (
 	word_id int4 NOT NULL,
 	contains_order int4 NOT NULL,
 	teaches bool NULL,
-	iteration int2 NULL,
 	CONSTRAINT phrase_contains_words_pkey PRIMARY KEY (phrase_id, word_id, contains_order),
 	CONSTRAINT phrase_contains_fk FOREIGN KEY (phrase_id) REFERENCES cloze_chinese.phrases(phrase_id),
 	CONSTRAINT word_contained_fk FOREIGN KEY (word_id) REFERENCES cloze_chinese.words(word_id)
 );
-
 
 CREATE TABLE cloze_chinese.user_progress (
 	user_id int4 NOT NULL,

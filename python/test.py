@@ -97,7 +97,7 @@ def print_sentence():
 
 		for k,v in all_phrases.items():
 			current_row = []
-			current_row = (v["word_to_teach"],v["raw_text"], v["clean_text"], v["display_text"], v["pinyin"], v["english"],v["freq_score"],v["is_sentence"],v["sentence_order"],v["words"],v["iteration"])
+			current_row = (v["word_to_teach"],v["raw_text"], v["clean_text"], v["display_text"], v["pinyin"], v["english"],v["freq_score"],v["is_sentence"],v["sentence_order"],v["iteration"],v["words"])
 			insert_phrases.append(current_row)
 
 		insert_phrases_query = """
@@ -111,7 +111,7 @@ def print_sentence():
 
 		),
 		new_phrase_row AS (
-		INSERT INTO cloze_chinese.phrases (raw_text, clean_text, display_text, pinyin, english,frequency_score,is_sentence, sentence_order) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING phrase_id
+		INSERT INTO cloze_chinese.phrases (raw_text, clean_text, display_text, pinyin, english,frequency_score,is_sentence, sentence_order, iteration) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING phrase_id
 		),
 
 		word_contained_rows AS (
@@ -120,8 +120,8 @@ def print_sentence():
 		on w.word_text = wl_text
 		)
 
-		INSERT INTO cloze_chinese.phrase_contains_words(phrase_id, word_id, contains_order, teaches,iteration)
-		SELECT phrase_id, word_id, contains_order, teaches, %s AS iteration
+		INSERT INTO cloze_chinese.phrase_contains_words(phrase_id, word_id, contains_order, teaches)
+		SELECT phrase_id, word_id, contains_order, teaches
 		FROM word_contained_rows
 
 		"""
