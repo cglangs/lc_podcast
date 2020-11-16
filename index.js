@@ -145,7 +145,10 @@ async function getSentence (object, params, ctx, resolveInfo){
     w.pinyin AS "${types.word_taught}${fields.pinyin}",
     COALESCE(up.interval_id,1) AS "${types.word_taught}${fields.interval_id}",
     TO_CHAR(NOW(), 'yyyy-mm-dd hh-mm-ss.ms') AS time_fetched,
-    1 AS rank
+    CASE 
+      WHEN EXTRACT(EPOCH FROM (NOW() - up.last_seen)) > i.seconds THEN 1
+    ELSE 4
+    END AS rank
     FROM all_valid_phrases p
     INNER JOIN cloze_chinese.phrase_contains_words ptw
     ON p.phrase_id = ptw.phrase_id
@@ -158,8 +161,7 @@ async function getSentence (object, params, ctx, resolveInfo){
     INNER JOIN cloze_chinese.intervals i
     ON up.interval_id = i.interval_id
     AND up.user_id = :userId
-    WHERE EXTRACT(EPOCH FROM (NOW() - up.last_seen)) > i.seconds
-    ORDER BY EXTRACT(EPOCH FROM (NOW() - up.last_seen)) DESC
+    ORDER BY i.interval_id ASC, EXTRACT(EPOCH FROM (NOW() - up.last_seen)) DESC
     LIMIT 1
 ),
 
