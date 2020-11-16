@@ -124,27 +124,18 @@ async function getSentence (object, params, ctx, resolveInfo){
           SELECT  1
           FROM 
           cloze_chinese.phrase_contains_words pcw
+          INNER JOIN cloze_chinese.words w
+          ON pcw.word_id = w.word_id
           LEFT JOIN cloze_chinese.user_progress up
           ON pcw.word_id = up.word_id
           AND up.user_id =  :userId
           WHERE pcw.phrase_id = p.phrase_id
           AND pcw.teaches = FALSE
           AND (up.word_id IS NULL OR up.interval_id <= 2)
+          AND w.is_base_word = FALSE
       )
       )
     ),
-
-  next_sentence_order AS(
-    SELECT MIN(p.sentence_order) AS min_s
-    FROM cloze_chinese.phrase_contains_words pcw 
-    INNER JOIN cloze_chinese.phrases p
-    ON pcw.phrase_id = p.phrase_id
-    LEFT JOIN cloze_chinese.user_progress up
-    ON pcw.word_id = up.word_id
-    AND up.user_id = :userId
-    WHERE pcw.teaches = false
-    AND up.word_id is NULL
-  ),
 
   all_seen_phrases AS (
     SELECT p.*, 
@@ -154,10 +145,7 @@ async function getSentence (object, params, ctx, resolveInfo){
     w.pinyin AS "${types.word_taught}${fields.pinyin}",
     COALESCE(up.interval_id,1) AS "${types.word_taught}${fields.interval_id}",
     TO_CHAR(NOW(), 'yyyy-mm-dd hh-mm-ss.ms') AS time_fetched,
-    CASE 
-      WHEN EXTRACT(EPOCH FROM (NOW() - up.last_seen)) > i.seconds THEN 1
-    ELSE 4
-    END AS rank
+    1 AS rank
     FROM all_valid_phrases p
     INNER JOIN cloze_chinese.phrase_contains_words ptw
     ON p.phrase_id = ptw.phrase_id
@@ -170,6 +158,7 @@ async function getSentence (object, params, ctx, resolveInfo){
     INNER JOIN cloze_chinese.intervals i
     ON up.interval_id = i.interval_id
     AND up.user_id = :userId
+    WHERE EXTRACT(EPOCH FROM (NOW() - up.last_seen)) > i.seconds
     ORDER BY EXTRACT(EPOCH FROM (NOW() - up.last_seen)) DESC
     LIMIT 1
 ),
@@ -223,8 +212,7 @@ async function getSentence (object, params, ctx, resolveInfo){
     AND up_teaches.user_id = :userId
     WHERE up_teaches.word_id IS NULL
     AND p.is_sentence = false
-    and parent_phrase.sentence_order = (select min_s from next_sentence_order)
-    ORDER BY w.word_occurrences DESC
+    ORDER BY parent_phrase.sentence_order ASC, w.word_occurrences DESC
     LIMIT 1
 )
 

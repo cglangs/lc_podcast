@@ -14,6 +14,7 @@ CREATE TABLE cloze_chinese.words (
 	word_occurrences int4 NULL,
 	pinyin varchar(255) NULL,
 	english varchar(255) NULL,
+	is_base_word bool NULL,
 	CONSTRAINT unique_word_text UNIQUE (word_text),
 	CONSTRAINT words_pkey PRIMARY KEY (word_id)
 );
@@ -49,16 +50,6 @@ CREATE TABLE cloze_chinese.phrase_contains_words (
 	CONSTRAINT word_contained_fk FOREIGN KEY (word_id) REFERENCES cloze_chinese.words(word_id)
 );
 
-
-CREATE TABLE cloze_chinese.phrase_teaches_words (
-	phrase_id int4 NOT NULL,
-	word_id int4 NOT NULL,
-	iteration int4 NULL,
-	CONSTRAINT phrase_teaches_words_pkey PRIMARY KEY (phrase_id, word_id),
-	CONSTRAINT word_iteration_key UNIQUE (word_id, iteration),
-	CONSTRAINT phrase_teaches_fk FOREIGN KEY (phrase_id) REFERENCES cloze_chinese.phrases(phrase_id),
-	CONSTRAINT word_taught_fk FOREIGN KEY (word_id) REFERENCES cloze_chinese.words(word_id)
-);
 
 CREATE TABLE cloze_chinese.user_progress (
 	user_id int4 NOT NULL,

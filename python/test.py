@@ -48,13 +48,14 @@ def print_sentence():
 		for key in sentence_data:
 			sentence_data[key]["freq_score"] = sum([word_frequencies[w] for w in sentence_data[key]["words"]]) / len(sentence_data[key]["words"])
 		sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: item[1]["freq_score"], reverse=True)}
-		new_word_key = len(sorted_sentence_data) + 1
+		new_word_key = counter
 
 		sentence_order_counter = 1
 		for s_key in sorted_sentence_data:
 			words = sorted_sentence_data[s_key]["words"]
 			old_words = [w for w in words if w in used_words]
 			new_words = [w for w in words if w not in used_words and w not in vocab]
+			#print(words, old_words,new_words)
 			if(len(new_words) > 0):
 				lowest_frequency = min([word_frequencies[w] for w in new_words])
 				#TODO: change word to teach to be least used when possible
@@ -86,9 +87,9 @@ def print_sentence():
 		insert_words = []
 		#records_list_template = ','.join(['%s'] * 5)
 		for k,v in word_frequencies.items():
-			insert_words.append((k,v))
+			insert_words.append((k,v, k in vocab))
 
-		#insert_words_query = 'INSERT INTO cloze_chinese.words (word_text,word_occurrences) VALUES (%s, %s)'
+		insert_words_query = 'INSERT INTO cloze_chinese.words (word_text,word_occurrences, is_base_word) VALUES (%s, %s, %s)'
 
 		#cur.executemany(insert_words_query,insert_words)
 
