@@ -19,7 +19,15 @@ one_word_sentences = {}
 
 
 def print_sentence():
-	#with driver.session() as session:
+	#TODO list known words csv put into used_words Set
+	with open('known_words.csv') as knownwordsfile:
+		readKnownWords = csv.reader(knownwordsfile, delimiter=',')
+		vocabRows = list(readKnownWords)
+		vocab = [elt for lst in vocabRows for elt in lst]
+
+		#used_words.update(vocab)
+		#print(used_words)
+
 	with open('interval3.csv') as csvfile:
 		readCSV = csv.reader(csvfile, delimiter=',')
 		rows = list(readCSV)
@@ -28,22 +36,25 @@ def print_sentence():
 		for sentence in rows:
 			formatted_sentence = regex.sub(r"[%s]+" %punc, "", sentence[0])
 			seg_list = list(jieba.cut(formatted_sentence, cut_all=False, HMM=False))
-
-			sentence_data[counter]={"raw_text": sentence[0], "pinyin": sentence[1],"english": sentence[2], "clean_text": formatted_sentence, "words": seg_list, "is_sentence": True}
+			sentenceToEasy =  all(item in vocab for item in seg_list)
+			if not sentenceToEasy:
+				sentence_data[counter]={"raw_text": sentence[0], "pinyin": sentence[1],"english": sentence[2], "clean_text": formatted_sentence, "words": seg_list, "is_sentence": True}
 			for word in seg_list:
 					if word not in word_frequencies:
 						word_frequencies[word] = 0
 					word_frequencies[word] += 1
 			counter += 1
+
 		for key in sentence_data:
 			sentence_data[key]["freq_score"] = sum([word_frequencies[w] for w in sentence_data[key]["words"]]) / len(sentence_data[key]["words"])
 		sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: item[1]["freq_score"], reverse=True)}
 		new_word_key = len(sorted_sentence_data) + 1
+
 		sentence_order_counter = 1
 		for s_key in sorted_sentence_data:
 			words = sorted_sentence_data[s_key]["words"]
 			old_words = [w for w in words if w in used_words]
-			new_words = [w for w in words if w not in used_words]
+			new_words = [w for w in words if w not in used_words and w not in vocab]
 			if(len(new_words) > 0):
 				lowest_frequency = min([word_frequencies[w] for w in new_words])
 				#TODO: change word to teach to be least used when possible
@@ -80,13 +91,12 @@ def print_sentence():
 		#insert_words_query = 'INSERT INTO cloze_chinese.words (word_text,word_occurrences) VALUES (%s, %s)'
 
 		#cur.executemany(insert_words_query,insert_words)
-		print(one_word_sentences)
 
 		all_phrases = one_word_sentences | sorted_sentence_data
 
 		for k,v in all_phrases.items():
 			current_row = []
-			current_row = (v["word_to_teach"],v["raw_text"], v["clean_text"], v["display_text"], v["pinyin"], v["english"],v["freq_score"],v["is_sentence"],v["sentence_order"],v["iteration"],v["words"])
+			current_row = (v["word_to_teach"],v["raw_text"], v["clean_text"], v["display_text"], v["pinyin"], v["english"],v["freq_score"],v["is_sentence"],v["sentence_order"],v["words"],v["iteration"])
 			insert_phrases.append(current_row)
 
 		insert_phrases_query = """
@@ -100,24 +110,22 @@ def print_sentence():
 
 		),
 		new_phrase_row AS (
-
 		INSERT INTO cloze_chinese.phrases (raw_text, clean_text, display_text, pinyin, english,frequency_score,is_sentence, sentence_order) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING phrase_id
-
 		),
-		word_contained_rows AS (
 
+		word_contained_rows AS (
 		SELECT (SELECT phrase_id FROM new_phrase_row) as phrase_id, word_id, ordinality AS contains_order, word_id = (SELECT word_id FROM word_to_teach_row) AS teaches
 		FROM cloze_chinese.words w INNER JOIN UNNEST(%s) WITH ORDINALITY as wl_text
 		on w.word_text = wl_text
-
 		)
 
-		INSERT INTO cloze_chinese.phrase_contains_words(phrase_id, word_id, contains_order, teaches)
-		SELECT phrase_id, word_id, contains_order, teaches
+		INSERT INTO cloze_chinese.phrase_contains_words(phrase_id, word_id, contains_order, teaches,iteration)
+		SELECT phrase_id, word_id, contains_order, teaches, %s AS iteration
 		FROM word_contained_rows
 
 		"""
 		#print(sorted_sentence_data)
+		#print(insert_phrases)
 		cur.executemany(insert_phrases_query,insert_phrases)
 
 

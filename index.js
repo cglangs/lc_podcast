@@ -166,6 +166,7 @@ async function getSentence (object, params, ctx, resolveInfo){
     ON ptw.word_id = w.word_id
     INNER JOIN cloze_chinese.user_progress up
     ON w.word_id = up.word_id
+    AND up.is_learned = FALSE
     INNER JOIN cloze_chinese.intervals i
     ON up.interval_id = i.interval_id
     AND up.user_id = :userId
