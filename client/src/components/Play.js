@@ -188,6 +188,10 @@ class Play extends Component {
     return progress
   }
 
+  displayCloze(){
+
+  }
+
   playDashboard(userId,role){
     return(
       <Query query={GET_SENTENCE} variables={{userId: userId}}>
@@ -196,6 +200,9 @@ class Play extends Component {
             if (loading) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>Loading</div>
             if (error) return <div style={{"marginTop": "25%",marginLeft: "45%"}}>error</div>
             const nextSentence = this.state.lastSentence || data.getNextSentence
+            const sentenceParts = nextSentence.display_text.split("#")
+            const num_occurences = (nextSentence.display_text.match(/#/g) || []).length;
+            var occurences_displayed = num_occurences
             //Don't rerender when waiting for refetch or when there is no result
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
             if(data.getNextSentence && data.getCurrentProgress){
@@ -233,15 +240,29 @@ class Play extends Component {
                          >
                           {makeAttempt => (
                             <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-                             <p className="cloze-text">{nextSentence.display_text.substr(0,nextSentence.display_text.indexOf('#'))}</p>
-                            <input style={{width: `${nextSentence.word_taught.word_text.length * 40}px`,fontSize: "37px", margin: "15px 5px 15px 5px", color: this.getFontColor(nextSentence.word_taught), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                this.submitAnswer(makeAttempt, refetch, userId, wordId, (nextSentence.word_taught.word_text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught), nextSentence.word_taught.interval_id)
-                              }
-                            }}
-                            />
-                             <p className="cloze-text">{nextSentence.display_text.substr(nextSentence.display_text.indexOf('#') + 1,nextSentence.display_text.length)}</p>
+                            {
+                              sentenceParts.map(part => {
+                                occurences_displayed = occurences_displayed === num_occurences ? 0 : occurences_displayed + 1
+                                return(
+                                  <div style={{display: "flex", flexDirection: "row"}}>
+                                  <p className="cloze-text">{part}</p>
+                                  {occurences_displayed < num_occurences ?
+                                    (
+                                        <input style={{width: `${nextSentence.word_taught.word_text.length * 40}px`,fontSize: "37px", margin: "15px 5px 15px 5px", color: this.getFontColor(nextSentence.word_taught), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
+                                        onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          this.submitAnswer(makeAttempt, refetch, userId, wordId, (nextSentence.word_taught.word_text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught), nextSentence.word_taught.interval_id)
+                                        }
+                                        }}
+                                        />
+                                      ) : null
+                                  }
+                                  
+                                  </div>                                  
+                                  )
+                              })
+          
+                           }
                             <button
                               style={{margin: "15px 5px 15px 5px", height: "40px", marginBlockStart: "3em", fontSize: "14px"}}
                               onClick={() => 

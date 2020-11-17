@@ -47,7 +47,7 @@ async function signup(object, params, ctx, resolveInfo) {
 
 async function upgrade(object, params, ctx, resolveInfo) {
   try {
-    const result = await ctx.models.users.update({ user_role: 'STUDENT',user_name: params.user_name, user_email: params.email, user_password: params.password},
+    const result = await ctx.models.users.update({ user_role: 'STUDENT'},
       { where: { user_id: params.user_id },
         returning: true,
         plain: true })
