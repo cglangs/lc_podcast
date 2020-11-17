@@ -161,13 +161,13 @@ class Play extends Component {
           timeFetched: time_fetched,
           showCharacterDefinitions: false,
           lastSentence: null
-      }, () => {/*this.stopSound()*/})
+      }, () => {this.stopSound()})
     } else{
         this.setState({
         showAnswer: true,
         showPinyin: true,
         userResponse: correctResponse,
-        }, () => {/*this.playSound()*/})
+        }, () => {this.playSound()})
     }
   }
 
@@ -226,12 +226,12 @@ class Play extends Component {
                               showAnswer: this.checkAnswer(nextSentence.word_taught),
                               showPinyin: this.checkAnswer(nextSentence.word_taught),
                               isCorrect: this.checkAnswer(nextSentence.word_taught),
-                              //audio: this.setAudio(nextSentence.phrase_id),
+                              audio: this.setAudio(nextSentence.phrase_id),
                               lastSentence: nextSentence
                               }, () => {
-                                /*if(this.checkAnswer(nextSentence.word_taught)){
+                                if(this.checkAnswer(nextSentence.word_taught)){
                                   this.playSound()
-                                }*/
+                                }
                               })
                             }
 
