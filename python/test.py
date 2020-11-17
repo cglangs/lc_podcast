@@ -5,12 +5,12 @@ import regex
 
 
 
-jieba.set_dictionary("hsk1_dict.txt")
+jieba.set_dictionary("user_dict.txt")
 #driver = GraphDatabase.driver("bolt://localhost:11003", auth=("neo4j", "password"))
 con = psycopg2.connect(database="postgres", user="postgres", password="pass", host="127.0.0.1", port="5432")
 print("Database opened successfully")
 cur = con.cursor()
-punc = "！？｡。＂＃＄％＆＇（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789a-zA-Z"
+punc = "][!-\"?,！？｡。＂＃＄％＆＇（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789a-zA-Z"
 word_frequencies = {}
 word_iterations = {}
 sentence_data={}
@@ -28,13 +28,13 @@ def print_sentence():
 		#used_words.update(vocab)
 		#print(used_words)
 
-	with open('interval3.csv') as csvfile:
-		readCSV = csv.reader(csvfile, delimiter=',')
+	with open('sentencemine.tsv') as csvfile:
+		readCSV = csv.reader(csvfile, delimiter='\t')
 		rows = list(readCSV)
-		rows.pop(0)
+		#rows.pop(0)
 		counter = 1
 		for sentence in rows:
-			formatted_sentence = regex.sub(r"[%s]+" %punc, "", sentence[0])
+			formatted_sentence = regex.sub(r"[%s]+" %punc, "", sentence[0].replace(" ", ""))
 			seg_list = list(jieba.cut(formatted_sentence, cut_all=False, HMM=False))
 			sentenceToEasy =  all(item in vocab for item in seg_list)
 			if not sentenceToEasy:
@@ -91,7 +91,7 @@ def print_sentence():
 
 		insert_words_query = 'INSERT INTO cloze_chinese.words (word_text,word_occurrences, is_base_word) VALUES (%s, %s, %s)'
 
-		#cur.executemany(insert_words_query,insert_words)
+		cur.executemany(insert_words_query,insert_words)
 
 		all_phrases = one_word_sentences | sorted_sentence_data
 

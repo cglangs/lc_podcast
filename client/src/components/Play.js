@@ -188,10 +188,6 @@ class Play extends Component {
     return progress
   }
 
-  displayCloze(){
-
-  }
-
   playDashboard(userId,role){
     return(
       <Query query={GET_SENTENCE} variables={{userId: userId}}>
