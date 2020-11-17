@@ -248,7 +248,7 @@ class Play extends Component {
                                   <p className="cloze-text">{part}</p>
                                   {occurences_displayed < num_occurences ?
                                     (
-                                        <input style={{width: `${nextSentence.word_taught.word_text.length * 40}px`,fontSize: "37px", margin: "15px 5px 15px 5px", color: this.getFontColor(nextSentence.word_taught), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
+                                        <input style={{minWidth: `${nextSentence.word_taught.word_text.length * 40}px`, maxWidth: `${this.state.userResponse.length * 40}px`,fontSize: "37px", margin: "15px 5px 15px 5px", color: this.getFontColor(nextSentence.word_taught), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                                         onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                           this.submitAnswer(makeAttempt, refetch, userId, wordId, (nextSentence.word_taught.word_text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught), nextSentence.word_taught.interval_id)

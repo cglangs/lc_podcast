@@ -40,6 +40,10 @@ module.exports = function(sequelize, DataTypes) {
     sentence_order: {
       type: DataTypes.INTEGER,
       allowNull: true
+    },
+    iteration: {
+      type: DataTypes.SMALLINT,
+      allowNull: true
     }
   }, {
     sequelize,

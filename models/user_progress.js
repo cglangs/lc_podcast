@@ -52,6 +52,7 @@ module.exports = function(sequelize, DataTypes) {
     sequelize,
     tableName: 'user_progress',
     schema: 'cloze_chinese',
+    hasTrigger: true,
     timestamps: false,
     indexes: [
       {

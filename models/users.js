@@ -15,8 +15,7 @@ module.exports = function(sequelize, DataTypes) {
     },
     user_email: {
       type: DataTypes.STRING(255),
-      allowNull: true,
-      unique: "user_email_unique"
+      allowNull: true
     },
     user_password: {
       type: DataTypes.STRING(255),

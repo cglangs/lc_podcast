@@ -25,6 +25,10 @@ module.exports = function(sequelize, DataTypes) {
     english: {
       type: DataTypes.STRING(255),
       allowNull: true
+    },
+    is_base_word: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true
     }
   }, {
     sequelize,

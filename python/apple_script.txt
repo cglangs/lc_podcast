@@ -1,0 +1,49 @@
+var app = Application.currentApplication()
+app.includeStandardAdditions = true
+
+
+var file = app.chooseFile({
+    ofType: "csv",
+    withPrompt: "Please select a text file to read:"
+})
+
+
+    // lines :: String -> [String]
+    function lines(s) {
+        return s.split(/[\r\n]/);
+    };
+
+    // readFile :: FilePath -> maybe String
+    function readFile(strPath) {
+        var error = $(),
+            str = ObjC.unwrap(
+                $.NSString.stringWithContentsOfFileEncodingError($(strPath)
+                    .stringByStandardizingPath, $.NSUTF8StringEncoding, error)
+            ),
+            blnValid = typeof error.code !== 'string';
+        return {
+            nothing: !blnValid,
+            just: blnValid ? str : undefined,
+            error: blnValid ? '' : error.code
+        };
+    };
+
+
+var x = lines(readFile(file.toString()).just);
+var id,sentence
+
+var outputFolder = app.chooseFolder({
+    withPrompt: "Please select an output folder:"
+})
+
+x.shift()
+x.forEach(function(line){
+	id = line.split(',')[0]
+	sentence = line.split(',')[1]
+	outputFile = outputFolder + "/" + id.toString() + ".aiff"
+	app.say(sentence, {
+    	using: "Ting-Ting",
+		speakingRate: 120,
+		savingTo: outputFile
+	})
+})
