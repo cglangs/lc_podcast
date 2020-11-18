@@ -51,7 +51,7 @@ def print_sentence():
 			rank_dict[k] = rank
 			rank += 1
 		for key in sentence_data:
-			sentence_data[key]["freq_score"] = sum([rank_dict[word_frequencies[w]] for w in sentence_data[key]["words"]]) / len(sentence_data[key]["words"])
+			sentence_data[key]["freq_score"] = sum([1 if w in vocab else rank_dict[word_frequencies[w]] for w in sentence_data[key]["words"]]) / len(sentence_data[key]["words"])
 		sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: item[1]["freq_score"])}
 		
 
