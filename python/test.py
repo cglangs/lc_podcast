@@ -10,7 +10,7 @@ jieba.set_dictionary("user_dict.txt")
 con = psycopg2.connect(database="postgres", user="postgres", password="pass", host="127.0.0.1", port="5432")
 print("Database opened successfully")
 cur = con.cursor()
-punc = "][!-\"?,！？｡。＂＃＄％＆＇（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789a-zA-Z"
+punc = "\"-][!?,！？｡。＂＃＄％＆＇（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789a-zA-Z"
 word_frequencies = {}
 word_iterations = {}
 sentence_data={}
@@ -34,7 +34,8 @@ def print_sentence():
 		#rows.pop(0)
 		counter = 1
 		for sentence in rows:
-			formatted_sentence = regex.sub(r"[%s]+" %punc, "", sentence[0].replace(" ", ""))
+			#for some reason regex won't remove hyphen
+			formatted_sentence = regex.sub(r"[%s]+" %punc, "", sentence[0].replace(" ", "").replace("-",""))
 			seg_list = list(jieba.cut(formatted_sentence, cut_all=False, HMM=False))
 			sentenceToEasy =  all(item in vocab for item in seg_list)
 			if not sentenceToEasy:

@@ -6,4 +6,4 @@ order by word_occurrences desc
 select p.raw_text from phrases p
 inner join phrase_contains_words pcw 
 on p.phrase_id = pcw.phrase_id 
-where pcw.word_id = 9919
+where pcw.word_id = 21439
