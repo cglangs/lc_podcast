@@ -38,8 +38,8 @@ module.exports =  gql`
   type Word {
   	word_id: Int!
     word_text: String!
-	english: String!
-    pinyin: String!
+	  english: String!
+    pinyin: String
     interval_id: Int
   }
 
