@@ -12,21 +12,20 @@ print("Database opened successfully")
 cur = con.cursor()
 punc = "\"\\!?,！？｡。＂＃＄％＆＇%&/:;°·℃（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛《》〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789a-zA-Z"
 word_frequencies = {}
+word_iterations = {}
 word_ranks = {}
 sentence_data={}
 used_words = set()
 one_word_sentences = {}
+rank_dict ={}
 
 
 def print_sentence():
-	#TODO list known words csv put into used_words Set
 	with open('known_words.csv') as knownwordsfile:
 		readKnownWords = csv.reader(knownwordsfile, delimiter=',')
 		vocabRows = list(readKnownWords)
 		vocab = [elt for lst in vocabRows for elt in lst]
 
-		#used_words.update(vocab)
-		#print(used_words)
 
 	with open('sentencemine.tsv') as csvfile:
 		readCSV = csv.reader(csvfile, delimiter='\t')
@@ -34,7 +33,6 @@ def print_sentence():
 		#rows.pop(0)
 		counter = 1
 		for sentence in rows:
-			#for some reason regex won't remove hyphen
 			formatted_sentence = regex.sub(r"[{}]+".format(punc), "", sentence[0].replace(" ", "").replace("-","").replace("[","").replace("]","").replace("─","").replace("\u3000",""))
 			seg_list = list(jieba.cut(formatted_sentence, cut_all=False, HMM=False))
 			sentenceToEasy =  all(item in vocab for item in seg_list)
@@ -45,24 +43,27 @@ def print_sentence():
 						word_frequencies[word] = 0
 					word_frequencies[word] += 1
 			counter += 1
-		sorted_words = sorted(word_frequencies.keys(), key=lambda item: item, reverse=True)
-		print(sorted_words)
 
-			#get word ranks
+
+		unique_occurrence_nums = set(word_frequencies.values())
+		rank = 1
+		for k in sorted(unique_occurrence_nums, key=lambda item: item, reverse=True):
+			rank_dict[k] = rank
+			rank += 1
 		for key in sentence_data:
-			sentence_data[key]["freq_score"] = sum([word_frequencies[w] for w in sentence_data[key]["words"]]) / len(sentence_data[key]["words"])
-		sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: item[1]["freq_score"], reverse=True)}
-		new_word_key = counter
+			sentence_data[key]["freq_score"] = sum([rank_dict[word_frequencies[w]] for w in sentence_data[key]["words"]]) / len(sentence_data[key]["words"])
+		sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: item[1]["freq_score"])}
+		
 
+		new_word_key = counter
 		sentence_order_counter = 1
+
 		for s_key in sorted_sentence_data:
 			words = sorted_sentence_data[s_key]["words"]
 			old_words = [w for w in words if w in used_words]
 			new_words = [w for w in words if w not in used_words and w not in vocab]
-			#print(words, old_words,new_words)
 			if(len(new_words) > 0):
 				lowest_frequency = min([word_frequencies[w] for w in new_words])
-				#TODO: change word to teach to be least used when possible
 				word_to_teach  = [ w for w in new_words if word_frequencies[w] == lowest_frequency][0]
 				for nw in new_words:
 					if nw not in word_iterations:
@@ -89,13 +90,12 @@ def print_sentence():
 
 		insert_phrases = []
 		insert_words = []
-		#records_list_template = ','.join(['%s'] * 5)
 		for k,v in word_frequencies.items():
 			insert_words.append((k,v, k in vocab))
 
 		insert_words_query = 'INSERT INTO cloze_chinese.words (word_text,word_occurrences, is_base_word) VALUES (%s, %s, %s)'
 
-		#cur.executemany(insert_words_query,insert_words)
+		cur.executemany(insert_words_query,insert_words)
 
 		all_phrases = one_word_sentences | sorted_sentence_data
 
@@ -131,10 +131,10 @@ def print_sentence():
 		"""
 		#print(sorted_sentence_data)
 		#print(insert_phrases)
-		#cur.executemany(insert_phrases_query,insert_phrases)
+		cur.executemany(insert_phrases_query,insert_phrases)
 
 
-		#con.commit()
+		con.commit()
 		#rint("Record inserted successfully")
 		con.close()
 
