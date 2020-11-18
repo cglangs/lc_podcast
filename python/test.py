@@ -10,9 +10,9 @@ jieba.set_dictionary("user_dict.txt")
 con = psycopg2.connect(database="postgres", user="postgres", password="pass", host="127.0.0.1", port="5432")
 print("Database opened successfully")
 cur = con.cursor()
-punc = "\"-][!?,！？｡。＂＃＄％＆＇（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789a-zA-Z"
+punc = "\"\\!?,！？｡。＂＃＄％＆＇%&/:;°·℃（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛《》〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789a-zA-Z"
 word_frequencies = {}
-word_iterations = {}
+word_ranks = {}
 sentence_data={}
 used_words = set()
 one_word_sentences = {}
@@ -35,7 +35,7 @@ def print_sentence():
 		counter = 1
 		for sentence in rows:
 			#for some reason regex won't remove hyphen
-			formatted_sentence = regex.sub(r"[%s]+" %punc, "", sentence[0].replace(" ", "").replace("-",""))
+			formatted_sentence = regex.sub(r"[{}]+".format(punc), "", sentence[0].replace(" ", "").replace("-","").replace("[","").replace("]","").replace("─","").replace("\u3000",""))
 			seg_list = list(jieba.cut(formatted_sentence, cut_all=False, HMM=False))
 			sentenceToEasy =  all(item in vocab for item in seg_list)
 			if not sentenceToEasy:
@@ -45,7 +45,10 @@ def print_sentence():
 						word_frequencies[word] = 0
 					word_frequencies[word] += 1
 			counter += 1
+		sorted_words = sorted(word_frequencies.keys(), key=lambda item: item, reverse=True)
+		print(sorted_words)
 
+			#get word ranks
 		for key in sentence_data:
 			sentence_data[key]["freq_score"] = sum([word_frequencies[w] for w in sentence_data[key]["words"]]) / len(sentence_data[key]["words"])
 		sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: item[1]["freq_score"], reverse=True)}
@@ -92,7 +95,7 @@ def print_sentence():
 
 		insert_words_query = 'INSERT INTO cloze_chinese.words (word_text,word_occurrences, is_base_word) VALUES (%s, %s, %s)'
 
-		cur.executemany(insert_words_query,insert_words)
+		#cur.executemany(insert_words_query,insert_words)
 
 		all_phrases = one_word_sentences | sorted_sentence_data
 
@@ -128,10 +131,10 @@ def print_sentence():
 		"""
 		#print(sorted_sentence_data)
 		#print(insert_phrases)
-		cur.executemany(insert_phrases_query,insert_phrases)
+		#cur.executemany(insert_phrases_query,insert_phrases)
 
 
-		con.commit()
+		#con.commit()
 		#rint("Record inserted successfully")
 		con.close()
 
