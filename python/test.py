@@ -2,6 +2,7 @@ import psycopg2
 import csv
 import jieba
 import regex
+import pinyin
 
 
 
@@ -91,9 +92,11 @@ def print_sentence():
 		insert_phrases = []
 		insert_words = []
 		for k,v in word_frequencies.items():
-			insert_words.append((k,v, k in vocab))
+			insert_words.append((k, pinyin.get(k), v,k in vocab))
 
-		insert_words_query = 'INSERT INTO cloze_chinese.words (word_text,word_occurrences, is_base_word) VALUES (%s, %s, %s)'
+		insert_words_query = """
+		INSERT INTO cloze_chinese.words (word_text, pinyin, word_occurrences, is_base_word) VALUES (%s,%s,%s, %s);
+		"""
 
 		cur.executemany(insert_words_query,insert_words)
 
@@ -116,6 +119,10 @@ def print_sentence():
 		),
 		new_phrase_row AS (
 		INSERT INTO cloze_chinese.phrases (raw_text, clean_text, display_text, pinyin, english,frequency_score,is_sentence, sentence_order, iteration) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING phrase_id
+		),
+
+		phrase_teaches_row AS (
+		INSERT INTO cloze_chinese.phrase_teaches_words(phrase_id, word_id) VALUES((SELECT phrase_id FROM new_phrase_row),(SELECT word_id FROM word_to_teach_row))
 		),
 
 		word_contained_rows AS (

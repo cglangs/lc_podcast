@@ -39,6 +39,13 @@ CREATE TABLE cloze_chinese.phrases (
 	CONSTRAINT phrases_pkey PRIMARY KEY (phrase_id)
 );
 
+CREATE TABLE cloze_chinese.phrase_teaches_words (
+	phrase_id int4 NOT NULL,
+	word_id int4 NOT NULL,
+	CONSTRAINT phrase_teaches_words_pkey PRIMARY KEY (phrase_id, word_id),
+	CONSTRAINT phrase_teaches_fk FOREIGN KEY (phrase_id) REFERENCES cloze_chinese.phrases(phrase_id),
+	CONSTRAINT word_taught_fk FOREIGN KEY (word_id) REFERENCES cloze_chinese.words(word_id)
+	);
 
 CREATE TABLE cloze_chinese.phrase_contains_words (
 	phrase_id int4 NOT NULL,

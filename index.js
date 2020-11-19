@@ -150,9 +150,8 @@ async function getSentence (object, params, ctx, resolveInfo){
     ELSE 4
     END AS rank
     FROM all_valid_phrases p
-    INNER JOIN cloze_chinese.phrase_contains_words ptw
+    INNER JOIN cloze_chinese.phrase_teaches_words ptw
     ON p.phrase_id = ptw.phrase_id
-    AND ptw.teaches = TRUE
     INNER JOIN cloze_chinese.words w
     ON ptw.word_id = w.word_id
     INNER JOIN cloze_chinese.user_progress up
@@ -175,9 +174,8 @@ async function getSentence (object, params, ctx, resolveInfo){
     TO_CHAR(NOW(), 'yyyy-mm-dd hh-mm-ss.ms') AS time_fetched,
     2 AS rank
     FROM all_valid_phrases p
-    INNER JOIN cloze_chinese.phrase_contains_words ptw
+    INNER JOIN cloze_chinese.phrase_teaches_words ptw
     ON p.phrase_id = ptw.phrase_id
-    AND ptw.teaches = TRUE
     INNER JOIN cloze_chinese.words w
     ON ptw.word_id = w.word_id
     LEFT JOIN cloze_chinese.user_progress up_teaches
@@ -202,9 +200,8 @@ async function getSentence (object, params, ctx, resolveInfo){
     INNER JOIN cloze_chinese.phrase_contains_words pcw 
     ON parent_phrase.phrase_id = pcw.phrase_id
     AND pcw.teaches = FALSE
-    inner join cloze_chinese.phrase_contains_words ptw 
+    inner join cloze_chinese.phrase_teaches_words ptw 
     on pcw.word_id = ptw.word_id
-    AND ptw.teaches = TRUE
     inner join cloze_chinese.words w
     on ptw.word_id = w.word_id
     inner join cloze_chinese.phrases p
@@ -220,12 +217,14 @@ async function getSentence (object, params, ctx, resolveInfo){
 
     SELECT *
     FROM all_seen_phrases
-    UNION 
+    UNION ALL 
     SELECT *
     FROM unseen_full_phrases
-    UNION 
+    WHERE NOT EXISTS( SELECT phrase_id FROM all_seen_phrases WHERE rank = 1)
+    UNION ALL
     SELECT *
     FROM unseen_words
+    WHERE NOT EXISTS( SELECT phrase_id FROM unseen_full_phrases)
     order by rank ASC
     LIMIT 1`,
     {

@@ -11,6 +11,8 @@ module.exports =  gql`
  
   type Mutation {
   	CreateUser(user_name: String! email: String! password: String! role: String! = "STUDENT"): User
+    EditWord(word_id: Int!, word_text: String!, pinyin: String!, english: String!): Word
+    EditPhrase(phrase_id: Int!, raw_text: String!, clean_text: String!, display_text: String!, pinyin: String!, english: String!): Word
   	UpgradeUser(user_name: String! email: String! password: String!): User
   	Login(email: String! password: String!): User
   	makeClozeAttempt(word_id: Int!, interval_id: Int!): Int @hasToken
