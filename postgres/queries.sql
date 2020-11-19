@@ -55,21 +55,6 @@ ORDER BY
 
 
 
-with recursive first_choice AS (
-	select my_first_choice
-),
-
-second_choice AS (
-	select my_ second_choice
-
-)
-
-select * from first_choice
-union
-select * from second_choice
-
-
-
 
 
 

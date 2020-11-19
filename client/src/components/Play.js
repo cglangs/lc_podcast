@@ -5,6 +5,8 @@ import { Howl } from 'howler';
 import ProgressBar from './ProgressBar'
 import Switch from "./Switch";
 import { getCookie} from '../utils'
+import { withRouter } from 'react-router-dom';
+
 
 
 
@@ -188,6 +190,20 @@ class Play extends Component {
     return progress
   }
 
+  editWord(word){
+    console.log(this.props)
+    console.log(this.context)
+    this.props.history.push({
+      pathname: '/wordedit',
+      state: {
+        word_id: word.word_id,
+        word_text: word.word_text,
+        pinyin: word.pinyin,
+        english: word.english
+      }  
+    })
+  }
+
   playDashboard(userId,role){
     return(
       <Query query={GET_SENTENCE} variables={{userId: userId}}>
@@ -208,6 +224,7 @@ class Play extends Component {
                   <div style={{display: "flex", flexDirection: "row", "width": "100%"}}>
                   <div style={{"flexGrow": "4", "paddingTop": "20%"}}>
                   {role === "TESTER" && (<p style={{fontSize: "12px", "marginBottom": "20px"}}>You are currently not logged in. Log in to save your progress.</p>)}
+                  <button onClick={() => this.editWord(nextSentence.word_taught)}>Edit</button>
                   <div style={{display: "inline-block", "textAlign": "center"}}>
                     <ProgressBar currentTimeInterval={userInterval} />
                      <div style={{display: "flex", justifyContent: "center"}}>
@@ -337,4 +354,4 @@ class Play extends Component {
 
 
 
-export default Play;
+export default withRouter(Play);

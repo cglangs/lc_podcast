@@ -4,11 +4,8 @@ import gql from 'graphql-tag';
 import '../styles/App.css';
 
 const EDIT_WORD = gql`
-  mutation editWord($word_id: Int!, $english: String, $italics: String) {
-  	UpdateWord(word_id: $word_id, english: $english, italics: $italics){
-  		word_id
-  		text
-  	}
+  mutation editWord($word_id: Int!, $english: String!) {
+  	EditWord(word_id: $word_id, english: $english)
   }
 `
 
@@ -17,17 +14,16 @@ class WordEdit extends Component {
     super(props)
     this.state = {
       word_id: props.location.state.word_id,
-      text: props.location.state.text,
+      word_text: props.location.state.word_text,
       pinyin: props.location.state.pinyin,
-      english: props.location.state.english,
-      italics: props.location.state.italics
+      english: props.location.state.english
     }
   }
 	render(){
 	  return (
 	    <div className="App">
 	      <header className="App-header">
-	        <p>{this.state.text}</p>
+	        <p>{this.state.word_text}</p>
 	        <p>{this.state.pinyin}</p>
 	        <p>Translation</p>
             <input
@@ -37,21 +33,13 @@ class WordEdit extends Component {
               placeholder="Enter word's english translation"
               style={{width: "250px"}}
             />
-            <p>Notes</p>
-	        <input
-              value={this.state.italics}
-              onChange={e => this.setState({ italics: e.target.value })}
-              type="italics"
-              placeholder="Enter word's extra notes"
-              style={{width: "250px"}}
-            />
             <Mutation mutation={EDIT_WORD}
                update={(store) => {
-                   this.props.history.push({pathname: '/words' })                   
+                   this.props.history.push({pathname: '/' })                   
                 }}
              >
 	            {editWord => (
-	              <button onClick={() => editWord({variables: {word_id: parseInt(this.state.word_id), english: this.state.english, italics: this.state.italics}})} disabled={this.state.english.length === 0}>
+	              <button onClick={() => editWord({variables: {word_id: parseInt(this.state.word_id), english: this.state.english}})} disabled={this.state.english.length === 0}>
 	              Submit
 	              </button>
 	            )}

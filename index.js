@@ -235,9 +235,13 @@ async function getSentence (object, params, ctx, resolveInfo){
     nest: true,
     type: sequelize.QueryTypes.SELECT })
 
-  console.log(sentence)
-
   return sentence[0]
+}
+
+async function changeWordTranslation(object, params, ctx, resolveInfo){
+  const result = await ctx.models.words.update({ english: params.english},
+      { where: { word_id: params.word_id }})
+  return result[0]
 }
 
 async function currentProgress (object, params, ctx, resolveInfo){
@@ -245,7 +249,7 @@ async function currentProgress (object, params, ctx, resolveInfo){
     `select 
     COALESCE(sum(CASE WHEN is_learned THEN 1 ELSE 0 END),0) as words_learned, 
     COALESCE(sum(interval_id - 1),0) as intervals_completed,
-    (select count(word_id) from cloze_chinese.words) as total_word_count
+    (select count(word_id) from cloze_chinese.words WHERE is_base_word = FALSE) as total_word_count
     from cloze_chinese.user_progress
     where user_id = ?`,
     {
@@ -271,6 +275,9 @@ const resolvers = {
     makeClozeAttempt(object, params, ctx, resolveInfo) {
        params.user_id = ctx.req.userId
       return makeAttempt(object, params, ctx, resolveInfo)    
+    },
+      EditWord(object, params, ctx, resolveInfo) {
+      return changeWordTranslation(object, params, ctx, resolveInfo)    
     }
 
   },
