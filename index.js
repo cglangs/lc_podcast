@@ -20,6 +20,7 @@ const sequelize = new Sequelize(
   'postgres',
   'pass',
   {
+    //host: '54.162.39.62',
     dialect: 'postgres',
   },
 );
@@ -239,7 +240,7 @@ async function getSentence (object, params, ctx, resolveInfo){
 }
 
 async function changeWordTranslation(object, params, ctx, resolveInfo){
-  const result = await ctx.models.words.update({ english: params.english},
+  const result = await ctx.models.words.update({ english: params.english, pinyin: params.pinyin},
       { where: { word_id: params.word_id }})
   return result[0]
 }
@@ -247,6 +248,7 @@ async function changeWordTranslation(object, params, ctx, resolveInfo){
 async function currentProgress (object, params, ctx, resolveInfo){
   const progress = await sequelize.query(
     `select 
+    COALESCE(count(word_id),0) as new_words_seen, 
     COALESCE(sum(CASE WHEN is_learned THEN 1 ELSE 0 END),0) as words_learned, 
     COALESCE(sum(interval_id - 1),0) as intervals_completed,
     (select count(word_id) from cloze_chinese.words WHERE is_base_word = FALSE) as total_word_count
@@ -314,12 +316,6 @@ const directiveResolvers = {
   }
 }
 
-
-/*const schema = makeAugmentedSchema({
-  typeDefs,
-  resolvers
-});*/
-
 // Allow cross-origin
 
 
@@ -343,7 +339,6 @@ app.use((req, res, next) =>{
 
   if(accessToken){
     const user = jwt.verify(accessToken, ACCESS_SECRET)
-    console.log(user)
     req.userId = user.userId
     return next()
   }
@@ -364,13 +359,11 @@ app.use((req, res, next) =>{
   next();
 })
 
-
-/*app.use(express.static('public'))
+app.use(express.static('public'))
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
-});*/
-
+});
 
 
 const server = new ApolloServer({

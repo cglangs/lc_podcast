@@ -4,8 +4,8 @@ import gql from 'graphql-tag';
 import '../styles/App.css';
 
 const EDIT_WORD = gql`
-  mutation editWord($word_id: Int!, $english: String!) {
-  	EditWord(word_id: $word_id, english: $english)
+  mutation editWord($word_id: Int!,  $english: String!,  $pinyin: String!) {
+  	EditWord(word_id: $word_id, english: $english, pinyin: $pinyin)
   }
 `
 
@@ -33,13 +33,20 @@ class WordEdit extends Component {
               placeholder="Enter word's english translation"
               style={{width: "250px"}}
             />
+            <input
+              value={this.state.pinyin}
+              onChange={e => this.setState({ pinyin: e.target.value })}
+              type="pinyin"
+              placeholder="Enter word's pinyin"
+              style={{width: "250px"}}
+            />
             <Mutation mutation={EDIT_WORD}
                update={(store) => {
                    this.props.history.push({pathname: '/' })                   
                 }}
              >
 	            {editWord => (
-	              <button onClick={() => editWord({variables: {word_id: parseInt(this.state.word_id), english: this.state.english}})} disabled={this.state.english.length === 0}>
+	              <button onClick={() => editWord({variables: {word_id: parseInt(this.state.word_id), pinyin: this.state.pinyin ,english: this.state.english}})} disabled={this.state.english.length === 0}>
 	              Submit
 	              </button>
 	            )}

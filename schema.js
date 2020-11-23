@@ -11,7 +11,7 @@ module.exports =  gql`
  
   type Mutation {
   	CreateUser(user_name: String! email: String! password: String! role: String! = "STUDENT"): User
-    EditWord(word_id: Int!, english: String!): Int
+    EditWord(word_id: Int!, english: String!, pinyin: String!): Int
   	UpgradeUser(user_name: String! email: String! password: String!): User
   	Login(email: String! password: String!): User
   	makeClozeAttempt(word_id: Int!, interval_id: Int!): Int @hasToken
@@ -45,6 +45,7 @@ module.exports =  gql`
   }
 
   type Progress {
+    new_words_seen: Int!
   	words_learned: Int!
   	intervals_completed: Int!
   	total_word_count: Int!

@@ -8,7 +8,6 @@ import Words from './Words'
 import WordEdit from './WordEdit'
 import Play from './Play'
 import About from './About'
-import Citations from './Citations'
 
 import {Query} from 'react-apollo';
 import gql from 'graphql-tag';
@@ -47,7 +46,6 @@ class App extends Component {
             <Route exact path="/wordedit" component={WordEdit} />
             <Route exact path="/login" render={() => (<Login user={user} refetchUser={refetch}/>)} />
             <Route exact path="/about" component={About} />
-            <Route exact path="/citations" component={Citations} />
           </Switch>
         </div>
         )

@@ -1,11 +1,13 @@
 import React, { Component } from 'react'
 import {Query, Mutation} from 'react-apollo';
 import gql from 'graphql-tag';
-import { Howl } from 'howler';
+//import { Howl } from 'howler';
 import ProgressBar from './ProgressBar'
 import Switch from "./Switch";
 import { getCookie} from '../utils'
 import { withRouter } from 'react-router-dom';
+//import runJxa from 'run-jxa'
+
 
 
 
@@ -49,6 +51,7 @@ const GET_SENTENCE = gql`
 	}
 
   getCurrentProgress {
+    new_words_seen
     words_learned
     intervals_completed
     total_word_count
@@ -117,27 +120,36 @@ class Play extends Component {
 		return correct_response.word_text === this.state.userResponse
 	}
 
-  setAudio(phrase_id) {
+  /*setAudio(phrase_id) {
     var Sounds
      Sounds = new Howl({
          src: ["/audio/sentences/" + phrase_id + ".m4a"]
       })
   
     return Sounds
-  }
+  }*/
 
-  playSound(){
+  /*playSound(){
     if(this.state.audio){
         this.state.audio.play()
     }
-  }
+  }*/
 
-  stopSound(){
+  /*stopSound(){
     if(this.state.audio){
         this.state.audio.stop()
     }
 
-  }
+  }*/
+
+  playAudio(){
+    var msg = new SpeechSynthesisUtterance();
+    msg.text = this.state.audio;
+    msg.lang = "zh"
+    msg.rate = 0.75
+    msg.pitch = 1;
+    window.speechSynthesis.speak(msg);
+}
 
   getFontColor(word){
     var color = 'black'
@@ -169,7 +181,7 @@ class Play extends Component {
         showAnswer: true,
         showPinyin: true,
         userResponse: correctResponse,
-        }, () => {/*this.playSound()*/})
+        }, () => {this.playAudio()})
     }
   }
 
@@ -219,16 +231,19 @@ class Play extends Component {
             if (nextSentence && this.state.timeFetched === nextSentence.time_fetched)  return <div/>
             if(data.getNextSentence && data.getCurrentProgress){
               const wordId = parseInt(nextSentence.word_taught.word_id)
+              const fontSize =  nextSentence.raw_text.length <= 24 ? 40 : 20
+              const buttonMarginStart = nextSentence.raw_text.length <= 20 ? "3em" : "1.5em"
+              console.log(nextSentence.raw_text.length, fontSize)
               const userInterval = this.getUserInterval(this.state.showAnswer,this.state.isCorrect, nextSentence.word_taught.interval_id)
                 return(
                   <div style={{display: "flex", flexDirection: "row", "width": "100%"}}>
                   <div style={{"flexGrow": "4", "paddingTop": "20%"}}>
                   {role === "TESTER" && (<p style={{fontSize: "12px", "marginBottom": "20px"}}>You are currently not logged in. Log in to save your progress.</p>)}
-                  <button onClick={() => this.editWord(nextSentence.word_taught)}>Edit</button>
+                  {role === "STUDENT" && (<linkbutton style={{"marginRight": "15px","fontSize": "10px"}} onClick={() => this.editWord(nextSentence.word_taught)}>Edit</linkbutton>)}
                   <div style={{display: "inline-block", "textAlign": "center"}}>
                     <ProgressBar currentTimeInterval={userInterval} />
                      <div style={{display: "flex", justifyContent: "center"}}>
-                      {this.state.showAnswer && <button  style={{"width": "25px", "height": "25px", "marginRight": "10px", "marginBlockStart": "1.8em"}} onClick={() => this.playSound(nextSentence._id, nextSentence.word_taught.word_id)}><img style={{"width": "100%"}} alt="replay audio" src="speaker_icon.svg"/></button>}
+                      {this.state.showAnswer && <button  style={{"width": "25px", "height": "25px", "marginRight": "10px", "marginBlockStart": "1.8em"}} onClick={() => this.playAudio()}><img style={{"width": "100%"}} alt="replay audio" src="speaker_icon.svg"/></button>}
                      {this.state.showPinyin ? <p style={{fontSize: "calc(10px + 2vmin)"}}>{nextSentence.pinyin}</p> : this.getText(nextSentence)}
                       </div>
                      <Mutation mutation={MAKE_ATTEMPT} refetchQueries={[{query: GET_SENTENCE, variables: {userId: userId}}]}
@@ -239,13 +254,13 @@ class Play extends Component {
                               showAnswer: this.checkAnswer(nextSentence.word_taught),
                               showPinyin: this.checkAnswer(nextSentence.word_taught),
                               isCorrect: this.checkAnswer(nextSentence.word_taught),
-                              //audio: this.setAudio(nextSentence.phrase_id),
+                              audio: nextSentence.raw_text,
                               lastSentence: nextSentence
-                              }, () => {/*
+                              }, () => {
                                 if(this.checkAnswer(nextSentence.word_taught)){
-                                  this.playSound()
+                                  this.playAudio()
                                 }
-                              */})
+                              })
                             }
 
                             }
@@ -258,10 +273,10 @@ class Play extends Component {
                                 occurences_displayed = occurences_displayed === num_occurences ? 0 : occurences_displayed + 1
                                 return(
                                   <div style={{display: "flex", flexDirection: "row"}}>
-                                  <p className="cloze-text">{part}</p>
+                                  <p style={{"fontSize": fontSize + "px", "marginBlockStart": "0.95em"}}>{part}</p>
                                   {occurences_displayed < num_occurences ?
                                     (
-                                        <input style={{minWidth: `${nextSentence.word_taught.word_text.length * 40}px`, maxWidth: `${nextSentence.word_taught.word_text.length * 40 + (this.state.userResponse.length - nextSentence.word_taught.word_text.length || 0) * 10}px`,fontSize: "37px", margin: "15px 5px 15px 5px", color: this.getFontColor(nextSentence.word_taught), height: "40px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
+                                        <input style={{minWidth: `${nextSentence.word_taught.word_text.length * fontSize}px`, maxWidth: `${nextSentence.word_taught.word_text.length * fontSize + (this.state.userResponse.length - nextSentence.word_taught.word_text.length || 0) * 10}px`,fontSize: (fontSize - 3) + "px", margin: "15px 5px 15px 5px", color: this.getFontColor(nextSentence.word_taught), height: fontSize + "px", "marginBlockStart": "1em"}} value={this.state.userResponse} onChange={e => this.setState({ userResponse: e.target.value })}
                                         onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                           this.submitAnswer(makeAttempt, refetch, userId, wordId, (nextSentence.word_taught.word_text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught), nextSentence.word_taught.interval_id)
@@ -277,7 +292,7 @@ class Play extends Component {
           
                            }
                             <button
-                              style={{margin: "15px 5px 15px 5px", height: "40px", marginBlockStart: "3em", fontSize: "14px"}}
+                              style={{margin: "15px 5px 15px 5px", height: fontSize, marginBlockStart: buttonMarginStart, fontSize: "14px"}}
                               onClick={() => 
                                 {
                                   this.submitAnswer(makeAttempt, refetch, userId, wordId, (nextSentence.word_taught.word_text), nextSentence.time_fetched, this.checkAnswer(nextSentence.word_taught), nextSentence.word_taught.interval_id)
@@ -296,6 +311,7 @@ class Play extends Component {
               </div>
               <div style={{"flexGrow": 1, "backgroundColor": "lightslategray"}}>
                  <div style={{display: "flex", flexDirection: "column", justifyContent: "right"}}>
+                      <p style={{fontSize: "14px"}}>{"New Words Seen: " + data.getCurrentProgress.new_words_seen + "/" + data.getCurrentProgress.total_word_count}</p>
                       <p style={{fontSize: "14px"}}>{"Words Learned: " + data.getCurrentProgress.words_learned + "/" + data.getCurrentProgress.total_word_count}</p>
                       <p style={{fontSize: "14px"}}>{"Cards Completed: " + data.getCurrentProgress.intervals_completed}</p>
                       {/*<div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>

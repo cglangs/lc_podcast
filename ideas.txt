@@ -600,3 +600,10 @@ FROM
   hsk
 WHERE 
   hsk.simplified = words.word_text ;
+
+
+ docker run --name some-postgres -e POSTGRES_PASSWORD=pass -d -p 5432:5432 postgres
+
+ cat cloze_chinese_backup.sql | docker exec -i edb671cd2b65 pg_restore -U postgres -d postgres
+
+ docker exec -i edb671cd2b65 pg_dump -U postgres -d postgres > test_docker_backup.sql

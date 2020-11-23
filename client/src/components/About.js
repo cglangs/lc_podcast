@@ -15,14 +15,8 @@ class About extends Component {
         </p>
         <p><b>This App:</b></p>
         <p>
-		This app is a prototype of what I would like to create in the near future. It works by starting from zero and progressively introducing words to the user which are then used in fill-in-the-blanks exercises. I have written the phrases myself (even though I don’t know very much Chinese), and I have only included the 150 words from HSK1.
+		This app uses over 5000 mined sentences, spaced repetition, and progressively adds (over 7000) new words. All the words you will see in the sentences around the blank space are either words that you've seen before or HSK 1 words.
         </p>
-        <p><b>Goals:</b></p>
-		<ul>
-		  <li>Find a native Chinese speaker (preferably with teaching experience) who would like to partner with me on this project </li>
-		  <li>Get as much feedback as possible on the app: What don’t you like about it? What could be better?</li>
-		  <li>Find a better method for creating audio</li>
-		</ul>
 		<span><p><b>Contact me:</b></p> <a href="mailto:clozechinese@gmail.com" style={{"color":"aquamarine"}}>clozechinese@gmail.com</a></span> 
 		<p>Please email me if you have any feedback or if you could get me in touch with a potential collaborator. I would be happy to chat with you!</p>
         </header>

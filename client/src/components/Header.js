@@ -40,11 +40,6 @@ class Header extends Component {
               about
           </Link>
         </div> 
-        <div>          
-          <Link to="/citations">
-              citations
-          </Link>
-        </div>
         <div className="flex flex-fixed">
           {isLoggedIn && this.props.user && this.props.user.user_role !== 'TESTER' ? (
             <div

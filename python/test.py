@@ -3,6 +3,8 @@ import csv
 import jieba
 import regex
 import pinyin
+import sys
+import hanzidentifier
 
 
 
@@ -11,7 +13,7 @@ jieba.set_dictionary("user_dict.txt")
 con = psycopg2.connect(database="postgres", user="postgres", password="pass", host="127.0.0.1", port="5432")
 print("Database opened successfully")
 cur = con.cursor()
-punc = "\"\\!?,！？｡。＂＃＄％＆＇%&/:;°·℃（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛《》〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789９０a-zA-Z"
+punc = "\"\\!?,,,,．！？｡。＂＃＄％＆＇%&/:;°·℃（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛《》〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789９０３２６a-zA-Z"
 word_frequencies = {}
 word_iterations = {}
 word_ranks = {}
@@ -22,7 +24,7 @@ rank_dict ={}
 
 
 def print_sentence():
-	with open('known_words.csv') as knownwordsfile:
+	with open('video_demo_known_words.csv') as knownwordsfile:
 		readKnownWords = csv.reader(knownwordsfile, delimiter=',')
 		vocabRows = list(readKnownWords)
 		vocab = [elt for lst in vocabRows for elt in lst]
@@ -32,18 +34,28 @@ def print_sentence():
 		readCSV = csv.reader(csvfile, delimiter='\t')
 		rows = list(readCSV)
 		#rows.pop(0)
+		long_sentences = 0
 		counter = 1
 		for sentence in rows:
 			formatted_sentence = regex.sub(r"[{}]+".format(punc), "", sentence[0].replace(" ", "").replace("-","").replace("[","").replace("]","").replace("─","").replace("\u3000",""))
 			seg_list = list(jieba.cut(formatted_sentence, cut_all=False, HMM=False))
 			sentenceToEasy =  all(item in vocab for item in seg_list)
-			if not sentenceToEasy:
-				sentence_data[counter]={"raw_text": sentence[0], "pinyin": sentence[1],"english": sentence[2], "clean_text": formatted_sentence, "words": seg_list, "is_sentence": True}
-			for word in seg_list:
-					if word not in word_frequencies:
-						word_frequencies[word] = 0
-					word_frequencies[word] += 1
-			counter += 1
+			if len(formatted_sentence) <= 10:
+				if not sentenceToEasy:
+					sentence_data[counter]={"raw_text": sentence[0], "pinyin": sentence[1],"english": sentence[2], "clean_text": formatted_sentence, "words": seg_list, "is_sentence": True}
+				for word in seg_list:
+						if word not in word_frequencies:
+							word_frequencies[word] = 0
+						word_frequencies[word] += 1
+				counter += 1
+
+		#traditional_words = []
+		#for word in word_frequencies.keys():
+		#	if not hanzidentifier.is_simplified(word):
+		#		traditional_words.append(word)
+	
+		#sys.exit(traditional_words)
+
 
 
 		unique_occurrence_nums = set(word_frequencies.values())
@@ -54,10 +66,14 @@ def print_sentence():
 		for key in sentence_data:
 			sentence_data[key]["freq_score"] = sum([1 if w in vocab else rank_dict[word_frequencies[w]] for w in sentence_data[key]["words"]]) / len(sentence_data[key]["words"])
 		sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: item[1]["freq_score"])}
+
+
 		
 
 		new_word_key = counter
 		sentence_order_counter = 1
+
+		print(len(sorted_sentence_data))
 
 		for s_key in sorted_sentence_data:
 			words = sorted_sentence_data[s_key]["words"]
