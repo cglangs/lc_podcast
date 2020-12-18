@@ -10,9 +10,9 @@ import hanzidentifier
 
 jieba.set_dictionary("user_dict.txt")
 #driver = GraphDatabase.driver("bolt://localhost:11003", auth=("neo4j", "password"))
-#con = psycopg2.connect(database="postgres", user="postgres", password="pass", host="127.0.0.1", port="5432")
-#print("Database opened successfully")
-#cur = con.cursor()
+con = psycopg2.connect(database="postgres", user="postgres", password="pass", host="127.0.0.1", port="5432")
+print("Database opened successfully")
+cur = con.cursor()
 punc = "\"\\!?,,,,．！？｡。＂αβθ•ǎáāó()氵灬扌＃@+×＄％＆＇%&/:;°·℃（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛《》〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789９０３２６a-zA-Z"
 word_frequencies = {}
 word_iterations = {}
@@ -84,7 +84,7 @@ def create_sentences():
 		with open('sentencemine.tsv') as csvfile:
 			readCSV = csv.reader(csvfile, delimiter='\t')
 			rows = list(readCSV)
-			counter = generateSentenceData(rows, targetWords,hsk_words_left)
+			counter = generateSentenceData(rows, targetWords, hsk_words_left)
 			#print(counter)
 		#rows.pop(0)
 
@@ -111,8 +111,17 @@ def create_sentences():
 
 		#print(len(foundTargetWords))
 		while(len(hsk_words_taught) < len(foundTargetWords)):
+
+			sentence_data.clear()
+			word_frequencies.clear()
+			rank_dict.clear()
+			generateSentenceData(rows, targetWords,hsk_words_left)
+
 			nextSentence = generateNextSentence(targetWords)
 			del rows[nextSentence['rowIndex']]
+			print(len(hsk_words_taught))
+			print(len(foundTargetWords))
+			print(nextSentence)
 
 			result_sentence_data[sentence_order_counter] = nextSentence
 			words = nextSentence["words"]
@@ -150,15 +159,11 @@ def create_sentences():
 			used_words.update(new_words)
 			hsk_words_taught.update(hsk_new_words)
 			#TODO update hsk_words_taught
-			sentence_data.clear()
-			word_frequencies.clear()
-			rank_dict.clear()
-			generateSentenceData(rows, targetWords,hsk_words_left)
+
 			sentence_order_counter += 1
 
 		#print(len(result_sentence_data))
 
-'''
 		insert_phrases = []
 		insert_words = []
 		for k,v in word_frequencies.items():
@@ -215,7 +220,6 @@ def create_sentences():
 		#rint("Record inserted successfully")
 
 		con.close()
-'''
 
 
 
