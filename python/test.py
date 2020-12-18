@@ -166,16 +166,16 @@ def create_sentences():
 
 		insert_phrases = []
 		insert_words = []
-		for k,v in word_frequencies.items():
-			insert_words.append((k, pinyin.get(k), v,k in vocab))
+		for w in used_words:
+			insert_words.append((w, pinyin.get(w), w in vocab))
 
 		insert_words_query = """
-		INSERT INTO cloze_chinese.words (word_text, pinyin, word_occurrences, is_base_word) VALUES (%s,%s,%s, %s);
+		INSERT INTO cloze_chinese.words (word_text, pinyin, is_base_word) VALUES (%s,%s,%s);
 		"""
 
 		cur.executemany(insert_words_query,insert_words)
 
-		all_phrases = one_word_sentences | sorted_sentence_data
+		all_phrases = one_word_sentences | result_sentence_data
 
 		for k,v in all_phrases.items():
 			current_row = []

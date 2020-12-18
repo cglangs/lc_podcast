@@ -11,13 +11,13 @@ CREATE UNIQUE INDEX user_email_unique ON cloze_chinese.users USING btree (user_e
 CREATE TABLE cloze_chinese.words (
 	word_id serial NOT NULL DEFAULT nextval('cloze_chinese.words_word_id_seq'::regclass),
 	word_text varchar(255) NULL,
-	word_occurrences int4 NULL,
 	pinyin varchar(255) NULL,
 	english varchar(255) NULL,
 	is_base_word bool NULL,
 	CONSTRAINT unique_word_text UNIQUE (word_text),
 	CONSTRAINT words_pkey PRIMARY KEY (word_id)
 );
+
 
 CREATE TABLE cloze_chinese.intervals (
 	interval_id int4 NOT NULL,

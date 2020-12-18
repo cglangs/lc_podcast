@@ -212,7 +212,7 @@ async function getSentence (object, params, ctx, resolveInfo){
     AND up_teaches.user_id = :userId
     WHERE up_teaches.word_id IS NULL
     AND p.is_sentence = false
-    ORDER BY parent_phrase.sentence_order ASC, w.word_occurrences DESC
+    ORDER BY parent_phrase.sentence_order ASC
     LIMIT 1
 )
 
