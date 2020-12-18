@@ -20,7 +20,7 @@ const sequelize = new Sequelize(
   'postgres',
   'pass',
   {
-    host: '34.238.246.9',
+    //host: '34.238.246.9',
     dialect: 'postgres',
   },
 );

@@ -10,10 +10,10 @@ import hanzidentifier
 
 jieba.set_dictionary("user_dict.txt")
 #driver = GraphDatabase.driver("bolt://localhost:11003", auth=("neo4j", "password"))
-con = psycopg2.connect(database="postgres", user="postgres", password="pass", host="127.0.0.1", port="5432")
-print("Database opened successfully")
-cur = con.cursor()
-punc = "\"\\!?,,,,．！？｡。＂＃＄％＆＇%&/:;°·℃（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛《》〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789９０３２６a-zA-Z"
+#con = psycopg2.connect(database="postgres", user="postgres", password="pass", host="127.0.0.1", port="5432")
+#print("Database opened successfully")
+#cur = con.cursor()
+punc = "\"\\!?,,,,．！？｡。＂αβθ•ǎáāó()氵灬扌＃@+×＄％＆＇%&/:;°·℃（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛《》〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789９０３２６a-zA-Z"
 word_frequencies = {}
 word_iterations = {}
 word_ranks = {}
@@ -21,33 +21,75 @@ sentence_data={}
 used_words = set()
 one_word_sentences = {}
 rank_dict ={}
+hsk_words_left = []
+hsk_words_taught = set()
+result_sentence_data = {}
+vocab = []
+foundTargetWords = set()
+
+def generateNextSentence(targetWords):
+	for key in sentence_data:
+		wordsForLength = [word for word in sentence_data[key]["words"] if word not in used_words]
+		sentence_data[key]["freq_score"] = max([1 if w in vocab or w in targetWords else 1 if w in used_words else rank_dict[word_frequencies[w]] for w in sentence_data[key]["words"]])
+		sentence_data[key]["wordsForLength"] = wordsForLength
+	minSentence = min(sentence_data.items(), key=lambda item: (item[1]["freq_score"], len(item[1]["wordsForLength"])))
+	del sentence_data[minSentence[0]]
+	return minSentence[1]
+	#sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: (item[1]["freq_score"], len(item[1]["wordsForLength"])))}
+	#return sorted_sentence_data[0]
+
+def generateSentenceData(rows, targetWords,hsk_words_left):
+	counter = 1
+	rowIndex = 0
+	for sentence in rows:
+		formatted_sentence = regex.sub(r"[{}]+".format(punc), "", sentence[0].replace(" ", "").replace("-","").replace("[","").replace("]","").replace("─","").replace("\u3000",""))
+		seg_list = list(jieba.cut(formatted_sentence, cut_all=False, HMM=False))
+		sentenceToEasy =  all(item in vocab for item in seg_list)
+		sentenceRelevant = any(item in hsk_words_left for item in seg_list)
+		if len(formatted_sentence) <= 10 and not sentenceToEasy and sentenceRelevant:
+			sentence_data[counter]={"rowIndex": rowIndex, "raw_text": sentence[0], "pinyin": sentence[1],"english": sentence[2], "clean_text": formatted_sentence, "words": seg_list, "is_sentence": True}
+			for word in seg_list:
+				if word not in word_frequencies:
+					word_frequencies[word] = 0
+					if word in targetWords and word not in vocab:
+						foundTargetWords.add(word)
+				word_frequencies[word] += 1
+			counter += 1
+		rowIndex +=1
+	unique_occurrence_nums = set(word_frequencies.values())
+	rank = 1
+	for k in sorted(unique_occurrence_nums, key=lambda item: item, reverse=True):
+		rank_dict[k] = rank
+		rank += 1
+	return counter
 
 
-def print_sentence():
-	with open('video_demo_known_words.csv') as knownwordsfile:
-		readKnownWords = csv.reader(knownwordsfile, delimiter=',')
-		vocabRows = list(readKnownWords)
-		vocab = [elt for lst in vocabRows for elt in lst]
+def create_sentences():
+	#with open('known_words.csv') as knownwordsfile:
+	#	readKnownWords = csv.reader(knownwordsfile, delimiter=',')
+	#	vocabRows = list(readKnownWords)
+	#	vocab = [elt for lst in vocabRows for elt in lst]
+	
 
+	#TODO: target words file
+	with open('hsk_1.csv') as tagetwordsfile:
+		readhsk_1words = csv.reader(tagetwordsfile, delimiter=',')
+		targetRows = list(readhsk_1words)
+		targetRows.pop(0)
+		targetWords = [row[0] for row in targetRows ]
+		hsk_words_left = targetWords.copy()
 
-	with open('sentencemine.tsv') as csvfile:
-		readCSV = csv.reader(csvfile, delimiter='\t')
-		rows = list(readCSV)
+		#targetWords = [elt for lst in targetRows for elt in lst]
+
+		with open('sentencemine.tsv') as csvfile:
+			readCSV = csv.reader(csvfile, delimiter='\t')
+			rows = list(readCSV)
+			counter = generateSentenceData(rows, targetWords,hsk_words_left)
+			#print(counter)
 		#rows.pop(0)
-		long_sentences = 0
-		counter = 1
-		for sentence in rows:
-			formatted_sentence = regex.sub(r"[{}]+".format(punc), "", sentence[0].replace(" ", "").replace("-","").replace("[","").replace("]","").replace("─","").replace("\u3000",""))
-			seg_list = list(jieba.cut(formatted_sentence, cut_all=False, HMM=False))
-			sentenceToEasy =  all(item in vocab for item in seg_list)
-			if len(formatted_sentence) <= 10:
-				if not sentenceToEasy:
-					sentence_data[counter]={"raw_text": sentence[0], "pinyin": sentence[1],"english": sentence[2], "clean_text": formatted_sentence, "words": seg_list, "is_sentence": True}
-				for word in seg_list:
-						if word not in word_frequencies:
-							word_frequencies[word] = 0
-						word_frequencies[word] += 1
-				counter += 1
+
+
+
 
 		#traditional_words = []
 		#for word in word_frequencies.keys():
@@ -58,14 +100,7 @@ def print_sentence():
 
 
 
-		unique_occurrence_nums = set(word_frequencies.values())
-		rank = 1
-		for k in sorted(unique_occurrence_nums, key=lambda item: item, reverse=True):
-			rank_dict[k] = rank
-			rank += 1
-		for key in sentence_data:
-			sentence_data[key]["freq_score"] = sum([1 if w in vocab else rank_dict[word_frequencies[w]] for w in sentence_data[key]["words"]]) / len(sentence_data[key]["words"])
-		sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: item[1]["freq_score"])}
+
 
 
 		
@@ -73,15 +108,24 @@ def print_sentence():
 		new_word_key = counter
 		sentence_order_counter = 1
 
-		print(len(sorted_sentence_data))
 
-		for s_key in sorted_sentence_data:
-			words = sorted_sentence_data[s_key]["words"]
+		#print(len(foundTargetWords))
+		while(len(hsk_words_taught) < len(foundTargetWords)):
+			nextSentence = generateNextSentence(targetWords)
+			del rows[nextSentence['rowIndex']]
+
+			result_sentence_data[sentence_order_counter] = nextSentence
+			words = nextSentence["words"]
 			old_words = [w for w in words if w in used_words]
 			new_words = [w for w in words if w not in used_words and w not in vocab]
 			if(len(new_words) > 0):
-				lowest_frequency = min([word_frequencies[w] for w in new_words])
-				word_to_teach  = [ w for w in new_words if word_frequencies[w] == lowest_frequency][0]
+				hsk_new_words = [w for w in new_words if w in targetWords]
+				if(len(hsk_new_words) > 0):
+					lowest_frequency = min([word_frequencies[w] for w in hsk_new_words])
+					word_to_teach  = [ w for w in hsk_new_words if word_frequencies[w] == lowest_frequency][0]
+				else:
+					lowest_frequency = min([word_frequencies[w] for w in new_words])
+					word_to_teach  = [ w for w in new_words if word_frequencies[w] == lowest_frequency][0]
 				for nw in new_words:
 					if nw not in word_iterations:
 						word_iterations[nw] = 0
@@ -90,6 +134,7 @@ def print_sentence():
 						one_word_sentences[new_word_key]={"raw_text": nw, "pinyin": None, "english": None, "clean_text": nw, "freq_score": None,  "is_sentence": False, "sentence_order": None, "word_to_teach": nw, "words": [nw], "display_text": "#", "iteration": 1}
 						new_word_key += 1
 				iteration = 1
+				hsk_words_left = [word for word in hsk_words_left if word not in hsk_new_words]
 			else:
 				fewest_iterations = min([word_iterations[w] for w in old_words])
 				words_at_fewest_iterations = [ w for w in old_words if word_iterations[w] == fewest_iterations]
@@ -97,14 +142,23 @@ def print_sentence():
 				word_to_teach  = [ w for w in words_at_fewest_iterations if word_frequencies[w] == highest_frequency][0]
 				word_iterations[word_to_teach] += 1
 				iteration = fewest_iterations + 1
-			sorted_sentence_data[s_key]["word_to_teach"] = word_to_teach
-			sorted_sentence_data[s_key]["display_text"] = sorted_sentence_data[s_key]["raw_text"].replace(word_to_teach, '#')
-			sorted_sentence_data[s_key]["iteration"] = iteration
-			sorted_sentence_data[s_key]["sentence_order"] = sentence_order_counter
+			result_sentence_data[sentence_order_counter]["word_to_teach"] = word_to_teach
+			result_sentence_data[sentence_order_counter]["display_text"] = nextSentence["raw_text"].replace(word_to_teach, '#')
+			result_sentence_data[sentence_order_counter]["iteration"] = iteration
+			result_sentence_data[sentence_order_counter]["sentence_order"] = sentence_order_counter
 
 			used_words.update(new_words)
+			hsk_words_taught.update(hsk_new_words)
+			#TODO update hsk_words_taught
+			sentence_data.clear()
+			word_frequencies.clear()
+			rank_dict.clear()
+			generateSentenceData(rows, targetWords,hsk_words_left)
 			sentence_order_counter += 1
 
+		#print(len(result_sentence_data))
+
+'''
 		insert_phrases = []
 		insert_words = []
 		for k,v in word_frequencies.items():
@@ -159,12 +213,13 @@ def print_sentence():
 
 		con.commit()
 		#rint("Record inserted successfully")
+
 		con.close()
+'''
 
 
 
-
-print_sentence()
+create_sentences()
 
 
 

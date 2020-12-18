@@ -58,7 +58,10 @@ ORDER BY
 
     
 
-
+select * from words w
+left join translations t
+on w.word_text = t.hanzi
+where w.is_base_word = false and t.hanzi is null
 
 
 
