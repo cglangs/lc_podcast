@@ -13,8 +13,16 @@ SELECT raw_text FROM phrases p
 WHERE p.is_sentence = TRUE
 ORDER BY p.sentence_order ASC
 
-UPDATE cloze_chinese.words SET english = t.english FROM cloze_chinese.translations t
-WHERE word_text = t.hanzi;
+with defs as(
+select COALESCE(h.simplified,t.hanzi) as hanzi, COALESCE(h.english,t.english) as english
+FROM cloze_chinese.translations t
+left join cloze_chinese.hsk4_csv h
+on t.hanzi = h.simplified 
+)
+
+
+UPDATE cloze_chinese.words SET english = defs.english FROM defs
+WHERE word_text = defs.hanzi;
 
 
   SELECT
