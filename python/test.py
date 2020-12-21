@@ -9,10 +9,9 @@ import hanzidentifier
 
 
 jieba.set_dictionary("user_dict.txt")
-#driver = GraphDatabase.driver("bolt://localhost:11003", auth=("neo4j", "password"))
-con = psycopg2.connect(database="postgres", user="postgres", password="pass", host="127.0.0.1", port="5432")
+#con = psycopg2.connect(database="postgres", user="postgres", password="pass", host="127.0.0.1", port="5432")
 print("Database opened successfully")
-cur = con.cursor()
+#cur = con.cursor()
 punc = "\"\\!?,,,,．！？｡。＂αβθ•ǎáāó()氵灬扌＃@+×＄％＆＇%&/:;°·℃（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛《》〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789９０３２６a-zA-Z"
 word_frequencies = {}
 word_iterations = {}
@@ -29,10 +28,12 @@ foundTargetWords = set()
 
 def generateNextSentence(targetWords,vocab):
 	for key in sentence_data:
-		wordsForLength = [word for word in sentence_data[key]["words"] if word not in used_words]
+		sentence_data[key]["unknown_words"] = [w for w in sentence_data[key]["words"] if w not in used_words or w not in vocab]
 		sentence_data[key]["freq_score"] = max([1 if w in vocab or w in targetWords else 1 if w in used_words else rank_dict[word_frequencies[w]] for w in sentence_data[key]["words"]])
-		sentence_data[key]["wordsForLength"] = wordsForLength
-	minSentence = min(sentence_data.items(), key=lambda item: (item[1]["freq_score"], len(item[1]["wordsForLength"])))
+	minSentence = min(sentence_data.items(), key=lambda item: (len(item[1]["unknown_words"]), item[1]["freq_score"]))
+	#need recursive loop that  searches dependency tree for phrase that has only one unknown word
+
+
 	del sentence_data[minSentence[0]]
 	return minSentence[1]
 	#sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: (item[1]["freq_score"], len(item[1]["wordsForLength"])))}
@@ -168,7 +169,7 @@ def create_sentences():
 					sentence_order_counter += 1
 
 				#print(len(result_sentence_data))
-
+'''
 				insert_phrases = []
 				insert_words = []
 				for w in used_words:
@@ -226,7 +227,7 @@ def create_sentences():
 
 				con.close()
 
-
+'''
 
 create_sentences()
 
