@@ -9,9 +9,9 @@ import hanzidentifier
 
 
 jieba.set_dictionary("user_dict.txt")
-#con = psycopg2.connect(database="postgres", user="postgres", password="pass", host="127.0.0.1", port="5432")
+con = psycopg2.connect(database="postgres", user="postgres", password="pass", host="127.0.0.1", port="5432")
 print("Database opened successfully")
-#cur = con.cursor()
+cur = con.cursor()
 punc = "\"\\!?,,,,．！？｡。＂αβθ•ǎáāó()氵灬扌＃@+×＄％＆＇%&/:;°·℃（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛《》〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789９０３２６a-zA-Z"
 word_frequencies = {}
 word_iterations = {}
@@ -27,10 +27,14 @@ result_sentence_data = {}
 foundTargetWords = set()
 
 def generateNextSentence(targetWords,vocab):
+	print("Number of sentences:",len(sentence_data.items()))
+	relevantSentences = {key:value for (key,value) in sentence_data.items() if value["x"] == True}
+	print("Number of relevant sentences:",len(relevantSentences.items()))
+
 	for key in sentence_data:
-		sentence_data[key]["unknown_words"] = [w for w in sentence_data[key]["words"] if w not in used_words or w not in vocab]
-		sentence_data[key]["freq_score"] = max([1 if w in vocab or w in targetWords else 1 if w in used_words else rank_dict[word_frequencies[w]] for w in sentence_data[key]["words"]])
-	minSentence = min(sentence_data.items(), key=lambda item: (len(item[1]["unknown_words"]), item[1]["freq_score"]))
+		sentence_data[key]["unknown_words"] = [w for w in sentence_data[key]["words"] if w not in used_words and w not in vocab]
+		#sentence_data[key]["freq_score"] = max([1 if w in vocab or w in targetWords else 1 if w in used_words else rank_dict[word_frequencies[w]] for w in sentence_data[key]["words"]])
+	minSentence = min(relevantSentences.items(), key=lambda item: (len(item[1]["unknown_words"])))
 	#need recursive loop that  searches dependency tree for phrase that has only one unknown word
 
 
@@ -42,22 +46,30 @@ def generateNextSentence(targetWords,vocab):
 def generateSentenceData(rows, targetWords,hsk_words_left,vocab):
 	counter = 1
 	rowIndex = 0
+	'''
+	print("Rows before generate: ", len(rows))
+	print("Vocab before generate: ", len(vocab))
+	print("Used Words before generate: ", len(used_words))	
+	print("HSK words left before generate: ", len(hsk_words_left))	
+	print("Sentence data left before generate: ", len(sentence_data.values()))	
+	'''
+
 	for sentence in rows:
 		formatted_sentence = regex.sub(r"[{}]+".format(punc), "", sentence[0].replace(" ", "").replace("-","").replace("[","").replace("]","").replace("─","").replace("\u3000",""))
 		seg_list = list(jieba.cut(formatted_sentence, cut_all=False, HMM=False))
 		sentenceTooEasy =  all(item in vocab or item in used_words for item in seg_list)
 		sentenceRelevant = any(item in hsk_words_left for item in seg_list)
 		if len(formatted_sentence) <= 10 and not sentenceTooEasy and sentenceRelevant:
-			sentence_data[counter]={"rowIndex": rowIndex, "raw_text": sentence[0], "pinyin": sentence[1],"english": sentence[2], "clean_text": formatted_sentence, "words": seg_list, "is_sentence": True}
+			sentence_data[counter]={"rowIndex": rowIndex, "x": sentenceRelevant, "raw_text": sentence[0], "pinyin": sentence[1],"english": sentence[2], "clean_text": formatted_sentence, "words": seg_list, "is_sentence": True}
 			for word in seg_list:
 				if word not in word_frequencies:
 					word_frequencies[word] = 0
 					if word in targetWords and word not in vocab:
 						foundTargetWords.add(word)
 				word_frequencies[word] += 1
+			counter += 1
 		else:
 			del rows[rowIndex]
-			counter += 1
 		rowIndex +=1
 	unique_occurrence_nums = set(word_frequencies.values())
 	rank = 1
@@ -81,7 +93,6 @@ def create_sentences():
 			targetRows.pop(0)
 			targetWords = [row[0] for row in targetRows  if row[0]  not in vocab]
 			hsk_words_left = targetWords.copy()
-			print(hsk_words_left)
 
 		#targetWords = [elt for lst in targetRows for elt in lst]
 
@@ -131,8 +142,8 @@ def create_sentences():
 					words = nextSentence["words"]
 					old_words = [w for w in words if w in used_words]
 					new_words = [w for w in words if w not in used_words and w not in vocab]
-					print(old_words)
-					print(new_words)
+					#print(old_words)
+					#print(new_words)
 					if(len(new_words) > 0):
 						hsk_new_words = [w for w in new_words if w in targetWords]
 						if(len(hsk_new_words) > 0):
@@ -169,7 +180,6 @@ def create_sentences():
 					sentence_order_counter += 1
 
 				#print(len(result_sentence_data))
-'''
 				insert_phrases = []
 				insert_words = []
 				for w in used_words:
@@ -227,7 +237,6 @@ def create_sentences():
 
 				con.close()
 
-'''
 
 create_sentences()
 
