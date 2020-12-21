@@ -34,7 +34,7 @@ def getDependencies(rootSentence,otherSentences):
 	else:
 		for newWord in rootSentence["unknown_words"]:
 			for key in otherSentences:
-				if newWord in otherSentences[key]["unknown_words"]:
+				if newWord in otherSentences[key]["unknown_words"] and len(otherSentences[key]["unknown_words"]) < len(rootSentence["unknown_words"]):
 					nextSentence = otherSentences[key]
 					del otherSentences[key]
 					getDependencies(nextSentence,otherSentences)
