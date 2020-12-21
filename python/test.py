@@ -38,7 +38,6 @@ def generateNextSentence(targetWords,vocab,words_left):
 
 	minSentence = min(relevantSentences.items(), key=lambda item: (len(item[1]["unknown_words"]), -item[1]["freq_score"]))
 
-	#if minSentence[1]["unknown_words"] contains words not in targetWords, add them to target words and recursively call generateNextSentence
 	unknownNotTargetWords = [w for w in minSentence[1]["unknown_words"] if w not in words_left]
 	if len(unknownNotTargetWords):
 		return generateNextSentence(targetWords, vocab, words_left + unknownNotTargetWords)
@@ -54,7 +53,7 @@ def generateSentenceData(rows, targetWords,hsk_words_left,vocab):
 		formatted_sentence = regex.sub(r"[{}]+".format(punc), "", sentence[0].replace(" ", "").replace("-","").replace("[","").replace("]","").replace("─","").replace("\u3000",""))
 		seg_list = list(jieba.cut(formatted_sentence, cut_all=False, HMM=False))
 		sentenceTooEasy =  all(item in vocab or item in used_words for item in seg_list)
-		if len(formatted_sentence) <= 10 and not sentenceTooEasy:
+		if len(formatted_sentence) <= 12 and not sentenceTooEasy:
 			sentence_data[counter]={"rowIndex": rowIndex, "raw_text": sentence[0], "pinyin": sentence[1],"english": sentence[2], "clean_text": formatted_sentence, "words": seg_list, "is_sentence": True}
 			for word in seg_list:
 				if word not in word_frequencies:
