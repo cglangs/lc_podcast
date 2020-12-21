@@ -78,7 +78,7 @@ def create_sentences():
 			readhsk_4words = csv.reader(tagetwordsfile, delimiter=',')
 			targetRows = list(readhsk_4words)
 			targetRows.pop(0)
-			targetWords = [row[0] for row in targetRows ]
+			targetWords = [row[0] for row in targetRows  if row[0]  not in vocab]
 			hsk_words_left = targetWords.copy()
 			print(hsk_words_left)
 
