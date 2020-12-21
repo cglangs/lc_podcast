@@ -26,18 +26,39 @@ result_sentence_data = {}
 #vocab = []
 foundTargetWords = set()
 
+
+def getDependencies(rootSentence,otherSentences):
+	print(rootSentence)
+	if len(rootSentence["unknown_words"]) == 1:
+		return rootSentence
+	else:
+		for newWord in rootSentence["unknown_words"]:
+			for key in otherSentences:
+				if newWord in otherSentences[key]["unknown_words"]:
+					nextSentence = otherSentences[key]
+					del otherSentences[key]
+					getDependencies(nextSentence,otherSentences)
+
+
 def generateNextSentence(targetWords,vocab):
 	for key in sentence_data:
 		sentence_data[key]["unknown_words"] = [w for w in sentence_data[key]["words"] if w not in used_words and w not in vocab]
 		sentence_data[key]["freq_score"] = max([1 if w in vocab or w in targetWords else 1 if w in used_words else rank_dict[word_frequencies[w]] for w in sentence_data[key]["words"]])
 
 	relevantSentences = {key:value for (key,value) in sentence_data.items() if value["containsRemainingTargetWords"] == True}
+	otherSentences = {key:value for (key,value) in sentence_data.items() if value["containsRemainingTargetWords"] == False}
+
 	minSentence = min(relevantSentences.items(), key=lambda item: (len(item[1]["unknown_words"]), -item[1]["freq_score"]))
+
+	rootSentence = getDependencies(minSentence[1],otherSentences) or minSentence[1]
+
 	#need recursive loop that  searches dependency tree for phrase that has only one unknown word
 
 
+
+
 	del sentence_data[minSentence[0]]
-	return minSentence[1]
+	return rootSentence
 	#sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: (item[1]["freq_score"], len(item[1]["wordsForLength"])))}
 	#return sorted_sentence_data[0]
 
@@ -103,7 +124,6 @@ def create_sentences():
 
 
 
-
 		#traditional_words = []
 		#for word in word_frequencies.keys():
 		#	if not hanzidentifier.is_simplified(word):
@@ -112,11 +132,6 @@ def create_sentences():
 		#sys.exit(traditional_words)
 
 
-
-
-
-
-		
 
 				new_word_key = counter
 				sentence_order_counter = 1
@@ -234,7 +249,6 @@ def create_sentences():
 				#rint("Record inserted successfully")
 
 				con.close()
-
 
 create_sentences()
 
