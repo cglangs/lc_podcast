@@ -27,14 +27,12 @@ result_sentence_data = {}
 foundTargetWords = set()
 
 def generateNextSentence(targetWords,vocab):
-	print("Number of sentences:",len(sentence_data.items()))
-	relevantSentences = {key:value for (key,value) in sentence_data.items() if value["x"] == True}
-	print("Number of relevant sentences:",len(relevantSentences.items()))
-
 	for key in sentence_data:
 		sentence_data[key]["unknown_words"] = [w for w in sentence_data[key]["words"] if w not in used_words and w not in vocab]
-		#sentence_data[key]["freq_score"] = max([1 if w in vocab or w in targetWords else 1 if w in used_words else rank_dict[word_frequencies[w]] for w in sentence_data[key]["words"]])
-	minSentence = min(relevantSentences.items(), key=lambda item: (len(item[1]["unknown_words"])))
+		sentence_data[key]["freq_score"] = max([1 if w in vocab or w in targetWords else 1 if w in used_words else rank_dict[word_frequencies[w]] for w in sentence_data[key]["words"]])
+
+	relevantSentences = {key:value for (key,value) in sentence_data.items() if value["containsRemainingTargetWords"] == True}
+	minSentence = min(relevantSentences.items(), key=lambda item: (len(item[1]["unknown_words"]), -item[1]["freq_score"]))
 	#need recursive loop that  searches dependency tree for phrase that has only one unknown word
 
 
@@ -59,8 +57,8 @@ def generateSentenceData(rows, targetWords,hsk_words_left,vocab):
 		seg_list = list(jieba.cut(formatted_sentence, cut_all=False, HMM=False))
 		sentenceTooEasy =  all(item in vocab or item in used_words for item in seg_list)
 		sentenceRelevant = any(item in hsk_words_left for item in seg_list)
-		if len(formatted_sentence) <= 10 and not sentenceTooEasy and sentenceRelevant:
-			sentence_data[counter]={"rowIndex": rowIndex, "x": sentenceRelevant, "raw_text": sentence[0], "pinyin": sentence[1],"english": sentence[2], "clean_text": formatted_sentence, "words": seg_list, "is_sentence": True}
+		if len(formatted_sentence) <= 10 and not sentenceTooEasy:
+			sentence_data[counter]={"rowIndex": rowIndex, "containsRemainingTargetWords": sentenceRelevant, "raw_text": sentence[0], "pinyin": sentence[1],"english": sentence[2], "clean_text": formatted_sentence, "words": seg_list, "is_sentence": True}
 			for word in seg_list:
 				if word not in word_frequencies:
 					word_frequencies[word] = 0
