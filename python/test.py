@@ -27,22 +27,10 @@ result_sentence_data = {}
 foundTargetWords = set()
 
 
-def getDependencies(rootSentence,otherSentences):
-	print(rootSentence)
-	if len(rootSentence["unknown_words"]) == 1:
-		return rootSentence
-	else:
-		for newWord in rootSentence["unknown_words"]:
-			for key in otherSentences:
-				if newWord in otherSentences[key]["unknown_words"] and len(otherSentences[key]["unknown_words"]) < len(rootSentence["unknown_words"]):
-					nextSentence = otherSentences[key]
-					del otherSentences[key]
-					getDependencies(nextSentence,otherSentences)
-
-
-def generateNextSentence(targetWords,vocab):
+def generateNextSentence(targetWords,vocab,words_left):
 	for key in sentence_data:
 		sentence_data[key]["unknown_words"] = [w for w in sentence_data[key]["words"] if w not in used_words and w not in vocab]
+		sentence_data[key]["containsRemainingTargetWords"]= any(item in words_left for item in sentence_data[key]["unknown_words"])
 		sentence_data[key]["freq_score"] = max([1 if w in vocab or w in targetWords else 1 if w in used_words else rank_dict[word_frequencies[w]] for w in sentence_data[key]["words"]])
 
 	relevantSentences = {key:value for (key,value) in sentence_data.items() if value["containsRemainingTargetWords"] == True}
@@ -50,36 +38,24 @@ def generateNextSentence(targetWords,vocab):
 
 	minSentence = min(relevantSentences.items(), key=lambda item: (len(item[1]["unknown_words"]), -item[1]["freq_score"]))
 
-	rootSentence = getDependencies(minSentence[1],otherSentences) or minSentence[1]
-
-	#need recursive loop that  searches dependency tree for phrase that has only one unknown word
-
-
-
-
-	del sentence_data[minSentence[0]]
-	return rootSentence
-	#sorted_sentence_data = {k: v for k, v in sorted(sentence_data.items(), key=lambda item: (item[1]["freq_score"], len(item[1]["wordsForLength"])))}
-	#return sorted_sentence_data[0]
+	#if minSentence[1]["unknown_words"] contains words not in targetWords, add them to target words and recursively call generateNextSentence
+	unknownNotTargetWords = [w for w in minSentence[1]["unknown_words"] if w not in words_left]
+	if len(unknownNotTargetWords):
+		return generateNextSentence(targetWords, vocab, words_left + unknownNotTargetWords)
+	else:
+		del sentence_data[minSentence[0]]
+		return minSentence[1]
 
 def generateSentenceData(rows, targetWords,hsk_words_left,vocab):
 	counter = 1
 	rowIndex = 0
-	'''
-	print("Rows before generate: ", len(rows))
-	print("Vocab before generate: ", len(vocab))
-	print("Used Words before generate: ", len(used_words))	
-	print("HSK words left before generate: ", len(hsk_words_left))	
-	print("Sentence data left before generate: ", len(sentence_data.values()))	
-	'''
 
 	for sentence in rows:
 		formatted_sentence = regex.sub(r"[{}]+".format(punc), "", sentence[0].replace(" ", "").replace("-","").replace("[","").replace("]","").replace("─","").replace("\u3000",""))
 		seg_list = list(jieba.cut(formatted_sentence, cut_all=False, HMM=False))
 		sentenceTooEasy =  all(item in vocab or item in used_words for item in seg_list)
-		sentenceRelevant = any(item in hsk_words_left for item in seg_list)
 		if len(formatted_sentence) <= 10 and not sentenceTooEasy:
-			sentence_data[counter]={"rowIndex": rowIndex, "containsRemainingTargetWords": sentenceRelevant, "raw_text": sentence[0], "pinyin": sentence[1],"english": sentence[2], "clean_text": formatted_sentence, "words": seg_list, "is_sentence": True}
+			sentence_data[counter]={"rowIndex": rowIndex, "raw_text": sentence[0], "pinyin": sentence[1],"english": sentence[2], "clean_text": formatted_sentence, "words": seg_list, "is_sentence": True}
 			for word in seg_list:
 				if word not in word_frequencies:
 					word_frequencies[word] = 0
@@ -113,27 +89,11 @@ def create_sentences():
 			targetWords = [row[0] for row in targetRows  if row[0]  not in vocab]
 			hsk_words_left = targetWords.copy()
 
-		#targetWords = [elt for lst in targetRows for elt in lst]
 
 			with open('sentencemine.tsv') as csvfile:
 				readCSV = csv.reader(csvfile, delimiter='\t')
 				rows = list(readCSV)
-				counter = generateSentenceData(rows, targetWords, hsk_words_left,vocab)
-			#print(counter)
-		#rows.pop(0)
-
-
-
-		#traditional_words = []
-		#for word in word_frequencies.keys():
-		#	if not hanzidentifier.is_simplified(word):
-		#		traditional_words.append(word)
-	
-		#sys.exit(traditional_words)
-
-
-
-				new_word_key = counter
+				new_word_key = generateSentenceData(rows, targetWords, hsk_words_left,vocab)
 				sentence_order_counter = 1
 
 
@@ -145,7 +105,7 @@ def create_sentences():
 					rank_dict.clear()
 					generateSentenceData(rows, targetWords,hsk_words_left,vocab)
 
-					nextSentence = generateNextSentence(targetWords,vocab)
+					nextSentence = generateNextSentence(targetWords,vocab,hsk_words_left)
 					del rows[nextSentence['rowIndex']]
 					print(len(hsk_words_taught))
 					print(len(foundTargetWords))
