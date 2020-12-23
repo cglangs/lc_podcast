@@ -15,6 +15,7 @@ module.exports =  gql`
   	UpgradeUser(user_name: String! email: String! password: String!): User
   	Login(email: String! password: String!): User
   	makeClozeAttempt(word_id: Int!, interval_id: Int!): Int @hasToken
+    setWordLearned(word_id: Int!): Int @hasToken
   }
  
   type User {

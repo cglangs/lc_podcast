@@ -34,7 +34,6 @@ def generateNextSentence(targetWords,vocab,words_left):
 		sentence_data[key]["freq_score"] = max([1 if w in vocab or w in targetWords else 1 if w in used_words else rank_dict[word_frequencies[w]] for w in sentence_data[key]["words"]])
 
 	relevantSentences = {key:value for (key,value) in sentence_data.items() if value["containsRemainingTargetWords"] == True}
-	otherSentences = {key:value for (key,value) in sentence_data.items() if value["containsRemainingTargetWords"] == False}
 
 	minSentence = min(relevantSentences.items(), key=lambda item: (len(item[1]["unknown_words"]), -item[1]["freq_score"]))
 

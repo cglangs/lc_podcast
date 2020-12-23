@@ -27,7 +27,12 @@ mutation addTemporaryUser($user_name: String!, $email: String!, $password: Strin
     user_role
   }
 }
+`
 
+const SET_WORD_LEARNED = gql`
+mutation alreadyKnownWord($word_id: Int!) {
+  setWordLearned(word_id: $word_id)
+}
 `
 
 const GET_SENTENCE = gql`
@@ -60,6 +65,8 @@ const GET_SENTENCE = gql`
   }
 
 `
+
+
 
 class Play extends Component {
 	constructor(){
@@ -203,8 +210,6 @@ class Play extends Component {
   }
 
   editWord(word){
-    console.log(this.props)
-    console.log(this.context)
     this.props.history.push({
       pathname: '/wordedit',
       state: {
@@ -233,6 +238,7 @@ class Play extends Component {
               const wordId = parseInt(nextSentence.word_taught.word_id)
               const fontSize =  nextSentence.raw_text.length <= 24 ? 40 : 20
               const buttonMarginStart = nextSentence.raw_text.length <= 20 ? "3em" : "1.5em"
+
               console.log(nextSentence.raw_text.length, fontSize)
               const userInterval = this.getUserInterval(this.state.showAnswer,this.state.isCorrect, nextSentence.word_taught.interval_id)
                 return(
@@ -303,6 +309,40 @@ class Play extends Component {
                             </button>
                             </div>
                           )}
+                    </Mutation>
+                    <Mutation mutation={SET_WORD_LEARNED} refetchQueries={[{query: GET_SENTENCE}]}
+                       update={(store) => {
+                          this.setState({
+                            showAnswer: false,
+                            showPinyin: false,
+                            isSubmitted: false,
+                            userResponse: '',
+                            showCharacterDefinitions: false,
+                            lastSentence: null
+                          })
+
+                          }
+                          }                   
+
+                    >
+                    {setWordLearned => 
+                      this.state.showAnswer && 
+                      (
+                        <button
+                        style={{margin: "15px 5px 15px 5px", height: fontSize, marginBlockStart: buttonMarginStart, fontSize: "14px"}}
+                        onClick={() => 
+                          {
+                            setWordLearned({variables:{word_id: wordId}})
+                          }
+                        }
+                      >
+                      Too Easy
+                      </button>
+
+                      )
+    
+                     }
+
                     </Mutation>
                   </div>
                   <div>

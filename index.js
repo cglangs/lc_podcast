@@ -111,6 +111,18 @@ async function getMe(object, params, ctx, resolveInfo) {
   return user
 }
 
+async function wordLearned(object, params, ctx, resolveInfo) {
+  try {
+    await ctx.models.user_progress.upsert({user_id: params.user_id, word_id: params.word_id, interval_id: 11, is_learned: true})
+  }
+  catch(error){
+    console.log(error)
+    throw new Error("Unable to update user progress")
+  }
+
+  return params.user_id
+}
+
 
 async function getSentence (object, params, ctx, resolveInfo){
   const sentence = await sequelize.query(
@@ -278,10 +290,14 @@ const resolvers = {
        params.user_id = ctx.req.userId
       return makeAttempt(object, params, ctx, resolveInfo)    
     },
-      EditWord(object, params, ctx, resolveInfo) {
+    EditWord(object, params, ctx, resolveInfo) {
       return changeWordTranslation(object, params, ctx, resolveInfo)    
+    },
+    setWordLearned(object, params, ctx, resolveInfo){
+      //params.user_id = ctx.req.userId
+      params.user_id = 72
+      return wordLearned(object, params, ctx, resolveInfo)
     }
-
   },
   Query: {
      getNextSentence(object, params, ctx, resolveInfo){
@@ -359,11 +375,13 @@ app.use((req, res, next) =>{
   next();
 })
 
-app.use(express.static('public'))
+
+
+/*app.use(express.static('public'))
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
-});
+});*/
 
 
 const server = new ApolloServer({
