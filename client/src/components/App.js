@@ -40,8 +40,6 @@ class App extends Component {
           <Header user={user} refetchUser={refetch}/>
           <Switch>
             <Route exact path="/" render={() => (<Play  user={user} refetchUser={refetch}/> )} />
-            {/*user && user.role === 'ADMIN' && (<Route exact path="/author" component={Author} />)*/}
-            {/*user && user.role === 'ADMIN' && (<Route exact path="/editor" component={Editor} />)*/}
             {user && user.user_role === 'ADMIN' && (<Route exact path="/words" component={Words} />)}
             <Route exact path="/wordedit" component={WordEdit} />
             <Route exact path="/login" render={() => (<Login user={user} refetchUser={refetch}/>)} />

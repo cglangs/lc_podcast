@@ -20,7 +20,7 @@ const sequelize = new Sequelize(
   'postgres',
   'pass',
   {
-    //host: '34.238.246.9',
+    //host: '',
     dialect: 'postgres',
   },
 );
@@ -377,11 +377,11 @@ app.use((req, res, next) =>{
 
 
 
-/*app.use(express.static('public'))
+app.use(express.static('public'))
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
-});*/
+});
 
 
 const server = new ApolloServer({

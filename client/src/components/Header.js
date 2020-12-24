@@ -48,8 +48,6 @@ class Header extends Component {
                 document.cookie = "refresh-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
                 this.props.history.push('/')
                 window.location.reload(true);
-
-                //this.props.refetchUser()
               }}
             >
               logout

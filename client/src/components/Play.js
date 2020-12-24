@@ -1,15 +1,10 @@
 import React, { Component } from 'react'
 import {Query, Mutation} from 'react-apollo';
 import gql from 'graphql-tag';
-//import { Howl } from 'howler';
 import ProgressBar from './ProgressBar'
 import Switch from "./Switch";
 import { getCookie} from '../utils'
 import { withRouter } from 'react-router-dom';
-//import runJxa from 'run-jxa'
-
-
-
 
 
 const MAKE_ATTEMPT = gql`
@@ -127,28 +122,6 @@ class Play extends Component {
 		return correct_response.word_text === this.state.userResponse
 	}
 
-  /*setAudio(phrase_id) {
-    var Sounds
-     Sounds = new Howl({
-         src: ["/audio/sentences/" + phrase_id + ".m4a"]
-      })
-  
-    return Sounds
-  }*/
-
-  /*playSound(){
-    if(this.state.audio){
-        this.state.audio.play()
-    }
-  }*/
-
-  /*stopSound(){
-    if(this.state.audio){
-        this.state.audio.stop()
-    }
-
-  }*/
-
   playAudio(){
     var msg = new SpeechSynthesisUtterance();
     msg.text = this.state.audio;
@@ -238,8 +211,6 @@ class Play extends Component {
               const wordId = parseInt(nextSentence.word_taught.word_id)
               const fontSize =  nextSentence.raw_text.length <= 24 ? 40 : 20
               const buttonMarginStart = nextSentence.raw_text.length <= 20 ? "3em" : "1.5em"
-
-              console.log(nextSentence.raw_text.length, fontSize)
               const userInterval = this.getUserInterval(this.state.showAnswer,this.state.isCorrect, nextSentence.word_taught.interval_id)
                 return(
                   <div style={{display: "flex", flexDirection: "row", "width": "100%"}}>
@@ -354,11 +325,6 @@ class Play extends Component {
                       <p style={{fontSize: "14px"}}>{"New Words Seen: " + data.getCurrentProgress.new_words_seen + "/" + data.getCurrentProgress.total_word_count}</p>
                       <p style={{fontSize: "14px"}}>{"Words Learned: " + data.getCurrentProgress.words_learned + "/" + data.getCurrentProgress.total_word_count}</p>
                       <p style={{fontSize: "14px"}}>{"Cards Completed: " + data.getCurrentProgress.intervals_completed}</p>
-                      {/*<div style={{display: "flex", flexDirectioion: "row", justifyContent: "center"}}>
-                        <p style={{fontSize: "14px", "marginBlockStart": "0.5em"}}>{"Simplified"}</p> 
-                        <Switch switchId={`simplified-traditional-switch`} isDisabled={false} isOn={this.state.showTraditional} handleToggle={() => this.setState(prevState => ({showTraditional: !prevState.showTraditional}))} />
-                        <p style={{fontSize: "14px", "marginBlockStart": "0.5em", "marginLeft": "5%"}}>{"Traditional"}</p> 
-                      </div>*/}
                       <div style={{display: "flex", flexDirectioion: "row", justifyContent: "center", "marginTop": "20px"}}>
                         <p style={{fontSize: "14px", "marginBlockStart": "0.5em"}}>{"English"}</p> 
                         <Switch switchId={`english-pinyin-switch`} isDisabled={!this.state.showAnswer} isOn={this.state.showPinyin} handleToggle={() => this.setState(prevState => ({showPinyin: !prevState.showPinyin}))} />

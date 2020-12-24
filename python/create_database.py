@@ -13,17 +13,17 @@ con = psycopg2.connect(database="postgres", user="postgres", password="pass", ho
 print("Database opened successfully")
 cur = con.cursor()
 punc = "\"\\!?,,,,．！？｡。＂αβθ•ǎáāó()氵灬扌＃@+×＄％＆＇%&/:;°·℃（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛《》〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789９０３２６a-zA-Z"
+
 word_frequencies = {}
 word_iterations = {}
-word_ranks = {}
-sentence_data={}
-used_words = set()
-one_word_sentences = {}
 rank_dict ={}
-#hsk_words_left = []
-hsk_words_taught = set()
+sentence_data={}
+one_word_sentences = {}
 result_sentence_data = {}
-#vocab = []
+
+
+used_words = set()
+hsk_words_taught = set()
 foundTargetWords = set()
 
 
@@ -78,8 +78,6 @@ def create_sentences():
 		vocabRows = list(readKnownWords)
 		vocab = [elt for lst in vocabRows for elt in lst]
 	
-
-	#TODO: target words file
 		with open('hsk4.csv') as tagetwordsfile:
 			readhsk_4words = csv.reader(tagetwordsfile, delimiter=',')
 			targetRows = list(readhsk_4words)
@@ -95,26 +93,17 @@ def create_sentences():
 				sentence_order_counter = 1
 
 
-				#print(len(foundTargetWords))
 				while(len(hsk_words_taught) < len(foundTargetWords)):
-
 					sentence_data.clear()
 					word_frequencies.clear()
 					rank_dict.clear()
 					generateSentenceData(rows, targetWords,hsk_words_left,vocab)
-
 					nextSentence = generateNextSentence(targetWords,vocab,hsk_words_left)
 					del rows[nextSentence['rowIndex']]
-					print(len(hsk_words_taught))
-					print(len(foundTargetWords))
-					print(nextSentence)
-
 					result_sentence_data[sentence_order_counter] = nextSentence
 					words = nextSentence["words"]
 					old_words = [w for w in words if w in used_words]
 					new_words = [w for w in words if w not in used_words and w not in vocab]
-					#print(old_words)
-					#print(new_words)
 					if(len(new_words) > 0):
 						hsk_new_words = [w for w in new_words if w in targetWords]
 						if(len(hsk_new_words) > 0):
@@ -150,7 +139,6 @@ def create_sentences():
 
 					sentence_order_counter += 1
 
-				#print(len(result_sentence_data))
 				insert_phrases = []
 				insert_words = []
 				for w in used_words:
@@ -198,14 +186,10 @@ def create_sentences():
 				FROM word_contained_rows
 
 				"""
-				#print(sorted_sentence_data)
-				#print(insert_phrases)
 				cur.executemany(insert_phrases_query,insert_phrases)
 
 
 				con.commit()
-				#rint("Record inserted successfully")
-
 				con.close()
 
 create_sentences()

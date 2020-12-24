@@ -126,7 +126,6 @@ class Login extends Component {
 }
 
  _confirm() {
-  //this.props.refetchUser()
   this.props.history.push('/')
   window.location.reload(true);
 }

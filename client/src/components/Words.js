@@ -20,7 +20,6 @@ const GET_WORDS = gql`
   }
 `
 
-
 class Words extends Component {
 
 	editWord(word){
