@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken')
-const ACCESS_SECRET = 'Chine$eCl0ze4160'
-const REFRESH_SECRET = 'Cl0zeChine$e3139'
+require('dotenv').config()
+
+const ACCESS_SECRET = process.env.ACCESS_SECRET
+const REFRESH_SECRET = process.env.REFRESH_SECRET
 
 function getUserId(context) {
   const Authorization = context.request.get('Authorization')

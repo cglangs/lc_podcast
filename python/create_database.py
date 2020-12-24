@@ -5,13 +5,16 @@ import regex
 import pinyin
 import sys
 import hanzidentifier
+import os
+from dotenv import load_dotenv
 
 
-
-jieba.set_dictionary("user_dict.txt")
-con = psycopg2.connect(database="postgres", user="postgres", password="pass", host="127.0.0.1", port="5432")
+load_dotenv()
+con = psycopg2.connect(database=os.getenv("DB_NAME"), user=os.getenv("DB_USER"), password=os.getenv("DB_PASS"), host=os.getenv("DB_HOST"), port=os.getenv("PORT"))
 print("Database opened successfully")
 cur = con.cursor()
+
+jieba.set_dictionary("user_dict.txt")
 punc = "\"\\!?,,,,．！？｡。＂αβθ•ǎáāó()氵灬扌＃@+×＄％＆＇%&/:;°·℃（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛《》〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.0123456789９０３２６a-zA-Z"
 
 word_frequencies = {}
@@ -193,7 +196,6 @@ def create_sentences():
 				con.close()
 
 create_sentences()
-
 
 
 
