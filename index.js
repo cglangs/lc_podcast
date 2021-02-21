@@ -294,8 +294,7 @@ const resolvers = {
       return changeWordTranslation(object, params, ctx, resolveInfo)    
     },
     setWordLearned(object, params, ctx, resolveInfo){
-      //params.user_id = ctx.req.userId
-      params.user_id = 72
+      params.user_id = ctx.req.userId
       return wordLearned(object, params, ctx, resolveInfo)
     }
   },
